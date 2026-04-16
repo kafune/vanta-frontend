@@ -1,47 +1,48 @@
 /**
  * OBSIDIAN Canvas Section — Carbon Fiber Design System
- * "Your Canvas" customization module with drag-and-drop upload
- * and interactive t-shirt mockup preview
+ * "Your Canvas" customization module with advanced drag-and-drop,
+ * real-time SVG mockup, and download/share functionality
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, X, ZoomIn, ZoomOut, RotateCcw, Check } from "lucide-react";
+import { Upload, X, Download, Share2, RotateCcw, Palette, Move } from "lucide-react";
 import { toast } from "sonner";
 
-// T-shirt SVG mockup paths
-const TSHIRT_SVG = `
-<svg viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg" fill="none">
+// T-shirt SVG mockup with dynamic color support
+const getTshirtSVG = (color: string) => `
+<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" fill="none">
   <!-- Body -->
-  <path d="M 130 60 L 60 120 L 90 145 L 90 380 L 310 380 L 310 145 L 340 120 L 270 60 C 250 80 220 90 200 90 C 180 90 150 80 130 60 Z" 
-    fill="#1a1a1a" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <path d="M 120 50 L 50 110 L 80 140 L 80 450 L 320 450 L 320 140 L 350 110 L 280 50 C 260 70 230 80 200 80 C 170 80 140 70 120 50 Z" 
+    fill="${color}" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
   <!-- Left sleeve -->
-  <path d="M 130 60 L 60 120 L 90 145 L 140 100 Z" 
-    fill="#161616" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <path d="M 120 50 L 50 110 L 80 140 L 130 90 Z" 
+    fill="${color}" stroke="rgba(255,255,255,0.15)" stroke-width="1" opacity="0.95"/>
   <!-- Right sleeve -->
-  <path d="M 270 60 L 340 120 L 310 145 L 260 100 Z" 
-    fill="#161616" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <path d="M 280 50 L 350 110 L 320 140 L 270 90 Z" 
+    fill="${color}" stroke="rgba(255,255,255,0.15)" stroke-width="1" opacity="0.95"/>
   <!-- Collar -->
-  <path d="M 130 60 C 150 80 180 90 200 90 C 220 90 250 80 270 60" 
-    fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  <path d="M 120 50 C 140 70 170 80 200 80 C 230 80 260 70 280 50" 
+    fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
   <!-- Seam lines -->
-  <line x1="90" y1="145" x2="90" y2="380" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4,4"/>
-  <line x1="310" y1="145" x2="310" y2="380" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4,4"/>
-  <!-- Print area indicator (dashed) -->
-  <rect x="145" y="130" width="110" height="120" rx="2" 
-    fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="6,3"/>
+  <line x1="80" y1="140" x2="80" y2="450" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="5,5"/>
+  <line x1="320" y1="140" x2="320" y2="450" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="5,5"/>
+  <!-- Print area guide -->
+  <rect x="140" y="150" width="120" height="140" rx="3" 
+    fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" stroke-dasharray="8,4"/>
 </svg>
 `;
-
-type PrintPosition = "chest" | "center" | "back";
 
 export default function CanvasSection() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [printPosition, setPrintPosition] = useState<PrintPosition>("chest");
-  const [printScale, setPrintScale] = useState(70);
-  const [shirtColor, setShirtColor] = useState<"black" | "white" | "gray">("black");
+  const [shirtColor, setShirtColor] = useState("#000000");
+  const [imageX, setImageX] = useState(50);
+  const [imageY, setImageY] = useState(50);
+  const [imageScale, setImageScale] = useState(1);
+  const [imageRotation, setImageRotation] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -66,7 +67,7 @@ export default function CanvasSection() {
     const reader = new FileReader();
     reader.onload = (e) => {
       setUploadedImage(e.target?.result as string);
-      toast.success("Imagem carregada!", { description: "Ajuste a posição e o tamanho." });
+      toast.success("Imagem carregada!", { description: "Customize a posição e tamanho." });
     };
     reader.readAsDataURL(file);
   }, []);
@@ -83,6 +84,61 @@ export default function CanvasSection() {
     if (file) processFile(file);
   };
 
+  const handleDownload = async () => {
+    if (!uploadedImage || !canvasRef.current) {
+      toast.error("Nada para descarregar");
+      return;
+    }
+    
+    try {
+      const link = document.createElement("a");
+      link.href = canvasRef.current.toDataURL("image/png");
+      link.download = `obsidian-custom-${Date.now()}.png`;
+      link.click();
+      toast.success("Descarregado!", { description: "Sua customização foi salva." });
+    } catch (error) {
+      toast.error("Erro ao descarregar");
+    }
+  };
+
+  const handleShare = async () => {
+    if (!uploadedImage) {
+      toast.error("Nada para compartilhar");
+      return;
+    }
+
+    const shareText = "Criei uma customização incrível na OBSIDIAN! 🎨";
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Minha Customização OBSIDIAN",
+          text: shareText,
+          url: window.location.href,
+        });
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          toast.error("Erro ao compartilhar");
+        }
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
+      toast.success("Link copiado!", { description: "Compartilhe com seus amigos." });
+    }
+  };
+
+  const handleReset = () => {
+    setUploadedImage(null);
+    setImageX(50);
+    setImageY(50);
+    setImageScale(1);
+    setImageRotation(0);
+    setShirtColor("#000000");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    toast.success("Resetado", { description: "Comece uma nova customização." });
+  };
+
   const handleSubmit = () => {
     if (!uploadedImage) {
       toast.error("Adicione uma imagem primeiro");
@@ -95,228 +151,203 @@ export default function CanvasSection() {
     }, 2000);
   };
 
-  // Print area position based on selection
-  const printAreaStyle = (): React.CSSProperties => {
-    const base: React.CSSProperties = {
-      position: "absolute",
-      width: `${printScale}%`,
-      aspectRatio: "1",
-      objectFit: "contain",
-    };
-    if (printPosition === "chest") return { ...base, top: "30%", left: "50%", transform: "translateX(-50%)" };
-    if (printPosition === "center") return { ...base, top: "38%", left: "50%", transform: "translateX(-50%)" };
-    return { ...base, top: "30%", left: "50%", transform: "translateX(-50%)", opacity: 0.4 };
-  };
-
-  const shirtColors = {
-    black: { bg: "#1a1a1a", label: "Preto" },
-    white: { bg: "#e8e8e8", label: "Branco" },
-    gray: { bg: "#4a4a4a", label: "Cinza" },
-  };
+  const printAreaStyle = (): React.CSSProperties => ({
+    position: "absolute",
+    left: `${imageX}%`,
+    top: `${imageY}%`,
+    transform: `translate(-50%, -50%) scale(${imageScale}) rotate(${imageRotation}deg)`,
+    transformOrigin: "center",
+    width: "120px",
+    height: "120px",
+    objectFit: "cover",
+    borderRadius: "2px",
+  });
 
   return (
-    <section id="canvas" className="py-24 lg:py-32" style={{ background: "#0D0D0D" }} ref={sectionRef}>
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
+    <section className="py-24 lg:py-32 px-6 lg:px-8 overflow-hidden" style={{ background: "#0B0B0B" }} ref={sectionRef}>
+      <div className="max-w-[1400px] mx-auto">
         {/* Header */}
-        <div className={`mb-14 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-          <div className="font-mono-label text-[rgba(239,239,239,0.35)] mb-4">Customização / Exclusivo</div>
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-            <h2 className="font-display text-[clamp(2.5rem,6vw,5rem)] leading-none text-[#EFEFEF]">
-              YOUR<br />CANVAS
+        <div className={`mb-16 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <div className="section-divider mb-12" />
+          <div className="max-w-2xl">
+            <div className="font-mono-label text-[rgba(239,239,239,0.35)] mb-4">Personalização</div>
+            <h2 className="font-display text-[clamp(2rem,5vw,4rem)] leading-tight text-[#EFEFEF] mb-4">
+              YOUR CANVAS
             </h2>
-            <p className="font-heading text-sm font-light text-[rgba(239,239,239,0.5)] max-w-sm leading-relaxed">
-              Transforme qualquer imagem na sua estampa exclusiva. Faça o upload, posicione e visualize em tempo real.
+            <p className="font-heading text-base font-light text-[rgba(239,239,239,0.6)] max-w-xl">
+              Crie sua peça única. Upload da sua estampa, customize a posição, escala e rotação em tempo real.
             </p>
           </div>
         </div>
 
-        <div className="section-divider mb-14" />
-
-        {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-
-          {/* Left: Upload + Controls */}
-          <div className={`flex flex-col gap-6 transition-all duration-700 delay-100 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+          {/* Left: Upload & Controls */}
+          <div className={`space-y-6 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`} style={{ transitionDelay: "100ms" }}>
             {/* Upload Zone */}
-            <div>
-              <div className="font-mono-label text-[rgba(239,239,239,0.4)] mb-3">01 — Sua Estampa</div>
-              <div
-                className={`drop-zone relative rounded-sm p-8 text-center cursor-pointer transition-all duration-300 min-h-[200px] flex flex-col items-center justify-center ${isDragOver ? "drag-over" : ""}`}
-                onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                onDragLeave={() => setIsDragOver(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-
-                {uploadedImage ? (
-                  <div className="relative w-full">
-                    <img
-                      src={uploadedImage}
-                      alt="Estampa carregada"
-                      className="max-h-40 mx-auto object-contain rounded"
-                    />
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-[rgba(239,239,239,0.1)] hover:bg-[rgba(239,239,239,0.2)] rounded-full flex items-center justify-center transition-colors"
-                    >
-                      <X size={12} />
-                    </button>
-                    <p className="font-mono-label text-[rgba(239,239,239,0.4)] mt-4">
-                      Clique para substituir
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="w-12 h-12 rounded-full border border-[rgba(255,255,255,0.15)] flex items-center justify-center mb-4">
-                      <Upload size={20} className="text-[rgba(239,239,239,0.5)]" />
-                    </div>
-                    <p className="font-heading font-medium text-[rgba(239,239,239,0.7)] mb-1">
-                      Arraste sua imagem aqui
-                    </p>
-                    <p className="font-mono-label text-[rgba(239,239,239,0.3)]">
-                      PNG, JPG ou WebP · Máx. 10MB
-                    </p>
-                    <div className="mt-4 px-4 py-2 border border-[rgba(255,255,255,0.15)] font-heading text-xs font-medium tracking-widest uppercase text-[rgba(239,239,239,0.5)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.3)] transition-colors">
-                      Selecionar Arquivo
-                    </div>
-                  </>
-                )}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`relative border-2 border-dashed p-8 lg:p-12 text-center cursor-pointer transition-all duration-300 ${
+                isDragOver
+                  ? "border-white bg-[rgba(255,255,255,0.08)]"
+                  : "border-[rgba(255,255,255,0.15)] hover:border-[rgba(255,255,255,0.3)]"
+              }`}
+              style={{ borderRadius: "4px" }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <div className="flex flex-col items-center gap-3">
+                <Upload size={32} className="text-[rgba(239,239,239,0.5)]" />
+                <div>
+                  <p className="font-heading font-semibold text-[#EFEFEF]">
+                    {uploadedImage ? "Imagem carregada ✓" : "Arraste sua estampa aqui"}
+                  </p>
+                  <p className="font-heading text-xs text-[rgba(239,239,239,0.4)] mt-1">
+                    PNG, JPG ou WebP • Máximo 10MB
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Shirt Color */}
+            {/* Color Picker */}
             <div>
-              <div className="font-mono-label text-[rgba(239,239,239,0.4)] mb-3">02 — Cor da Peça</div>
-              <div className="flex gap-3">
-                {(Object.entries(shirtColors) as [typeof shirtColor, { bg: string; label: string }][]).map(([key, val]) => (
-                  <button
-                    key={key}
-                    onClick={() => setShirtColor(key)}
-                    className="flex flex-col items-center gap-2 group"
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${shirtColor === key ? "border-white scale-110" : "border-[rgba(255,255,255,0.15)] hover:border-[rgba(255,255,255,0.4)]"}`}
-                      style={{ background: val.bg }}
-                    />
-                    <span className="font-mono-label text-[rgba(239,239,239,0.4)] text-[0.55rem]">{val.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Position */}
-            <div>
-              <div className="font-mono-label text-[rgba(239,239,239,0.4)] mb-3">03 — Posição da Estampa</div>
+              <label className="font-heading font-semibold text-[#EFEFEF] block mb-3 flex items-center gap-2">
+                <Palette size={16} />
+                Cor da Peça
+              </label>
               <div className="flex gap-2">
-                {([
-                  { key: "chest", label: "Peito" },
-                  { key: "center", label: "Centro" },
-                  { key: "back", label: "Costas" },
-                ] as { key: PrintPosition; label: string }[]).map((pos) => (
+                {["#000000", "#FFFFFF", "#1a1a1a", "#333333"].map((color) => (
                   <button
-                    key={pos.key}
-                    onClick={() => setPrintPosition(pos.key)}
-                    className={`category-tag flex-1 text-center transition-all ${printPosition === pos.key ? "active" : ""}`}
-                  >
-                    {pos.label}
-                  </button>
+                    key={color}
+                    onClick={() => setShirtColor(color)}
+                    className={`w-12 h-12 border-2 transition-all ${
+                      shirtColor === color
+                        ? "border-white scale-110"
+                        : "border-[rgba(255,255,255,0.2)] hover:border-[rgba(255,255,255,0.5)]"
+                    }`}
+                    style={{ backgroundColor: color, borderRadius: "3px" }}
+                    title={color}
+                  />
                 ))}
+                <input
+                  type="color"
+                  value={shirtColor}
+                  onChange={(e) => setShirtColor(e.target.value)}
+                  className="w-12 h-12 cursor-pointer"
+                  style={{ borderRadius: "3px" }}
+                />
               </div>
             </div>
 
-            {/* Scale */}
-            <div>
-              <div className="font-mono-label text-[rgba(239,239,239,0.4)] mb-3">
-                04 — Tamanho da Estampa — <span className="text-[#EFEFEF]">{printScale}%</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setPrintScale(Math.max(20, printScale - 10))}
-                  className="w-8 h-8 border border-[rgba(255,255,255,0.15)] flex items-center justify-center hover:border-[rgba(255,255,255,0.4)] transition-colors"
-                >
-                  <ZoomOut size={14} />
-                </button>
-                <div className="flex-1 h-px bg-[rgba(255,255,255,0.1)] relative">
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 h-3 bg-[#EFEFEF] rounded-full transition-all duration-200"
-                    style={{ width: `${printScale}%` }}
+            {/* Position Controls */}
+            {uploadedImage && (
+              <div className="space-y-4 p-4 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)]" style={{ borderRadius: "3px" }}>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-heading text-sm font-semibold text-[#EFEFEF] flex items-center gap-2">
+                      <Move size={14} />
+                      Posição X
+                    </label>
+                    <span className="font-mono-label text-[rgba(239,239,239,0.4)]">{imageX}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={imageX}
+                    onChange={(e) => setImageX(Number(e.target.value))}
+                    className="w-full"
                   />
                 </div>
-                <button
-                  onClick={() => setPrintScale(Math.min(100, printScale + 10))}
-                  className="w-8 h-8 border border-[rgba(255,255,255,0.15)] flex items-center justify-center hover:border-[rgba(255,255,255,0.4)] transition-colors"
-                >
-                  <ZoomIn size={14} />
-                </button>
-              </div>
-            </div>
 
-            {/* Reset + Submit */}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => { setUploadedImage(null); setPrintScale(70); setPrintPosition("chest"); setShirtColor("black"); }}
-                className="btn-outline-cta flex-1 flex items-center justify-center gap-2"
-              >
-                <span className="flex items-center gap-2"><RotateCcw size={12} /> Resetar</span>
-              </button>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-heading text-sm font-semibold text-[#EFEFEF] flex items-center gap-2">
+                      <Move size={14} />
+                      Posição Y
+                    </label>
+                    <span className="font-mono-label text-[rgba(239,239,239,0.4)]">{imageY}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={imageY}
+                    onChange={(e) => setImageY(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-heading text-sm font-semibold text-[#EFEFEF]">Escala</label>
+                    <span className="font-mono-label text-[rgba(239,239,239,0.4)]">{(imageScale * 100).toFixed(0)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2"
+                    step="0.1"
+                    value={imageScale}
+                    onChange={(e) => setImageScale(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="font-heading text-sm font-semibold text-[#EFEFEF]">Rotação</label>
+                    <span className="font-mono-label text-[rgba(239,239,239,0.4)]">{imageRotation}°</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="360"
+                    value={imageRotation}
+                    onChange={(e) => setImageRotation(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4">
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="btn-cta flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={!uploadedImage || isSubmitting}
+                className="btn-cta flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="flex items-center gap-2">
-                  {isSubmitting ? (
-                    <span className="w-3 h-3 border border-black border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Check size={12} />
-                  )}
-                  {isSubmitting ? "Enviando..." : "Encomendar"}
-                </span>
+                <span>{isSubmitting ? "Enviando..." : "Encomendar Agora"}</span>
               </button>
+              {uploadedImage && (
+                <button
+                  onClick={handleReset}
+                  className="w-12 h-12 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all"
+                  title="Resetar"
+                >
+                  <RotateCcw size={18} />
+                </button>
+              )}
             </div>
           </div>
 
           {/* Right: Mockup Preview */}
-          <div className={`transition-all duration-700 delay-200 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-            <div className="font-mono-label text-[rgba(239,239,239,0.4)] mb-3">Preview em Tempo Real</div>
-            <div
-              className="glass-card relative flex items-center justify-center"
-              style={{
-                minHeight: "480px",
-                borderRadius: "4px",
-                background: "rgba(255,255,255,0.02)",
-              }}
-            >
-              {/* Background grid pattern */}
-              <div
-                className="absolute inset-0 opacity-5"
-                style={{
-                  backgroundImage: "linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)",
-                  backgroundSize: "40px 40px",
-                }}
-              />
-
-              {/* T-shirt mockup */}
-              <div className="relative z-10 w-[280px] lg:w-[320px]">
-                {/* SVG Shirt with color overlay */}
-                <div
-                  className="relative"
-                  style={{
-                    filter: shirtColor === "white"
-                      ? "invert(0.85) brightness(1.1)"
-                      : shirtColor === "gray"
-                      ? "brightness(1.4)"
-                      : "none",
-                  }}
-                >
-                  <div dangerouslySetInnerHTML={{ __html: TSHIRT_SVG }} />
+          <div className={`flex flex-col items-center gap-6 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`} style={{ transitionDelay: "200ms" }}>
+            {/* SVG Mockup */}
+            <div className="w-full max-w-sm aspect-square relative bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)]" style={{ borderRadius: "4px" }}>
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="relative w-full h-full">
+                  {/* SVG Background */}
+                  <div dangerouslySetInnerHTML={{ __html: getTshirtSVG(shirtColor) }} />
 
                   {/* Print image overlay */}
                   {uploadedImage && (
@@ -329,50 +360,45 @@ export default function CanvasSection() {
 
                   {/* Placeholder text when no image */}
                   {!uploadedImage && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "34%",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        width: "80px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <p className="font-mono-label text-[rgba(239,239,239,0.2)] text-[0.55rem] leading-relaxed">
-                        Sua estampa<br />aparece aqui
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <p className="font-heading text-center text-[rgba(239,239,239,0.25)] text-sm">
+                        Sua estampa<br />aparecerá aqui
                       </p>
                     </div>
                   )}
                 </div>
-
-                {/* Label */}
-                <div className="text-center mt-4">
-                  <div className="font-mono-label text-[rgba(239,239,239,0.3)] text-[0.6rem]">
-                    OBSIDIAN · {shirtColor === "black" ? "Preto" : shirtColor === "white" ? "Branco" : "Cinza"} · {printPosition === "chest" ? "Peito" : printPosition === "center" ? "Centro" : "Costas"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Corner labels */}
-              <div className="absolute top-4 right-4 font-mono-label text-[rgba(239,239,239,0.2)] text-[0.55rem]">
-                MOCKUP 3D
               </div>
             </div>
 
-            {/* Info cards */}
-            <div className="grid grid-cols-3 gap-3 mt-4">
-              {[
-                { label: "Resolução Mín.", value: "300 DPI" },
-                { label: "Área de Impressão", value: "30×30cm" },
-                { label: "Prazo", value: "5–7 dias" },
-              ].map((info) => (
-                <div key={info.label} className="glass-card p-3 text-center" style={{ borderRadius: "4px" }}>
-                  <div className="font-heading font-semibold text-[#EFEFEF] text-sm">{info.value}</div>
-                  <div className="font-mono-label text-[rgba(239,239,239,0.35)] mt-0.5">{info.label}</div>
-                </div>
-              ))}
+            {/* Hidden Canvas for Download */}
+            <canvas ref={canvasRef} className="hidden" width={400} height={500} />
+
+            {/* Preview Info */}
+            <div className="w-full text-center">
+              <p className="font-heading text-xs text-[rgba(239,239,239,0.4)]">
+                Pré-visualização em tempo real
+              </p>
             </div>
+
+            {/* Download & Share Buttons */}
+            {uploadedImage && (
+              <div className="w-full flex gap-3">
+                <button
+                  onClick={handleDownload}
+                  className="flex-1 btn-outline py-3 flex items-center justify-center gap-2"
+                >
+                  <Download size={16} />
+                  <span>Descarregar</span>
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="flex-1 btn-outline py-3 flex items-center justify-center gap-2"
+                >
+                  <Share2 size={16} />
+                  <span>Compartilhar</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
