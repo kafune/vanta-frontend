@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Plus, Minus, X, ShoppingBag } from "lucide-react";
 import { useCart, CartItem } from "@/hooks/useCart";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 interface CartDrawerProps {
   open: boolean;
@@ -20,6 +21,8 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const [, setLocation] = useLocation();
   const { items, removeItem, updateQuantity, clearCart, subtotal, tax, shipping, total, itemCount } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  
+  const sendOrderConfirmationMutation = trpc.email.sendOrderConfirmation.useMutation();
 
   const handleCheckout = async () => {
     if (items.length === 0) {
@@ -31,11 +34,38 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
     try {
       // Generate order ID
       const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
+      const trackingNumber = `OBSIDIAN-${orderId}-2025`;
+      
+      // Send order confirmation email
+      const emailData = {
+        orderId,
+        trackingNumber,
+        customerEmail: "customer@example.com", // TODO: Get from user auth
+        customerName: "Valued Customer",
+        items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          size: item.size,
+        })),
+        subtotal,
+        tax,
+        shipping,
+        total,
+        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-PT", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+      };
+
+      await sendOrderConfirmationMutation.mutateAsync(emailData);
       
       // TODO: Integrate with Stripe checkout
       // For now, simulate successful checkout and redirect
       toast.success("Pedido processado com sucesso!", {
-        description: "Redirecionando para confirmação...",
+        description: "Email de confirmação enviado...",
       });
       
       // Clear cart and redirect to success page
@@ -46,6 +76,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         setLocation(`/checkout/success?orderId=${orderId}`);
       }, 1500);
     } catch (error) {
+      console.error("Checkout error:", error);
       toast.error("Erro ao processar checkout");
       setIsCheckingOut(false);
     }
@@ -122,10 +153,10 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             <div className="flex flex-col gap-2 pt-2">
               <Button
                 onClick={handleCheckout}
-                disabled={isCheckingOut}
+                disabled={isCheckingOut || sendOrderConfirmationMutation.isPending}
                 className="w-full bg-[#FFFFFF] text-[#0B0B0B] hover:bg-[#F0F0F0] font-heading font-semibold"
               >
-                {isCheckingOut ? "Processando..." : "Checkout"}
+                {isCheckingOut || sendOrderConfirmationMutation.isPending ? "Processando..." : "Checkout"}
               </Button>
               <Button
                 onClick={() => clearCart()}
