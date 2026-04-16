@@ -9,8 +9,10 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus, Minus, X, ShoppingBag } from "lucide-react";
 import { useCart, CartItem } from "@/hooks/useCart";
+import { useCoupon } from "@/hooks/useCoupon";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { Input } from "@/components/ui/input";
 
 interface CartDrawerProps {
   open: boolean;
@@ -20,9 +22,28 @@ interface CartDrawerProps {
 export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const [, setLocation] = useLocation();
   const { items, removeItem, updateQuantity, clearCart, subtotal, tax, shipping, total, itemCount } = useCart();
+  const { appliedCoupon, error: couponError, loading: couponLoading, handleApplyCoupon, removeCoupon } = useCoupon();
+  const [couponCode, setCouponCode] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   
   const sendOrderConfirmationMutation = trpc.email.sendOrderConfirmation.useMutation();
+
+  const handleApplyCouponClick = async () => {
+    if (!couponCode.trim()) {
+      toast.error("Digite um código de cupom");
+      return;
+    }
+
+    try {
+      await handleApplyCoupon(couponCode, subtotal * 100); // Convert to cents
+      toast.success("Cupom aplicado com sucesso!");
+      setCouponCode("");
+    } catch (error) {
+      toast.error(couponError || "Erro ao aplicar cupom");
+    }
+  };
+
+  const finalTotal = appliedCoupon ? total - (appliedCoupon.discount / 100) : total;
 
   const handleCheckout = async () => {
     if (items.length === 0) {
@@ -51,7 +72,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         subtotal,
         tax,
         shipping,
-        total,
+        total: finalTotal,
         estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-PT", {
           weekday: "long",
           year: "numeric",
@@ -125,6 +146,44 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         {/* Summary */}
         {items.length > 0 && (
           <div className="p-4 space-y-3 border-t border-[rgba(255,255,255,0.08)]">
+            {/* Coupon Section */}
+            <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] p-3 rounded-sm">
+              {appliedCoupon ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-heading text-sm text-green-400">✓ Cupom aplicado</span>
+                    <button
+                      onClick={removeCoupon}
+                      className="text-[0.65rem] text-[rgba(239,239,239,0.4)] hover:text-[rgba(239,239,239,0.7)]"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                  <p className="font-mono-label text-[0.7rem] text-[rgba(239,239,239,0.5)]">
+                    {appliedCoupon.code} - {appliedCoupon.discountType === "percentage" ? `${appliedCoupon.discountValue}%` : `€${(appliedCoupon.discountValue / 100).toFixed(2)}`} de desconto
+                  </p>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Código de cupom"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-[#EFEFEF] placeholder-[rgba(239,239,239,0.3)] text-sm h-8"
+                    disabled={couponLoading}
+                  />
+                  <Button
+                    onClick={handleApplyCouponClick}
+                    disabled={couponLoading || !couponCode.trim()}
+                    className="bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] text-[#EFEFEF] text-sm h-8 px-3"
+                  >
+                    Aplicar
+                  </Button>
+                </div>
+              )}
+              {couponError && <p className="font-mono-label text-[0.65rem] text-red-400 mt-1">{couponError}</p>}
+            </div>
+
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
                 <span>Subtotal</span>
@@ -140,13 +199,19 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                   {shipping === 0 ? "Grátis" : `€${shipping.toFixed(2)}`}
                 </span>
               </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-green-400">
+                  <span>Desconto</span>
+                  <span>-€{(appliedCoupon.discount / 100).toFixed(2)}</span>
+                </div>
+              )}
             </div>
 
             <div className="h-px bg-[rgba(255,255,255,0.08)]" />
 
             <div className="flex justify-between font-heading font-semibold text-[#EFEFEF]">
               <span>Total</span>
-              <span>€{total.toFixed(2)}</span>
+              <span>€{finalTotal.toFixed(2)}</span>
             </div>
 
             {/* Action Buttons */}

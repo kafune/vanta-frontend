@@ -15,6 +15,13 @@
       "when": 1776381075857,
       "tag": "0001_confused_the_enforcers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1776382806707,
+      "tag": "0002_odd_harpoon",
+      "breakpoints": true
     }
   ]
 }
