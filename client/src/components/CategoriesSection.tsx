@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 
 const CATEGORY_IMAGES = {
   cotton: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-cotton-6C3ChDmVfT5oxo4PDhFrbf.webp",
-  oversized: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-oversized-fkaeTb24PqHL7RPsvGjmFY.webp",
+  oversized: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/oversized-offwhite-c8WohVPsQ9PCtLcY97nDkj.webp",
   dryfit: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-dryfit-fpbTLZXZdYCMYERV2Myz4g.webp",
   hoodie: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-hoodie-Z6BCR25Eed5suvi3SXqxEz.webp",
 };
@@ -46,16 +46,7 @@ const categories = [
     image: CATEGORY_IMAGES.dryfit,
     featured: false,
   },
-  {
-    id: "moleton",
-    tag: "04 / Essentials",
-    name: "Essential Hoodies",
-    description: "Moletons com acabamento de luxo. Volume generoso e tecido de alta gramatura.",
-    detail: "400g/m² · Forro interno · Bolso canguru",
-    price: "A partir de R$ 189",
-    image: CATEGORY_IMAGES.hoodie,
-    featured: false,
-  },
+
 ];
 
 export default function CategoriesSection() {
