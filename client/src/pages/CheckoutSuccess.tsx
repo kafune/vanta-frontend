@@ -228,6 +228,13 @@ export default function CheckoutSuccess() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
           <button
+            onClick={() => setLocation(`/track/${order.orderId}`)}
+            className="flex-1 btn-cta py-3 flex items-center justify-center gap-2"
+          >
+            <Package size={16} />
+            <span>Rastrear Pedido</span>
+          </button>
+          <button
             onClick={() => setLocation("/")}
             className="flex-1 btn-outline-cta py-3 flex items-center justify-center gap-2"
           >
@@ -236,7 +243,7 @@ export default function CheckoutSuccess() {
           </button>
           <button
             onClick={() => setLocation("/produto/essential-tee-280g")}
-            className="flex-1 btn-cta py-3 flex items-center justify-center gap-2"
+            className="flex-1 btn-outline-cta py-3 flex items-center justify-center gap-2"
           >
             <span>Continuar Comprando</span>
             <ArrowRight size={16} />

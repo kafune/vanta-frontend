@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Product from "./pages/Product";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import OrderTracking from "./pages/OrderTracking";
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
@@ -14,6 +15,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/produto/:id"} component={Product} />
       <Route path={"/checkout/success"} component={CheckoutSuccess} />
+      <Route path={"/track/:orderId"} component={OrderTracking} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
