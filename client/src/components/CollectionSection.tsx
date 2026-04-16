@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Collection Section — Carbon Fiber Design System
+ * VANTA Collection Section — Carbon Fiber Design System
  * Featured products grid with filter tabs
  */
 

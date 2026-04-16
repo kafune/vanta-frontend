@@ -99,7 +99,7 @@ function getOrderConfirmationTemplate(data: OrderConfirmationData): string {
       <body>
         <div class="container">
           <div class="header">
-            <h1>OBSIDIAN</h1>
+            <h1>VANTA</h1>
             <p style="margin: 10px 0 0 0; font-size: 14px; color: rgba(239,239,239,0.7);">Confirmação de Pedido</p>
           </div>
           
@@ -110,7 +110,7 @@ function getOrderConfirmationTemplate(data: OrderConfirmationData): string {
             <div class="section">
               <h2>Número de Rastreamento</h2>
               <div class="tracking-box">
-                <p style="margin: 0 0 8px 0; color: #666; font-size: 12px;">OBSIDIAN Tracking Number</p>
+                <p style="margin: 0 0 8px 0; color: #666; font-size: 12px;">VANTA Tracking Number</p>
                 <p class="tracking-number">${data.trackingNumber}</p>
               </div>
             </div>
@@ -164,7 +164,7 @@ function getOrderConfirmationTemplate(data: OrderConfirmationData): string {
           </div>
           
           <div class="footer">
-            <p style="margin: 0;">OBSIDIAN — Premium Fashion Store</p>
+            <p style="margin: 0;">VANTA — Premium Fashion Store</p>
             <p style="margin: 8px 0 0 0;">
               <a href="https://darkfashn-ljqd3zro.manus.space">Visitar Loja</a> • 
               <a href="mailto:support@obsidian.com">Suporte</a>
@@ -205,7 +205,7 @@ function getShipmentNotificationTemplate(data: ShipmentNotificationData): string
       <body>
         <div class="container">
           <div class="header">
-            <h1>OBSIDIAN</h1>
+            <h1>VANTA</h1>
             <p style="margin: 10px 0 0 0; font-size: 14px; color: rgba(239,239,239,0.7);">Seu Pedido Foi Despachado!</p>
           </div>
           
@@ -238,7 +238,7 @@ function getShipmentNotificationTemplate(data: ShipmentNotificationData): string
           </div>
           
           <div class="footer">
-            <p style="margin: 0;">OBSIDIAN — Premium Fashion Store</p>
+            <p style="margin: 0;">VANTA — Premium Fashion Store</p>
             <p style="margin: 8px 0 0 0;">
               <a href="https://darkfashn-ljqd3zro.manus.space">Visitar Loja</a> • 
               <a href="mailto:support@obsidian.com">Suporte</a>
@@ -293,7 +293,7 @@ function getDeliveryUpdateTemplate(data: DeliveryUpdateData): string {
       <body>
         <div class="container">
           <div class="header">
-            <h1>OBSIDIAN</h1>
+            <h1>VANTA</h1>
             <p style="margin: 10px 0 0 0; font-size: 14px; color: rgba(239,239,239,0.7);">Atualização de Entrega</p>
           </div>
           
@@ -330,7 +330,7 @@ function getDeliveryUpdateTemplate(data: DeliveryUpdateData): string {
           </div>
           
           <div class="footer">
-            <p style="margin: 0;">OBSIDIAN — Premium Fashion Store</p>
+            <p style="margin: 0;">VANTA — Premium Fashion Store</p>
             <p style="margin: 8px 0 0 0;">
               <a href="https://darkfashn-ljqd3zro.manus.space">Visitar Loja</a> • 
               <a href="mailto:support@obsidian.com">Suporte</a>
@@ -349,7 +349,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData): P
   try {
     const html = getOrderConfirmationTemplate(data);
     await transporter.sendMail({
-      from: '"OBSIDIAN Store" <noreply@obsidian.com>',
+      from: '"VANTA Store" <noreply@obsidian.com>',
       to: data.customerEmail,
       subject: `Pedido Confirmado - ${data.trackingNumber}`,
       html,
@@ -369,7 +369,7 @@ export async function sendShipmentNotificationEmail(data: ShipmentNotificationDa
   try {
     const html = getShipmentNotificationTemplate(data);
     await transporter.sendMail({
-      from: '"OBSIDIAN Store" <noreply@obsidian.com>',
+      from: '"VANTA Store" <noreply@obsidian.com>',
       to: data.customerEmail,
       subject: `Seu Pedido Foi Despachado - ${data.trackingNumber}`,
       html,
@@ -389,7 +389,7 @@ export async function sendDeliveryUpdateEmail(data: DeliveryUpdateData): Promise
   try {
     const html = getDeliveryUpdateTemplate(data);
     await transporter.sendMail({
-      from: '"OBSIDIAN Store" <noreply@obsidian.com>',
+      from: '"VANTA Store" <noreply@obsidian.com>',
       to: data.customerEmail,
       subject: `Atualização de Entrega - ${data.trackingNumber}`,
       html,

@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Product Gallery — Carbon Fiber Design System
+ * VANTA Product Gallery — Carbon Fiber Design System
  * Image gallery with zoom, thumbnails and lightbox functionality
  */
 

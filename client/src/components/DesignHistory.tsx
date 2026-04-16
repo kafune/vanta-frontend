@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Design History Component
+ * VANTA Design History Component
  * Displays saved designs with load, edit, export, and delete options
  */
 

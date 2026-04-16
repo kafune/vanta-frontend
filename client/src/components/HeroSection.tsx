@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Hero Section — Carbon Fiber Design System
+ * VANTA Hero Section — Carbon Fiber Design System
  * Full-viewport hero with editorial typography and asymmetric layout
  * Dark image background with white text (high contrast)
  */
@@ -22,7 +22,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 z-0">
         <img
           src={HERO_IMAGE}
-          alt="OBSIDIAN Premium Fashion"
+          alt="VANTA Premium Fashion"
           className="w-full h-full object-cover object-center"
           style={{ opacity: 0.75 }}
         />

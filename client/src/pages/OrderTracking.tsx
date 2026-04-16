@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Order Tracking Page
+ * VANTA Order Tracking Page
  * Real-time order status tracking with timeline and delivery info
  */
 
@@ -59,7 +59,7 @@ export default function OrderTracking() {
     // Simulate fetching tracking data
     const mockTracking: OrderTrackingData = {
       orderId: orderId || "UNKNOWN",
-      trackingNumber: `OBSIDIAN-${orderId?.toUpperCase()}-2025`,
+      trackingNumber: `VANTA-${orderId?.toUpperCase()}-2025`,
       status: "in_transit",
       estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-PT", {
         weekday: "long",
@@ -79,7 +79,7 @@ export default function OrderTracking() {
           title: "Pedido Confirmado",
           description: "Seu pedido foi confirmado e processado",
           timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000),
-          location: "OBSIDIAN Store",
+          location: "VANTA Store",
           completed: true,
         },
         {
@@ -87,7 +87,7 @@ export default function OrderTracking() {
           title: "Em Preparação",
           description: "Seu pedido está sendo preparado para envio",
           timestamp: new Date(Date.now() - 36 * 60 * 60 * 1000),
-          location: "Armazém OBSIDIAN",
+          location: "Armazém VANTA",
           completed: true,
         },
         {

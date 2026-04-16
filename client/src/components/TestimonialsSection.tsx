@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Testimonials Section — Carbon Fiber Design System
+ * VANTA Testimonials Section — Carbon Fiber Design System
  * Social proof with customer reviews in horizontal scroll
  */
 
@@ -12,7 +12,7 @@ const testimonials = [
     name: "Lucas M.",
     handle: "@lucasm_style",
     rating: 5,
-    text: "A qualidade do algodão é incomparável. Já comprei em outras marcas premium e a OBSIDIAN está num nível acima. O processo de customização é incrível.",
+    text: "A qualidade do algodão é incomparável. Já comprei em outras marcas premium e a VANTA está num nível acima. O processo de customização é incrível.",
     product: "Essential Tee 280g",
   },
   {

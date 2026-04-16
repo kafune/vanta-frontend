@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN useDesignHistory Hook
+ * VANTA useDesignHistory Hook
  * Manages design customizations with localStorage persistence
  */
 

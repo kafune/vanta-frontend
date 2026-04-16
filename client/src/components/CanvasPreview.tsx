@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Canvas Preview — Carbon Fiber Design System
+ * VANTA Canvas Preview — Carbon Fiber Design System
  * Renders mockup preview with SVG and image overlay
  */
 

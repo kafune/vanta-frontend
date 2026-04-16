@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN useCart Hook
+ * VANTA useCart Hook
  * Manages shopping cart state with localStorage persistence
  */
 

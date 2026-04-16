@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Navbar — Carbon Fiber Design System
+ * VANTA Navbar — Carbon Fiber Design System
  * Floating transparent navbar with glassmorphism on scroll
  * Typography: Bebas Neue (logo) + Syne (nav items)
  * Integrated with CartDrawer for shopping cart functionality
@@ -51,7 +51,7 @@ export default function Navbar() {
               className="font-display text-2xl lg:text-3xl tracking-widest text-[#EFEFEF] hover:text-white transition-colors"
               onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
             >
-              OBSIDIAN
+              VANTA
             </a>
 
             {/* Desktop Nav Links */}

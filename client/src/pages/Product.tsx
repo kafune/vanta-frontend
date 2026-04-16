@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Product Page — Carbon Fiber Design System
+ * VANTA Product Page — Carbon Fiber Design System
  * Detailed product page with gallery, size selector, and specifications
  */
 

@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Categories Section — Carbon Fiber Design System
+ * VANTA Categories Section — Carbon Fiber Design System
  * Four main product categories with editorial card layout
  * Asymmetric grid: large featured card + 3 smaller cards
  */

@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Size Selector — Carbon Fiber Design System
+ * VANTA Size Selector — Carbon Fiber Design System
  * Size selection with measurement guide modal and fit information
  */
 
@@ -24,7 +24,7 @@ const measurementGuide = {
 
 const sizeDescriptions = {
   P: "Ajustado. Ideal para corpos mais compactos.",
-  M: "Regular. O fit clássico OBSIDIAN.",
+  M: "Regular. O fit clássico VANTA.",
   G: "Confortável. Espaço generoso no peito.",
   GG: "Relaxado. Caimento amplo e arejado.",
   XGG: "Oversized. Máximo conforto e volume.",

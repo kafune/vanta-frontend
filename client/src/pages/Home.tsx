@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Home Page — Carbon Fiber Design System
+ * VANTA Home Page — Carbon Fiber Design System
  * Philosophy: Industrial Modernism + Streetwear Tech Aesthetic
  * 
  * Layout: Navbar → Hero → Collection → Categories → Canvas → About → Footer

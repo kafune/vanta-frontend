@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Checkout Success Page
+ * VANTA Checkout Success Page
  * Order confirmation with tracking number and delivery details
  */
 
@@ -40,7 +40,7 @@ export default function CheckoutSuccess() {
       // Simulate fetching order details
       const mockOrder: OrderDetails = {
         orderId: orderId,
-        trackingNumber: `OBSIDIAN-${orderId.toUpperCase()}-2025`,
+        trackingNumber: `VANTA-${orderId.toUpperCase()}-2025`,
         estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-PT", {
           weekday: "long",
           year: "numeric",

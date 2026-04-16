@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Cart Drawer Component
+ * VANTA Cart Drawer Component
  * Slide-out drawer with cart items, quantity controls, and checkout
  */
 
@@ -34,7 +34,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
     try {
       // Generate order ID
       const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
-      const trackingNumber = `OBSIDIAN-${orderId}-2025`;
+      const trackingNumber = `VANTA-${orderId}-2025`;
       
       // Send order confirmation email
       const emailData = {

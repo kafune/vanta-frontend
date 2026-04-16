@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Category Products Page
+ * VANTA Category Products Page
  * Display products by category with color filters and image upload
  */
 
@@ -211,6 +211,7 @@ interface ProductCardProps {
 
 function ProductCard({ model, onImageUpload, isUploading, onUploadStart }: ProductCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [, setLocation] = useLocation();
 
   return (
     <div
@@ -285,9 +286,7 @@ function ProductCard({ model, onImageUpload, isUploading, onUploadStart }: Produ
           {isUploading ? "Carregando..." : "Upload"}
         </button>
         <button
-          onClick={() => {
-            // TODO: Add to cart or view details
-          }}
+          onClick={() => setLocation(`/modelo/${model.id}`)}
           className="flex-1 px-3 py-2 bg-[rgba(255,255,255,0.08)] text-[#EFEFEF] hover:bg-[rgba(255,255,255,0.12)] font-heading text-xs font-semibold rounded transition-all"
         >
           Ver Detalhes

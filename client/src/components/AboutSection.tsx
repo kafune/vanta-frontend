@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN About Section — Carbon Fiber Design System
+ * VANTA About Section — Carbon Fiber Design System
  * Brand manifesto with asymmetric layout
  */
 
@@ -49,14 +49,14 @@ export default function AboutSection() {
           <div className="section-divider mb-12" />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div>
-              <div className="font-mono-label text-[rgba(239,239,239,0.35)] mb-6">Manifesto / OBSIDIAN</div>
+              <div className="font-mono-label text-[rgba(239,239,239,0.35)] mb-6">Manifesto / VANTA</div>
               <h2 className="font-display text-[clamp(2.5rem,5vw,4.5rem)] leading-none text-[#EFEFEF] mb-8">
                 MODA QUE<br />FALA POR<br />VOCÊ
               </h2>
             </div>
             <div>
               <p className="font-heading text-base lg:text-lg font-light text-[rgba(239,239,239,0.6)] leading-relaxed mb-6">
-                Na OBSIDIAN, acreditamos que roupas são mais do que tecido. São declarações. Cada peça que criamos é projetada para ser uma extensão da sua identidade — não uma cópia de tendências passageiras.
+                Na VANTA, acreditamos que roupas são mais do que tecido. São declarações. Cada peça que criamos é projetada para ser uma extensão da sua identidade — não uma cópia de tendências passageiras.
               </p>
               <p className="font-heading text-sm font-light text-[rgba(239,239,239,0.4)] leading-relaxed">
                 Fundada com a missão de democratizar o vestuário premium com personalização real, combinamos materiais de alta qualidade com tecnologia de impressão de última geração para entregar peças únicas.

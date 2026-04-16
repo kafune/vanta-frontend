@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Canvas Section — Carbon Fiber Design System
+ * VANTA Canvas Section — Carbon Fiber Design System
  * "Your Canvas" customization module with advanced drag-and-drop,
  * real-time SVG mockup, download/share, and design history
  */
@@ -112,12 +112,12 @@ export default function CanvasSection() {
       return;
     }
 
-    const shareText = "Criei uma customização incrível na OBSIDIAN! 🎨";
+    const shareText = "Criei uma customização incrível na VANTA! 🎨";
     
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Minha Customização OBSIDIAN",
+          title: "Minha Customização VANTA",
           text: shareText,
           url: window.location.href,
         });

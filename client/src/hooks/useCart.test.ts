@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN useCart Hook Tests
+ * VANTA useCart Hook Tests
  * Comprehensive test suite for cart functionality
  */
 

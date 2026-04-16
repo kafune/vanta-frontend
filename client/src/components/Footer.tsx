@@ -1,5 +1,5 @@
 /**
- * OBSIDIAN Footer — Carbon Fiber Design System
+ * VANTA Footer — Carbon Fiber Design System
  * Minimalist footer with social icons and payment methods
  */
 
@@ -54,7 +54,7 @@ export default function Footer() {
               style={{ borderRadius: "2px 0 0 2px" }}
             />
             <button
-              onClick={() => toast.success("Inscrito!", { description: "Bem-vindo à família OBSIDIAN." })}
+              onClick={() => toast.success("Inscrito!", { description: "Bem-vindo à família VANTA." })}
               className="btn-cta px-6 py-3 whitespace-nowrap"
               style={{ borderRadius: "0 2px 2px 0" }}
             >
@@ -72,7 +72,7 @@ export default function Footer() {
         <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-1">
-            <div className="font-display text-2xl tracking-widest text-[#EFEFEF] mb-4">OBSIDIAN</div>
+            <div className="font-display text-2xl tracking-widest text-[#EFEFEF] mb-4">VANTA</div>
             <p className="font-heading text-xs font-light text-[rgba(239,239,239,0.4)] leading-relaxed mb-6">
               Vestuário premium com personalização exclusiva. Qualidade certificada, design sem compromisso.
             </p>
@@ -117,7 +117,7 @@ export default function Footer() {
       <div className="py-6 px-6 lg:px-8">
         <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <p className="font-mono-label text-[rgba(239,239,239,0.25)] text-[0.6rem]">
-            © 2025 OBSIDIAN Fashion Store. Todos os direitos reservados.
+            © 2025 VANTA Fashion Store. Todos os direitos reservados.
           </p>
 
           {/* Payment Methods */}
