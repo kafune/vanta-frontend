@@ -1,0 +1,125 @@
+/**
+ * OBSIDIAN Navbar — Carbon Fiber Design System
+ * Floating transparent navbar with glassmorphism on scroll
+ * Typography: Bebas Neue (logo) + Syne (nav items)
+ */
+
+import { useState, useEffect } from "react";
+import { ShoppingBag, Search, Menu, X } from "lucide-react";
+import { toast } from "sonner";
+
+const navLinks = [
+  { label: "Coleção", href: "#collection" },
+  { label: "Categorias", href: "#categories" },
+  { label: "Your Canvas", href: "#canvas" },
+  { label: "Sobre", href: "#about" },
+];
+
+export default function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [cartCount] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleNavClick = (href: string) => {
+    setMenuOpen(false);
+    const el = document.querySelector(href);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          scrolled ? "navbar-glass-scrolled" : "navbar-glass"
+        }`}
+      >
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-20">
+            {/* Logo */}
+            <a
+              href="#"
+              className="font-display text-2xl lg:text-3xl tracking-widest text-[#EFEFEF] hover:text-white transition-colors"
+              onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            >
+              OBSIDIAN
+            </a>
+
+            {/* Desktop Nav Links */}
+            <div className="hidden lg:flex items-center gap-8">
+              {navLinks.map((link) => (
+                <button
+                  key={link.label}
+                  onClick={() => handleNavClick(link.href)}
+                  className="relative font-heading text-xs font-medium tracking-[0.15em] uppercase text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors duration-200 group"
+                >
+                  {link.label}
+                  <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-[#EFEFEF] transition-all duration-300 group-hover:w-full" />
+                </button>
+              ))}
+            </div>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => toast("Pesquisa em breve", { description: "Funcionalidade a ser implementada." })}
+                className="text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
+                aria-label="Pesquisar"
+              >
+                <Search size={18} strokeWidth={1.5} />
+              </button>
+
+              <button
+                onClick={() => toast("Carrinho vazio", { description: "Adicione produtos ao carrinho." })}
+                className="relative text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
+                aria-label="Carrinho"
+              >
+                <ShoppingBag size={18} strokeWidth={1.5} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-white text-black text-[10px] font-bold rounded-full flex items-center justify-center font-mono">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Mobile Menu Toggle */}
+              <button
+                className="lg:hidden text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="Menu"
+              >
+                {menuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Menu */}
+      <div
+        className={`fixed inset-0 z-40 transition-all duration-500 ${
+          menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        style={{ background: "rgba(11,11,11,0.97)", backdropFilter: "blur(20px)" }}
+      >
+        <div className="flex flex-col items-center justify-center h-full gap-8">
+          {navLinks.map((link, i) => (
+            <button
+              key={link.label}
+              onClick={() => handleNavClick(link.href)}
+              className="font-display text-4xl tracking-widest text-[rgba(239,239,239,0.7)] hover:text-white transition-colors duration-200"
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
+              {link.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
