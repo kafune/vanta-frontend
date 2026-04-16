@@ -6,7 +6,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
-import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 const CATEGORY_IMAGES = {
   cotton: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-cotton-6C3ChDmVfT5oxo4PDhFrbf.webp",
@@ -17,7 +17,7 @@ const CATEGORY_IMAGES = {
 
 const categories = [
   {
-    id: "cotton",
+    id: "algodao",
     tag: "01 / Cotton",
     name: "Algodão Premium",
     description: "Textura incomparável e conforto absoluto. Tecido 100% algodão penteado de gramatura superior.",
@@ -47,7 +47,7 @@ const categories = [
     featured: false,
   },
   {
-    id: "hoodie",
+    id: "moleton",
     tag: "04 / Essentials",
     name: "Essential Hoodies",
     description: "Moletons com acabamento de luxo. Volume generoso e tecido de alta gramatura.",
@@ -58,73 +58,10 @@ const categories = [
   },
 ];
 
-function CategoryCard({ cat, large = false }: { cat: typeof categories[0]; large?: boolean }) {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <div
-      className={`product-card group ${large ? "row-span-2" : ""}`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ borderRadius: "4px" }}
-    >
-      {/* Image */}
-      <div className={`relative overflow-hidden ${large ? "h-[420px] lg:h-full" : "h-[220px] lg:h-[260px]"}`}>
-        <img
-          src={cat.image}
-          alt={cat.name}
-          className="product-image w-full h-full object-cover object-center"
-        />
-        {/* Overlay */}
-        <div
-          className="absolute inset-0 transition-opacity duration-500"
-          style={{
-            background: "linear-gradient(to top, rgba(11,11,11,0.9) 0%, rgba(11,11,11,0.2) 60%, transparent 100%)",
-            opacity: hovered ? 1 : 0.7,
-          }}
-        />
-
-        {/* Category Tag */}
-        <div className="absolute top-4 left-4">
-          <span className="font-mono-label text-[rgba(239,239,239,0.5)] bg-[rgba(11,11,11,0.6)] backdrop-blur-sm px-2 py-1 text-[0.6rem]">
-            {cat.tag}
-          </span>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-5 lg:p-6">
-        <h3 className={`font-heading font-bold text-[#EFEFEF] mb-2 ${large ? "text-2xl lg:text-3xl" : "text-lg lg:text-xl"}`}>
-          {cat.name}
-        </h3>
-        <p className="text-[rgba(239,239,239,0.55)] text-sm leading-relaxed mb-3 font-light">
-          {cat.description}
-        </p>
-        <div className="font-mono-label text-[rgba(239,239,239,0.3)] mb-4 text-[0.6rem]">
-          {cat.detail}
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span className="font-heading font-semibold text-[#EFEFEF] text-sm">{cat.price}</span>
-          <button
-            onClick={() => toast(`${cat.name}`, { description: "Explorar produtos em breve." })}
-            className="flex items-center gap-2 font-heading text-xs font-semibold uppercase tracking-widest text-[rgba(239,239,239,0.5)] hover:text-[#EFEFEF] transition-colors group"
-          >
-            Ver Mais
-            <ArrowRight
-              size={12}
-              className="transition-transform duration-300 group-hover:translate-x-1"
-            />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function CategoriesSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -157,7 +94,7 @@ export default function CategoriesSection() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
           {/* Featured large card — Cotton */}
           <div className={`lg:col-span-1 lg:row-span-2 transition-all duration-700 delay-100 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-            <div className="product-card h-full" style={{ borderRadius: "4px" }}>
+            <div className="product-card h-full cursor-pointer" style={{ borderRadius: "4px" }} onClick={() => setLocation("/categoria/algodao")}>
               <div className="relative overflow-hidden h-[380px] lg:h-[520px]">
                 <img
                   src={CATEGORY_IMAGES.cotton}
@@ -184,7 +121,10 @@ export default function CategoriesSection() {
                 <div className="flex items-center justify-between">
                   <span className="font-heading font-semibold text-[#EFEFEF]">A partir de R$ 89</span>
                   <button
-                    onClick={() => toast("Algodão Premium", { description: "Explorar produtos em breve." })}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation("/categoria/algodao");
+                    }}
                     className="flex items-center gap-2 font-heading text-xs font-semibold uppercase tracking-widest text-[rgba(239,239,239,0.5)] hover:text-[#EFEFEF] transition-colors group"
                   >
                     Ver Mais <ArrowRight size={12} className="transition-transform duration-300 group-hover:translate-x-1" />
@@ -201,7 +141,7 @@ export default function CategoriesSection() {
               className={`transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
               style={{ transitionDelay: `${(i + 2) * 100}ms` }}
             >
-              <div className="product-card h-full" style={{ borderRadius: "4px" }}>
+              <div className="product-card h-full cursor-pointer" style={{ borderRadius: "4px" }} onClick={() => setLocation(`/categoria/${cat.id}`)}>
                 <div className="relative overflow-hidden h-[220px] lg:h-[240px]">
                   <img
                     src={cat.image}
@@ -224,7 +164,10 @@ export default function CategoriesSection() {
                   <div className="flex items-center justify-between">
                     <span className="font-heading font-semibold text-[#EFEFEF] text-sm">{cat.price}</span>
                     <button
-                      onClick={() => toast(cat.name, { description: "Explorar produtos em breve." })}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLocation(`/categoria/${cat.id}`);
+                      }}
                       className="flex items-center gap-2 font-heading text-xs font-semibold uppercase tracking-widest text-[rgba(239,239,239,0.5)] hover:text-[#EFEFEF] transition-colors group"
                     >
                       Ver Mais <ArrowRight size={12} className="transition-transform duration-300 group-hover:translate-x-1" />
