@@ -4,6 +4,7 @@
  */
 
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus, Minus, X, ShoppingBag } from "lucide-react";
@@ -16,6 +17,7 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
+  const [, setLocation] = useLocation();
   const { items, removeItem, updateQuantity, clearCart, subtotal, tax, shipping, total, itemCount } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -27,16 +29,21 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
 
     setIsCheckingOut(true);
     try {
+      // Generate order ID
+      const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
+      
       // TODO: Integrate with Stripe checkout
-      // For now, show a placeholder
-      toast.success("Redirecionando para checkout...", {
-        description: "Integração Stripe em desenvolvimento",
+      // For now, simulate successful checkout and redirect
+      toast.success("Pedido processado com sucesso!", {
+        description: "Redirecionando para confirmação...",
       });
       
-      // Simulate checkout
+      // Clear cart and redirect to success page
       setTimeout(() => {
+        clearCart();
         setIsCheckingOut(false);
         onOpenChange(false);
+        setLocation(`/checkout/success?orderId=${orderId}`);
       }, 1500);
     } catch (error) {
       toast.error("Erro ao processar checkout");
