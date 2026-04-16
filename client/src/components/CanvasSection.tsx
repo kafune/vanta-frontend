@@ -1,12 +1,14 @@
 /**
  * OBSIDIAN Canvas Section — Carbon Fiber Design System
  * "Your Canvas" customization module with advanced drag-and-drop,
- * real-time SVG mockup, and download/share functionality
+ * real-time SVG mockup, download/share, and design history
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, X, Download, Share2, RotateCcw, Palette, Move } from "lucide-react";
+import { Upload, Download, Share2, RotateCcw, Palette, Move, Save } from "lucide-react";
 import { toast } from "sonner";
+import DesignHistory from "./DesignHistory";
+import { useDesignHistory, Design } from "@/hooks/useDesignHistory";
 
 // T-shirt SVG mockup with dynamic color support
 const getTshirtSVG = (color: string) => `
@@ -41,10 +43,13 @@ export default function CanvasSection() {
   const [imageScale, setImageScale] = useState(1);
   const [imageRotation, setImageRotation] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  const { saveDesign } = useDesignHistory();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -122,7 +127,6 @@ export default function CanvasSection() {
         }
       }
     } else {
-      // Fallback: copy to clipboard
       navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
       toast.success("Link copiado!", { description: "Compartilhe com seus amigos." });
     }
@@ -137,6 +141,43 @@ export default function CanvasSection() {
     setShirtColor("#000000");
     if (fileInputRef.current) fileInputRef.current.value = "";
     toast.success("Resetado", { description: "Comece uma nova customização." });
+  };
+
+  const handleSaveDesign = () => {
+    if (!uploadedImage) {
+      toast.error("Adicione uma imagem primeiro");
+      return;
+    }
+    setShowSaveDialog(true);
+  };
+
+  const handleConfirmSave = () => {
+    if (!uploadedImage) return;
+    
+    const saved = saveDesign(
+      saveName || `Design ${new Date().toLocaleDateString("pt-PT")}`,
+      uploadedImage,
+      shirtColor,
+      imageX,
+      imageY,
+      imageScale,
+      imageRotation
+    );
+
+    if (saved) {
+      toast.success("Design salvo!", { description: saved.name });
+      setShowSaveDialog(false);
+      setSaveName("");
+    }
+  };
+
+  const handleLoadDesign = (design: Design) => {
+    setUploadedImage(design.imageData);
+    setShirtColor(design.shirtColor);
+    setImageX(design.imageX);
+    setImageY(design.imageY);
+    setImageScale(design.imageScale);
+    setImageRotation(design.imageRotation);
   };
 
   const handleSubmit = () => {
@@ -175,7 +216,7 @@ export default function CanvasSection() {
               YOUR CANVAS
             </h2>
             <p className="font-heading text-base font-light text-[rgba(239,239,239,0.6)] max-w-xl">
-              Crie sua peça única. Upload da sua estampa, customize a posição, escala e rotação em tempo real.
+              Crie sua peça única. Upload da sua estampa, customize a posição, escala e rotação em tempo real. Salve seus designs para usar depois.
             </p>
           </div>
         </div>
@@ -320,24 +361,76 @@ export default function CanvasSection() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
-              <button
-                onClick={handleSubmit}
-                disabled={!uploadedImage || isSubmitting}
-                className="btn-cta flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span>{isSubmitting ? "Enviando..." : "Encomendar Agora"}</span>
-              </button>
-              {uploadedImage && (
+            <div className="flex flex-col gap-3 pt-4">
+              <div className="flex gap-3">
                 <button
-                  onClick={handleReset}
-                  className="w-12 h-12 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all"
-                  title="Resetar"
+                  onClick={handleSubmit}
+                  disabled={!uploadedImage || isSubmitting}
+                  className="btn-cta flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <RotateCcw size={18} />
+                  <span>{isSubmitting ? "Enviando..." : "Encomendar Agora"}</span>
                 </button>
-              )}
+                {uploadedImage && (
+                  <>
+                    <button
+                      onClick={handleSaveDesign}
+                      className="w-12 h-12 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all"
+                      title="Salvar Design"
+                    >
+                      <Save size={18} />
+                    </button>
+                    <button
+                      onClick={handleReset}
+                      className="w-12 h-12 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all"
+                      title="Resetar"
+                    >
+                      <RotateCcw size={18} />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Design History */}
+              <DesignHistory onLoadDesign={handleLoadDesign} />
             </div>
+
+            {/* Save Dialog */}
+            {showSaveDialog && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-[#111111] border border-[rgba(255,255,255,0.15)] p-6 max-w-sm w-full" style={{ borderRadius: "4px" }}>
+                  <h3 className="font-display text-xl text-[#EFEFEF] mb-4">Salvar Design</h3>
+                  <input
+                    type="text"
+                    value={saveName}
+                    onChange={(e) => setSaveName(e.target.value)}
+                    placeholder={`Design ${new Date().toLocaleDateString("pt-PT")}`}
+                    className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.15)] px-3 py-2 text-[#EFEFEF] font-heading mb-4 focus:outline-none focus:border-[rgba(255,255,255,0.4)]"
+                    style={{ borderRadius: "3px" }}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleConfirmSave();
+                      if (e.key === "Escape") setShowSaveDialog(false);
+                    }}
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowSaveDialog(false)}
+                      className="flex-1 py-2 border border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] font-heading text-sm transition-all"
+                      style={{ borderRadius: "3px" }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleConfirmSave}
+                      className="flex-1 py-2 bg-[#FFFFFF] text-[#0B0B0B] font-heading text-sm transition-all hover:bg-[#F0F0F0]"
+                      style={{ borderRadius: "3px" }}
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right: Mockup Preview */}
