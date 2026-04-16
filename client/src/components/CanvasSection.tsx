@@ -205,7 +205,7 @@ export default function CanvasSection() {
   });
 
   return (
-    <section className="py-24 lg:py-32 px-6 lg:px-8 overflow-hidden" style={{ background: "#0B0B0B" }} ref={sectionRef}>
+    <section id="canvas" className="py-24 lg:py-32 px-6 lg:px-8 overflow-hidden" style={{ background: "#0B0B0B" }} ref={sectionRef}>
       <div className="max-w-[1400px] mx-auto">
         {/* Header */}
         <div className={`mb-16 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
