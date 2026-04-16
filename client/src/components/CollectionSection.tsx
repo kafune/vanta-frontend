@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ShoppingBag, Heart } from "lucide-react";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 
 const CATEGORY_IMAGES = {
@@ -17,12 +18,12 @@ const CATEGORY_IMAGES = {
 type FilterType = "todos" | "cotton" | "oversized" | "dryfit" | "hoodie";
 
 const products = [
-  { id: 1, name: "Essential Tee 280g", category: "cotton", price: 89, originalPrice: null, tag: "Bestseller", image: CATEGORY_IMAGES.cotton, sizes: ["P", "M", "G", "GG"] },
-  { id: 2, name: "Urban Oversized", category: "oversized", price: 109, originalPrice: null, tag: "Novo", image: CATEGORY_IMAGES.oversized, sizes: ["P", "M", "G", "GG", "XGG"] },
-  { id: 3, name: "Performance Pro", category: "dryfit", price: 99, originalPrice: 129, tag: "Promoção", image: CATEGORY_IMAGES.dryfit, sizes: ["P", "M", "G", "GG"] },
-  { id: 4, name: "Luxury Hoodie", category: "hoodie", price: 189, originalPrice: null, tag: "Premium", image: CATEGORY_IMAGES.hoodie, sizes: ["P", "M", "G", "GG"] },
-  { id: 5, name: "Classic Cotton", category: "cotton", price: 79, originalPrice: null, tag: null, image: CATEGORY_IMAGES.cotton, sizes: ["P", "M", "G"] },
-  { id: 6, name: "Street Oversized", category: "oversized", price: 119, originalPrice: null, tag: "Exclusivo", image: CATEGORY_IMAGES.oversized, sizes: ["M", "G", "GG"] },
+  { id: "essential-tee-280g", name: "Essential Tee 280g", category: "cotton", price: 89, originalPrice: null, tag: "Bestseller", image: CATEGORY_IMAGES.cotton, sizes: ["P", "M", "G", "GG"] },
+  { id: "urban-oversized", name: "Urban Oversized", category: "oversized", price: 109, originalPrice: null, tag: "Novo", image: CATEGORY_IMAGES.oversized, sizes: ["P", "M", "G", "GG", "XGG"] },
+  { id: "performance-pro", name: "Performance Pro", category: "dryfit", price: 99, originalPrice: 129, tag: "Promoção", image: CATEGORY_IMAGES.dryfit, sizes: ["P", "M", "G", "GG"] },
+  { id: "luxury-hoodie", name: "Luxury Hoodie", category: "hoodie", price: 189, originalPrice: null, tag: "Premium", image: CATEGORY_IMAGES.hoodie, sizes: ["P", "M", "G", "GG"] },
+  { id: "classic-cotton", name: "Classic Cotton", category: "cotton", price: 79, originalPrice: null, tag: null, image: CATEGORY_IMAGES.cotton, sizes: ["P", "M", "G"] },
+  { id: "street-oversized", name: "Street Oversized", category: "oversized", price: 119, originalPrice: null, tag: "Exclusivo", image: CATEGORY_IMAGES.oversized, sizes: ["M", "G", "GG"] },
 ];
 
 const filters: { key: FilterType; label: string }[] = [
@@ -34,6 +35,7 @@ const filters: { key: FilterType; label: string }[] = [
 ];
 
 function ProductCard({ product }: { product: typeof products[0] }) {
+  const [, setLocation] = useLocation();
   const [liked, setLiked] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
@@ -70,18 +72,15 @@ function ProductCard({ product }: { product: typeof products[0] }) {
           />
         </button>
 
-        {/* Quick add on hover */}
+          {/* Quick add on hover */}
         <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <button
-            onClick={() => {
-              if (!selectedSize) { toast.error("Selecione um tamanho"); return; }
-              toast.success(`${product.name} adicionado!`, { description: `Tamanho ${selectedSize}` });
-            }}
+            onClick={() => setLocation(`/produto/${product.id}`)}
             className="w-full btn-cta py-2.5 text-xs flex items-center justify-center gap-2"
           >
             <span className="flex items-center gap-2">
               <ShoppingBag size={12} />
-              Adicionar ao Carrinho
+              Ver Detalhes
             </span>
           </button>
         </div>
