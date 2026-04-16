@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Package, MapPin, Bell, LogOut, Edit2, Save, X } from "lucide-react";
+import { User, Package, MapPin, Bell, LogOut, Edit2, Save, X, Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useCart } from "@/hooks/useCart";
 
 interface Order {
   id: string;
@@ -89,6 +91,77 @@ const statusColors: Record<string, { bg: string; text: string; label: string }> 
   cancelado: { bg: "bg-red-500/10", text: "text-red-400", label: "Cancelado" },
 };
 
+// Componente de Favoritos
+function FavoritesTab() {
+  const { favorites, removeFavorite } = useFavorites();
+  const { addItem } = useCart();
+
+  const handleAddToCart = (product: any) => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1,
+      size: "M",
+      color: product.color,
+    });
+    toast.success(`${product.name} adicionado ao carrinho!`);
+  };
+
+  if (favorites.length === 0) {
+    return (
+      <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
+        <CardContent className="pt-12 pb-12 text-center">
+          <Heart size={48} className="mx-auto mb-4 text-[rgba(239,239,239,0.3)]" />
+          <p className="text-[rgba(239,239,239,0.6)] mb-4">Nenhum produto favorito ainda</p>
+          <p className="text-[rgba(239,239,239,0.4)] text-sm">Clique no ícone de coração para adicionar produtos aos favoritos</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {favorites.map((product) => (
+        <Card key={product.id} className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] overflow-hidden hover:bg-[rgba(255,255,255,0.08)] transition-colors">
+          <div className="relative h-48 bg-[rgba(255,255,255,0.03)] overflow-hidden">
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <CardContent className="pt-4">
+            <h3 className="text-[#EFEFEF] font-semibold mb-2">{product.name}</h3>
+            <p className="text-[rgba(239,239,239,0.6)] text-sm mb-2">{product.color}</p>
+            <p className="text-[#EFEFEF] font-bold mb-4">€{product.price.toFixed(2)}</p>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => handleAddToCart(product)}
+                className="flex-1 bg-[#EFEFEF] text-[#0B0B0B] hover:bg-white text-sm"
+              >
+                <ShoppingCart size={14} className="mr-2" />
+                Carrinho
+              </Button>
+              <Button
+                onClick={() => {
+                  removeFavorite(product.id);
+                  toast.success("Removido dos favoritos");
+                }}
+                variant="outline"
+                className="border-[rgba(255,255,255,0.1)] text-[#EFEFEF] hover:bg-[rgba(255,255,255,0.1)]"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export default function UserAccount() {
   const { user, logout, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -155,7 +228,7 @@ export default function UserAccount() {
 
           {/* Tabs */}
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)]">
+            <TabsList className="grid w-full grid-cols-5 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)]">
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User size={16} />
                 <span className="hidden sm:inline">Perfil</span>
@@ -163,6 +236,10 @@ export default function UserAccount() {
               <TabsTrigger value="orders" className="flex items-center gap-2">
                 <Package size={16} />
                 <span className="hidden sm:inline">Pedidos</span>
+              </TabsTrigger>
+              <TabsTrigger value="favorites" className="flex items-center gap-2">
+                <Heart size={16} />
+                <span className="hidden sm:inline">Favoritos</span>
               </TabsTrigger>
               <TabsTrigger value="addresses" className="flex items-center gap-2">
                 <MapPin size={16} />
@@ -329,6 +406,11 @@ export default function UserAccount() {
                   </CardContent>
                 </Card>
               )}
+            </TabsContent>
+
+            {/* Favoritos */}
+            <TabsContent value="favorites" className="mt-8">
+              <FavoritesTab />
             </TabsContent>
 
             {/* Endereços */}

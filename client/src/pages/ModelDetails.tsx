@@ -3,6 +3,7 @@ import { ChevronLeft, ShoppingCart, Heart } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart } from "@/hooks/useCart";
+import { useFavorites } from "@/hooks/useFavorites";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -254,21 +255,11 @@ const categoryTitles: Record<string, string> = {
 export default function ModelDetails() {
   const [, params] = useRoute("/modelo/:id");
   const { addItem } = useCart();
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   const modelId = params?.id || "moleton";
   const variations = modelVariations[modelId] || modelVariations.moleton;
   const categoryTitle = categoryTitles[modelId] || "Coleção";
-
-  const toggleFavorite = (id: string) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(id)) {
-      newFavorites.delete(id);
-    } else {
-      newFavorites.add(id);
-    }
-    setFavorites(newFavorites);
-  };
 
   const handleAddToCart = (variation: ModelVariation) => {
     addItem({
@@ -283,6 +274,20 @@ export default function ModelDetails() {
     toast.success("Adicionado ao carrinho!", {
       description: `${variation.name} - ${variation.color}`,
     });
+  };
+
+  const handleToggleFavorite = (variation: ModelVariation) => {
+    toggleFavorite({
+      id: variation.id,
+      name: variation.name,
+      color: variation.color,
+      price: variation.price,
+      image: variation.image,
+      category: modelId,
+      addedAt: new Date().toISOString(),
+    });
+    const isFav = isFavorite(variation.id);
+    toast.success(isFav ? "Removido dos favoritos" : "Adicionado aos favoritos!");
   };
 
   return (
@@ -339,14 +344,14 @@ export default function ModelDetails() {
                     </button>
 
                     <button
-                      onClick={() => toggleFavorite(variation.id)}
+                      onClick={() => handleToggleFavorite(variation)}
                       className={`p-2 rounded-lg transition-colors opacity-0 group-hover:opacity-100 transition-opacity ${
-                        favorites.has(variation.id)
+                        isFavorite(variation.id)
                           ? "bg-red-500 text-white"
                           : "bg-[rgba(239,239,239,0.1)] text-[#EFEFEF] hover:bg-[rgba(239,239,239,0.2)]"
                       }`}
                     >
-                      <Heart size={18} fill={favorites.has(variation.id) ? "currentColor" : "none"} />
+                      <Heart size={18} fill={isFavorite(variation.id) ? "currentColor" : "none"} />
                     </button>
                   </div>
                 </div>
