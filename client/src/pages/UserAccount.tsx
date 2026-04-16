@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Package, MapPin, Bell, LogOut, Edit2, Save, X, Heart, ShoppingCart, Trash2 } from "lucide-react";
+import { User, Package, MapPin, Bell, LogOut, Edit2, Save, X, Heart, ShoppingCart, Trash2, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart } from "@/hooks/useCart";
+import ProductReviews from "@/components/ProductReviews";
 
 interface Order {
   id: string;
@@ -228,7 +229,7 @@ export default function UserAccount() {
 
           {/* Tabs */}
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)]">
+            <TabsList className="grid w-full grid-cols-6 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)]">
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User size={16} />
                 <span className="hidden sm:inline">Perfil</span>
@@ -248,6 +249,10 @@ export default function UserAccount() {
               <TabsTrigger value="notifications" className="flex items-center gap-2">
                 <Bell size={16} />
                 <span className="hidden sm:inline">Notificações</span>
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="flex items-center gap-2">
+                <Star size={16} />
+                <span className="hidden sm:inline">Avaliações</span>
               </TabsTrigger>
             </TabsList>
 
@@ -506,6 +511,33 @@ export default function UserAccount() {
                   <Button className="w-full bg-[#EFEFEF] text-[#0B0B0B] hover:bg-white mt-6">
                     Guardar Preferências
                   </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Avaliações */}
+            <TabsContent value="reviews" className="mt-8">
+              <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
+                <CardHeader>
+                  <CardTitle className="text-[#EFEFEF]">Minhas Avaliações</CardTitle>
+                  <CardDescription>Veja e gerencie suas avaliações de produtos</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {mockOrders.map((order) => (
+                      <div key={order.id} className="border-b border-[rgba(255,255,255,0.1)] pb-6 last:border-b-0">
+                        <div className="mb-4">
+                          <p className="text-[#EFEFEF] font-semibold mb-1">{order.id}</p>
+                          <p className="text-[rgba(239,239,239,0.6)] text-sm">{order.date}</p>
+                        </div>
+                        <ProductReviews
+                          productId={`product-${order.id}`}
+                          orderId={order.id}
+                          canReview={order.status === "entregue"}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

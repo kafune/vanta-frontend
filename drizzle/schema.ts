@@ -25,4 +25,52 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+// Orders table
+export const orders = mysqlTable("orders", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: int("userId").notNull(),
+  status: mysqlEnum("status", ["pendente", "confirmado", "enviado", "entregue", "cancelado"]).default("pendente").notNull(),
+  totalPrice: int("totalPrice").notNull(), // in cents
+  trackingNumber: varchar("trackingNumber", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = typeof orders.$inferInsert;
+
+// Order items table
+export const orderItems = mysqlTable("orderItems", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  orderId: varchar("orderId", { length: 64 }).notNull(),
+  productId: varchar("productId", { length: 64 }).notNull(),
+  productName: text("productName").notNull(),
+  quantity: int("quantity").notNull(),
+  price: int("price").notNull(), // in cents
+  color: varchar("color", { length: 64 }),
+  size: varchar("size", { length: 10 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = typeof orderItems.$inferInsert;
+
+// Reviews table
+export const reviews = mysqlTable("reviews", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  productId: varchar("productId", { length: 64 }).notNull(),
+  userId: int("userId").notNull(),
+  orderId: varchar("orderId", { length: 64 }).notNull(),
+  rating: int("rating").notNull(), // 1-5
+  title: varchar("title", { length: 255 }),
+  comment: text("comment"),
+  verified: int("verified").default(0).notNull(), // 0 or 1
+  helpful: int("helpful").default(0).notNull(),
+  unhelpful: int("unhelpful").default(0).notNull(),
+  status: mysqlEnum("status", ["pendente", "aprovado", "rejeitado"]).default("pendente").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = typeof reviews.$inferInsert;
