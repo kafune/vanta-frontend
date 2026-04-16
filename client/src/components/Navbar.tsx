@@ -2,11 +2,14 @@
  * OBSIDIAN Navbar — Carbon Fiber Design System
  * Floating transparent navbar with glassmorphism on scroll
  * Typography: Bebas Neue (logo) + Syne (nav items)
+ * Integrated with CartDrawer for shopping cart functionality
  */
 
 import { useState, useEffect } from "react";
 import { ShoppingBag, Search, Menu, X } from "lucide-react";
 import { toast } from "sonner";
+import CartDrawer from "./CartDrawer";
+import { useCart } from "@/hooks/useCart";
 
 const navLinks = [
   { label: "Coleção", href: "#collection" },
@@ -18,7 +21,8 @@ const navLinks = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [cartCount] = useState(0);
+  const [cartOpen, setCartOpen] = useState(false);
+  const { itemCount } = useCart();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -75,14 +79,14 @@ export default function Navbar() {
               </button>
 
               <button
-                onClick={() => toast("Carrinho vazio", { description: "Adicione produtos ao carrinho." })}
+                onClick={() => setCartOpen(true)}
                 className="relative text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
                 aria-label="Carrinho"
               >
                 <ShoppingBag size={18} strokeWidth={1.5} />
-                {cartCount > 0 && (
+                {itemCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-white text-black text-[10px] font-bold rounded-full flex items-center justify-center font-mono">
-                    {cartCount}
+                    {itemCount > 99 ? "99+" : itemCount}
                   </span>
                 )}
               </button>
@@ -120,6 +124,9 @@ export default function Navbar() {
           ))}
         </div>
       </div>
+
+      {/* Cart Drawer */}
+      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
     </>
   );
 }

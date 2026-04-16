@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import { ShoppingBag, Heart } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { useCart } from "@/hooks/useCart";
 
 const CATEGORY_IMAGES = {
   cotton: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-cotton-6C3ChDmVfT5oxo4PDhFrbf.webp",
@@ -36,8 +37,26 @@ const filters: { key: FilterType; label: string }[] = [
 
 function ProductCard({ product }: { product: typeof products[0] }) {
   const [, setLocation] = useLocation();
+  const { addItem } = useCart();
   const [liked, setLiked] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      toast.error("Selecione um tamanho");
+      return;
+    }
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      image: product.image,
+      size: selectedSize,
+    });
+    toast.success("Adicionado ao carrinho!", { description: `${product.name} - Tamanho ${selectedSize}` });
+    setSelectedSize(null);
+  };
 
   return (
     <div className="product-card group" style={{ borderRadius: "4px" }}>
@@ -73,15 +92,20 @@ function ProductCard({ product }: { product: typeof products[0] }) {
         </button>
 
           {/* Quick add on hover */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex gap-2">
+          <button
+            onClick={handleAddToCart}
+            disabled={!selectedSize}
+            className="flex-1 btn-cta py-2.5 text-xs flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ShoppingBag size={12} />
+            <span>Carrinho</span>
+          </button>
           <button
             onClick={() => setLocation(`/produto/${product.id}`)}
-            className="w-full btn-cta py-2.5 text-xs flex items-center justify-center gap-2"
+            className="flex-1 btn-outline py-2.5 text-xs flex items-center justify-center gap-2"
           >
-            <span className="flex items-center gap-2">
-              <ShoppingBag size={12} />
-              Ver Detalhes
-            </span>
+            <span>Detalhes</span>
           </button>
         </div>
       </div>
