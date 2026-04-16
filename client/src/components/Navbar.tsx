@@ -14,7 +14,7 @@ import { useCart } from "@/hooks/useCart";
 const navLinks = [
   { label: "Coleção", href: "#collection" },
   { label: "Categorias", href: "#categories" },
-  { label: "Your Canvas", href: "#canvas" },
+  { label: "Personalize sua peça", href: "#canvas" },
   { label: "Sobre", href: "#about" },
 ];
 
