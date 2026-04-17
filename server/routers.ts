@@ -6,6 +6,7 @@ import { z } from "zod";
 import { sendOrderConfirmationEmail, sendShipmentNotificationEmail, sendDeliveryUpdateEmail } from "./email";
 import { reviewsRouter } from "./routers/reviews";
 import { couponsRouter } from "./routers/coupons";
+import { cashbackRouter } from "./routers/cashback";
 import { adminRouter } from "./routers/admin";
 
 export const appRouter = router({
@@ -24,6 +25,7 @@ export const appRouter = router({
 
   reviews: reviewsRouter,
   coupons: couponsRouter,
+  cashback: cashbackRouter,
   admin: adminRouter,
 
   email: router({

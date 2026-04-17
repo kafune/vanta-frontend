@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Plus, Minus, X, ShoppingBag } from "lucide-react";
 import { useCart, CartItem } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
@@ -21,13 +22,18 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const { items, removeItem, updateQuantity, clearCart, subtotal, tax, shipping, total, itemCount } = useCart();
   const { appliedCoupon, error: couponError, loading: couponLoading, handleApplyCoupon, removeCoupon } = useCoupon();
   const [couponCode, setCouponCode] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [applyCashback, setApplyCashback] = useState(false);
   
   const sendOrderConfirmationMutation = trpc.email.sendOrderConfirmation.useMutation();
   const recordCouponUsageMutation = trpc.coupons.recordUsage.useMutation();
+  const getCashbackBalanceQuery = trpc.cashback.getBalance.useQuery(undefined, { enabled: !!user });
+  const recordCashbackEarnedMutation = trpc.cashback.recordEarned.useMutation();
+  const recordCashbackSpentMutation = trpc.cashback.recordSpent.useMutation();
 
   const handleApplyCouponClick = async () => {
     if (!couponCode.trim()) {
@@ -44,7 +50,8 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
     }
   };
 
-  const finalTotal = appliedCoupon ? total - (appliedCoupon.discount / 100) : total;
+  const cashbackDiscount = applyCashback && getCashbackBalanceQuery.data?.availableBalance ? Math.min(getCashbackBalanceQuery.data.availableBalance / 100, total) : 0;
+  const finalTotal = (appliedCoupon ? total - (appliedCoupon.discount / 100) : total) - cashbackDiscount;
 
   const handleCheckout = async () => {
     if (items.length === 0) {
@@ -97,6 +104,30 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         }
       }
       
+      // Record cashback spent if applied
+      if (applyCashback && cashbackDiscount > 0 && user) {
+        try {
+          await recordCashbackSpentMutation.mutateAsync({
+            orderId,
+            spentAmount: Math.round(cashbackDiscount * 100),
+          });
+        } catch (error) {
+          console.error("Error recording cashback spent:", error);
+        }
+      }
+      
+      // Record cashback earned (10% of final total)
+      if (user) {
+        try {
+          await recordCashbackEarnedMutation.mutateAsync({
+            orderId,
+            orderTotal: Math.round(finalTotal * 100),
+          });
+        } catch (error) {
+          console.error("Error recording cashback earned:", error);
+        }
+      }
+      
       // TODO: Integrate with Stripe checkout
       // For now, simulate successful checkout and redirect
       toast.success("Pedido processado com sucesso!", {
@@ -107,6 +138,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
       setTimeout(() => {
         clearCart();
         removeCoupon();
+        setApplyCashback(false);
         setIsCheckingOut(false);
         onOpenChange(false);
         setLocation(`/checkout/success?orderId=${orderId}`);
@@ -198,6 +230,25 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               )}
               {couponError && <p className="font-mono-label text-[0.65rem] text-red-400 mt-1">{couponError}</p>}
             </div>
+            
+            {/* Cashback Section */}
+            {user && getCashbackBalanceQuery.data && getCashbackBalanceQuery.data.availableBalance > 0 && (
+              <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] p-3 rounded-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-heading text-sm text-blue-400">💰 Cashback Disponível</span>
+                  <span className="font-mono-label text-[0.7rem] text-blue-400">€{(getCashbackBalanceQuery.data.availableBalance / 100).toFixed(2)}</span>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={applyCashback}
+                    onChange={(e) => setApplyCashback(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <span className="font-mono-label text-[0.7rem] text-[rgba(239,239,239,0.6)]">Usar cashback nesta compra</span>
+                </label>
+              </div>
+            )}
 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
@@ -216,8 +267,14 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               </div>
               {appliedCoupon && (
                 <div className="flex justify-between text-green-400">
-                  <span>Desconto</span>
+                  <span>Desconto (Cupom)</span>
                   <span>-€{(appliedCoupon.discount / 100).toFixed(2)}</span>
+                </div>
+              )}
+              {applyCashback && cashbackDiscount > 0 && (
+                <div className="flex justify-between text-blue-400">
+                  <span>Desconto (Cashback)</span>
+                  <span>-€{cashbackDiscount.toFixed(2)}</span>
                 </div>
               )}
             </div>

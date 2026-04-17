@@ -105,3 +105,31 @@ export const couponUsage = mysqlTable("couponUsage", {
 
 export type CouponUsage = typeof couponUsage.$inferSelect;
 export type InsertCouponUsage = typeof couponUsage.$inferInsert;
+
+// Cashback balance table - tracks available cashback credit per user
+export const cashbackBalance = mysqlTable("cashbackBalance", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: int("userId").notNull().unique(), // One balance per user
+  totalEarned: int("totalEarned").default(0).notNull(), // Total cashback earned in cents
+  totalSpent: int("totalSpent").default(0).notNull(), // Total cashback spent in cents
+  availableBalance: int("availableBalance").default(0).notNull(), // totalEarned - totalSpent
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CashbackBalance = typeof cashbackBalance.$inferSelect;
+export type InsertCashbackBalance = typeof cashbackBalance.$inferInsert;
+
+// Cashback transactions table - audit trail of cashback activity
+export const cashbackTransactions = mysqlTable("cashbackTransactions", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: int("userId").notNull(),
+  orderId: varchar("orderId", { length: 64 }).notNull(),
+  type: mysqlEnum("type", ["earned", "spent"]).notNull(), // earned from purchase or spent as discount
+  amount: int("amount").notNull(), // in cents
+  description: text("description"), // e.g., "Earned 10% cashback from order #123"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CashbackTransaction = typeof cashbackTransactions.$inferSelect;
+export type InsertCashbackTransaction = typeof cashbackTransactions.$inferInsert;

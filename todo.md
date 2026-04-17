@@ -49,3 +49,12 @@
 
 ## Bug Fixes
 - [x] Fix: OTTO10 coupon returns "inválido ou expirado" error when applying (corrected date comparison logic from lt/gt to lte/gte)
+
+
+## Cashback System (NEW)
+- [x] Create cashback tables in database (cashback_balance, cashback_transactions)
+- [x] Implement tRPC procedures: getCashbackBalance, applyCashback, recordCashback
+- [x] Integrate cashback into checkout flow (10% credit generation)
+- [x] Add cashback display in CartDrawer and checkout
+- [x] Create vitest tests for cashback system (7 tests passing)
+- [ ] Test end-to-end: purchase → earn cashback → use in next purchase
