@@ -6,6 +6,7 @@ export interface AppliedCoupon {
   discountType: "percentage" | "fixed";
   discountValue: number;
   discount: number;
+  couponId?: string;
 }
 
 export function useCoupon() {
@@ -37,6 +38,7 @@ export function useCoupon() {
             discountType: result.discountType,
             discountValue: result.discountValue,
             discount: result.discount,
+            couponId: result.couponId,
           });
           return result;
         }

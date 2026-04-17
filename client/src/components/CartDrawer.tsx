@@ -27,6 +27,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   
   const sendOrderConfirmationMutation = trpc.email.sendOrderConfirmation.useMutation();
+  const recordCouponUsageMutation = trpc.coupons.recordUsage.useMutation();
 
   const handleApplyCouponClick = async () => {
     if (!couponCode.trim()) {
@@ -83,6 +84,19 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
 
       await sendOrderConfirmationMutation.mutateAsync(emailData);
       
+      // Record coupon usage if a coupon was applied
+      if (appliedCoupon?.couponId) {
+        try {
+          await recordCouponUsageMutation.mutateAsync({
+            couponId: appliedCoupon.couponId,
+            orderId,
+          });
+        } catch (error) {
+          console.error("Error recording coupon usage:", error);
+          // Don't block checkout if coupon recording fails
+        }
+      }
+      
       // TODO: Integrate with Stripe checkout
       // For now, simulate successful checkout and redirect
       toast.success("Pedido processado com sucesso!", {
@@ -92,6 +106,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
       // Clear cart and redirect to success page
       setTimeout(() => {
         clearCart();
+        removeCoupon();
         setIsCheckingOut(false);
         onOpenChange(false);
         setLocation(`/checkout/success?orderId=${orderId}`);

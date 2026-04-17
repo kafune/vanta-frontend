@@ -93,3 +93,15 @@ export const coupons = mysqlTable("coupons", {
 
 export type Coupon = typeof coupons.$inferSelect;
 export type InsertCoupon = typeof coupons.$inferInsert;
+
+// Coupon usage tracking table
+export const couponUsage = mysqlTable("couponUsage", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  couponId: varchar("couponId", { length: 64 }).notNull(),
+  userId: int("userId").notNull(),
+  orderId: varchar("orderId", { length: 64 }).notNull(),
+  usedAt: timestamp("usedAt").defaultNow().notNull(),
+});
+
+export type CouponUsage = typeof couponUsage.$inferSelect;
+export type InsertCouponUsage = typeof couponUsage.$inferInsert;

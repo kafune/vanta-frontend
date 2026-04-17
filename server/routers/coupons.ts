@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { coupons } from "../../drizzle/schema";
+import { coupons, couponUsage } from "../../drizzle/schema";
 import { eq, and, gt, lt } from "drizzle-orm";
 
 export const couponsRouter = router({
   validate: publicProcedure
     .input(z.object({ code: z.string().min(1) }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -42,6 +42,27 @@ export const couponsRouter = router({
         };
       }
 
+      // Check if user already used this coupon (if authenticated)
+      if (ctx.user?.id) {
+        const userUsage = await db
+          .select()
+          .from(couponUsage)
+          .where(
+            and(
+              eq(couponUsage.couponId, c.id),
+              eq(couponUsage.userId, ctx.user.id)
+            )
+          )
+          .limit(1);
+
+        if (userUsage.length > 0) {
+          return {
+            valid: false,
+            error: "Você já utilizou este cupom",
+          };
+        }
+      }
+
       return {
         valid: true,
         coupon: {
@@ -62,7 +83,7 @@ export const couponsRouter = router({
         cartTotal: z.number(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -98,6 +119,24 @@ export const couponsRouter = router({
         throw new Error("Cupom atingiu o limite de uso");
       }
 
+      // Check if user already used this coupon (if authenticated)
+      if (ctx.user?.id) {
+        const userUsage = await db
+          .select()
+          .from(couponUsage)
+          .where(
+            and(
+              eq(couponUsage.couponId, c.id),
+              eq(couponUsage.userId, ctx.user.id)
+            )
+          )
+          .limit(1);
+
+        if (userUsage.length > 0) {
+          throw new Error("Você já utilizou este cupom");
+        }
+      }
+
       // Calculate discount
       let discount = 0;
       if (c.discountType === "percentage") {
@@ -117,6 +156,34 @@ export const couponsRouter = router({
         discount,
         discountType: c.discountType,
         discountValue: c.discountValue,
+        couponId: c.id,
       };
+    }),
+
+  recordUsage: publicProcedure
+    .input(
+      z.object({
+        couponId: z.string(),
+        orderId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      if (!ctx.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const usageId = `usage-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      await db.insert(couponUsage).values({
+        id: usageId,
+        couponId: input.couponId,
+        userId: ctx.user.id,
+        orderId: input.orderId,
+      });
+
+      return { success: true };
     }),
 });
