@@ -58,3 +58,14 @@
 - [x] Add cashback display in CartDrawer and checkout
 - [x] Create vitest tests for cashback system (7 tests passing)
 - [ ] Test end-to-end: purchase → earn cashback → use in next purchase
+
+
+## User Profile Page (NEW)
+- [x] Create Profile page component with layout
+- [x] Display user information (name, email, login method)
+- [x] Display cashback balance card (total earned, total spent, available)
+- [x] Display cashback transactions table with filters
+- [x] Add navigation to profile page from navbar/menu
+- [x] Add logout button in profile page
+- [x] Create responsive design for mobile/tablet
+- [x] Add loading and error states

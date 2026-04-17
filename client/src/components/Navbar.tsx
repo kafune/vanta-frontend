@@ -6,10 +6,12 @@
  */
 
 import { useState, useEffect } from "react";
-import { ShoppingBag, Search, Menu, X } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, User } from "lucide-react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 import CartDrawer from "./CartDrawer";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const navLinks = [
   { label: "Coleção", href: "#collection" },
@@ -19,6 +21,8 @@ const navLinks = [
 ];
 
 export default function Navbar() {
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -77,7 +81,15 @@ export default function Navbar() {
               >
                 <Search size={18} strokeWidth={1.5} />
               </button>
-
+              {user && (
+                <button
+                  onClick={() => setLocation("/profile")}
+                  className="text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
+                  aria-label="Perfil"
+                >
+                  <User size={18} strokeWidth={1.5} />
+                </button>
+              )}
               <button
                 onClick={() => setCartOpen(true)}
                 className="relative text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
@@ -122,6 +134,17 @@ export default function Navbar() {
               {link.label}
             </button>
           ))}
+          {user && (
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                setLocation("/profile");
+              }}
+              className="font-display text-4xl tracking-widest text-[rgba(239,239,239,0.7)] hover:text-white transition-colors duration-200"
+            >
+              Perfil
+            </button>
+          )}
         </div>
       </div>
 
