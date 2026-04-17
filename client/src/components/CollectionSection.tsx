@@ -22,7 +22,7 @@ const products = [
   { id: "essential-tee-280g", name: "Essential Tee 280g", category: "cotton", price: 89, originalPrice: null, tag: "Bestseller", image: CATEGORY_IMAGES.cotton, sizes: ["P", "M", "G", "GG"] },
   { id: "urban-oversized", name: "Urban Oversized", category: "oversized", price: 109, originalPrice: null, tag: "Novo", image: CATEGORY_IMAGES.oversized, sizes: ["P", "M", "G", "GG", "XGG"] },
   { id: "performance-pro", name: "Performance Pro", category: "dryfit", price: 99, originalPrice: 129, tag: "Promoção", image: CATEGORY_IMAGES.dryfit, sizes: ["P", "M", "G", "GG"] },
-  { id: "luxury-hoodie", name: "Luxury Hoodie", category: "hoodie", price: 189, originalPrice: null, tag: "Premium", image: CATEGORY_IMAGES.hoodie, sizes: ["P", "M", "G", "GG"] },
+  { id: "luxury-hoodie", name: "Moletom canguru", category: "hoodie", price: 189, originalPrice: null, tag: "Premium", image: CATEGORY_IMAGES.hoodie, sizes: ["P", "M", "G", "GG"] },
   { id: "classic-cotton", name: "Classic Cotton", category: "cotton", price: 79, originalPrice: null, tag: null, image: CATEGORY_IMAGES.cotton, sizes: ["P", "M", "G"] },
   { id: "street-oversized", name: "Street Oversized", category: "oversized", price: 119, originalPrice: null, tag: "Exclusivo", image: CATEGORY_IMAGES.oversized, sizes: ["M", "G", "GG"] },
 ];
@@ -115,7 +115,7 @@ function ProductCard({ product }: { product: typeof products[0] }) {
         <div className="font-mono-label text-[rgba(239,239,239,0.3)] text-[0.6rem] mb-1.5">
           {product.category === "cotton" ? "Algodão Premium" :
            product.category === "oversized" ? "Oversized" :
-           product.category === "dryfit" ? "Dry Fit" : "Hoodie"}
+           product.category === "dryfit" ? "Dry Fit" : "Premium"}
         </div>
         <h3 className="font-heading font-semibold text-[#EFEFEF] text-sm mb-3">{product.name}</h3>
 
