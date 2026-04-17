@@ -2,7 +2,7 @@ import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { coupons, couponUsage } from "../../drizzle/schema";
-import { eq, and, gt, lt } from "drizzle-orm";
+import { eq, and, gt, lt, lte, gte } from "drizzle-orm";
 
 export const couponsRouter = router({
   validate: publicProcedure
@@ -19,8 +19,8 @@ export const couponsRouter = router({
           and(
             eq(coupons.code, input.code.toUpperCase()),
             eq(coupons.isActive, 1),
-            lt(coupons.validFrom, now),
-            gt(coupons.validUntil, now)
+            lte(coupons.validFrom, now),
+            gte(coupons.validUntil, now)
           )
         )
         .limit(1);
@@ -95,8 +95,8 @@ export const couponsRouter = router({
           and(
             eq(coupons.code, input.code.toUpperCase()),
             eq(coupons.isActive, 1),
-            lt(coupons.validFrom, now),
-            gt(coupons.validUntil, now)
+            lte(coupons.validFrom, now),
+            gte(coupons.validUntil, now)
           )
         )
         .limit(1);

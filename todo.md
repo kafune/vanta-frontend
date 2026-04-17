@@ -45,3 +45,7 @@
 - [ ] Wishlist sharing
 - [ ] Product recommendations
 - [ ] Newsletter subscription
+
+
+## Bug Fixes
+- [x] Fix: OTTO10 coupon returns "inválido ou expirado" error when applying (corrected date comparison logic from lt/gt to lte/gte)
