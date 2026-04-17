@@ -213,7 +213,7 @@ export default function CanvasSection() {
           <div className="max-w-2xl">
             <div className="font-mono-label text-[rgba(239,239,239,0.35)] mb-4">Personalização</div>
             <h2 className="font-display text-[clamp(2rem,5vw,4rem)] leading-tight text-[#EFEFEF] mb-4">
-              YOUR CANVAS
+              Personalização
             </h2>
             <p className="font-heading text-base font-light text-[rgba(239,239,239,0.6)] max-w-xl">
               Crie sua peça única. Upload da sua estampa, customize a posição, escala e rotação em tempo real. Salve seus designs para usar depois.
