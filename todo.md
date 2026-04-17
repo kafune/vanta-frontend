@@ -24,8 +24,17 @@
 - [x] Integrated coupon usage tracking in CartDrawer checkout
 - [x] Updated `useCoupon` hook to handle `couponId`
 - [x] Comprehensive vitest tests for coupon system
-- [ ] Create OTTO10 coupon via Admin UI (10% discount, one-time per user)
-- [ ] Test end-to-end flow: apply OTTO10 → checkout → verify cannot reuse
+- [x] Create OTTO10 coupon via Admin UI (10% discount, one-time per user)
+- [x] Test end-to-end flow: apply OTTO10 → checkout → verify cannot reuse
+
+## Testing & Documentation
+- [x] Created comprehensive unit tests (9 tests)
+- [x] Created integration tests (2 tests)
+- [x] Created COUPON_SYSTEM.md documentation
+- [x] Created TESTING_COUPONS.md with manual test scenarios
+- [x] Created create-otto10-coupon.mjs script
+- [ ] Execute manual end-to-end testing via Admin UI
+- [ ] Verify database records after test scenarios
 
 ## Future Enhancements
 - [ ] Stripe payment integration
