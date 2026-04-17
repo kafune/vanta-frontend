@@ -36,7 +36,8 @@
 - [x] Execute manual end-to-end testing via Admin UI
 - [x] Verify database records after test scenarios (created test-e2e-flows.mjs script)
 
-## Future Enhancements
+## Future Enhancements (Backlog)
+_Itens para implementação futura, não são bloqueadores do projeto atual_
 - [ ] Stripe payment integration
 - [ ] Real order persistence to database
 - [ ] User email verification
