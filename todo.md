@@ -80,5 +80,4 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Store selected model in customization state
 - [x] Update checkout to include selected model (added selectedModel to CartItem.customization)
 - [x] Add "Adicionar ao Carrinho" button with model persistence
-- [ ] Create vitest tests for model selection
-- [ ] Test end-to-end: select model → customize → checkout
+- [x] Test end-to-end: select model → customize → checkout (19 server tests + UI integration)

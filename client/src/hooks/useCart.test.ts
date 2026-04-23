@@ -329,4 +329,5 @@ describe("useCart Hook", () => {
     expect(result.current.items[0]?.customization).toBeDefined();
     expect(result.current.items[0]?.customization?.shirtColor).toBe("#000000");
   });
+
 });
