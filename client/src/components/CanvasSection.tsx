@@ -8,6 +8,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Download, Share2, RotateCcw, Palette, Move, Save } from "lucide-react";
 import { toast } from "sonner";
 import DesignHistory from "./DesignHistory";
+import ModelSelector, { ClothingModel, CLOTHING_MODELS } from "./ModelSelector";
+import { getClothingSVG } from "@/utils/clothingModels";
 import { useDesignHistory, Design } from "@/hooks/useDesignHistory";
 
 // T-shirt SVG mockup with dynamic color support
@@ -45,6 +47,7 @@ export default function CanvasSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ClothingModel>("regular-shirt");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -225,6 +228,11 @@ export default function CanvasSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           {/* Left: Upload & Controls */}
           <div className={`space-y-6 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`} style={{ transitionDelay: "100ms" }}>
+            {/* Model Selector */}
+            <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.1)] p-6 rounded-lg">
+              <ModelSelector selectedModel={selectedModel} onModelChange={setSelectedModel} />
+            </div>
+
             {/* Upload Zone */}
             <div
               onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
@@ -440,7 +448,7 @@ export default function CanvasSection() {
               <div className="w-full h-full flex items-center justify-center">
                 <div className="relative w-full h-full">
                   {/* SVG Background */}
-                  <div dangerouslySetInnerHTML={{ __html: getTshirtSVG(shirtColor) }} />
+                  <div dangerouslySetInnerHTML={{ __html: getClothingSVG(selectedModel, shirtColor) }} />
 
                   {/* Print image overlay */}
                   {uploadedImage && (

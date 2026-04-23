@@ -70,3 +70,14 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Add logout button in profile page
 - [x] Create responsive design for mobile/tablet
 - [x] Add loading and error states
+
+
+## Personalization Models Expansion (NEW)
+- [x] Create model selection component with grid/carousel (ModelSelector.tsx)
+- [x] Add model types: oversized shirts, regular shirts, hoodies, sweatshirts, tank tops, long sleeves
+- [x] Integrate model selection into Canvas customization
+- [x] Add visual previews for each model (clothingModels.ts with 7 SVG generators)
+- [x] Store selected model in customization state
+- [ ] Update checkout to include selected model
+- [ ] Create vitest tests for model selection
+- [ ] Test end-to-end: select model → customize → checkout
