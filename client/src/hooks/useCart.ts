@@ -17,6 +17,7 @@ export interface CartItem {
     imageData?: string;
     shirtColor?: string;
     selectedModel?: string;
+    sleeveLength?: "short" | "long";
   };
 }
 

@@ -81,3 +81,11 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Update checkout to include selected model (added selectedModel to CartItem.customization)
 - [x] Add "Adicionar ao Carrinho" button with model persistence
 - [x] Test end-to-end: select model → customize → checkout (19 server tests + UI integration)
+
+
+## Clothing Models Improvement (COMPLETE)
+- [x] Recreate SVG models with realistic visuals for each clothing type (7 detailed SVG generators)
+- [x] Add sleeve length selector (short/long) for applicable garments (SleeveLengthSelector component)
+- [x] Integrate sleeve customization into CanvasSection (conditional display for models with sleeves)
+- [x] Update CartItem to store sleeve length preference (sleeveLength in customization)
+- [x] Test end-to-end: select model → customize sleeves → checkout (19 tests passing)

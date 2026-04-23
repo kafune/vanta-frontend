@@ -9,7 +9,8 @@ import { Upload, Download, Share2, RotateCcw, Palette, Move, Save, ShoppingBag }
 import { toast } from "sonner";
 import DesignHistory from "./DesignHistory";
 import ModelSelector, { ClothingModel, CLOTHING_MODELS } from "./ModelSelector";
-import { getClothingSVG } from "@/utils/clothingModels";
+import SleeveLengthSelector from "./SleeveLengthSelector";
+import { getClothingSVG, SleeveLength } from "@/utils/clothingModels";
 import { useCart } from "@/hooks/useCart";
 import { useDesignHistory, Design } from "@/hooks/useDesignHistory";
 
@@ -50,6 +51,7 @@ export default function CanvasSection() {
   const [saveName, setSaveName] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ClothingModel>("regular-shirt");
+  const [sleeveLength, setSleeveLength] = useState<SleeveLength>("short");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -157,6 +159,7 @@ export default function CanvasSection() {
           imageData: uploadedImage,
           shirtColor: shirtColor,
           selectedModel: selectedModel,
+          sleeveLength: sleeveLength,
         },
       });
       
@@ -300,6 +303,19 @@ export default function CanvasSection() {
                 </div>
               </div>
             </div>
+
+            {/* Sleeve Length Selector - Only for models with sleeves */}
+            {(selectedModel === "regular-shirt" || selectedModel === "oversized-shirt" || 
+              selectedModel === "regular-hoodie" || selectedModel === "oversized-hoodie" || 
+              selectedModel === "sweatshirt") && (
+              <div className="p-4 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)]" style={{ borderRadius: "3px" }}>
+                <SleeveLengthSelector 
+                  selectedLength={sleeveLength} 
+                  onSelect={setSleeveLength}
+                  showLabel={true}
+                />
+              </div>
+            )}
 
             {/* Color Picker */}
             <div>
@@ -483,7 +499,7 @@ export default function CanvasSection() {
               <div className="w-full h-full flex items-center justify-center">
                 <div className="relative w-full h-full">
                   {/* SVG Background */}
-                  <div dangerouslySetInnerHTML={{ __html: getClothingSVG(selectedModel, shirtColor) }} />
+                  <div dangerouslySetInnerHTML={{ __html: getClothingSVG(selectedModel, shirtColor, sleeveLength) }} />
 
                   {/* Print image overlay */}
                   {uploadedImage && (
