@@ -8,6 +8,7 @@ import { reviewsRouter } from "./routers/reviews";
 import { couponsRouter } from "./routers/coupons";
 import { cashbackRouter } from "./routers/cashback";
 import { adminRouter } from "./routers/admin";
+import { wishlistRouter } from "./routers/wishlist";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -27,6 +28,7 @@ export const appRouter = router({
   coupons: couponsRouter,
   cashback: cashbackRouter,
   admin: adminRouter,
+  wishlist: wishlistRouter,
 
   email: router({
     sendOrderConfirmation: publicProcedure

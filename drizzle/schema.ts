@@ -133,3 +133,19 @@ export const cashbackTransactions = mysqlTable("cashbackTransactions", {
 
 export type CashbackTransaction = typeof cashbackTransactions.$inferSelect;
 export type InsertCashbackTransaction = typeof cashbackTransactions.$inferInsert;
+
+
+// Wishlist table - user's favorite items
+export const wishlist = mysqlTable("wishlist", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: int("userId").notNull(),
+  productId: varchar("productId", { length: 64 }).notNull(),
+  productName: text("productName").notNull(),
+  productImage: text("productImage"),
+  productPrice: int("productPrice").notNull(), // in cents
+  productCategory: varchar("productCategory", { length: 64 }),
+  addedAt: timestamp("addedAt").defaultNow().notNull(),
+});
+
+export type Wishlist = typeof wishlist.$inferSelect;
+export type InsertWishlist = typeof wishlist.$inferInsert;

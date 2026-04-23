@@ -6,12 +6,13 @@
  */
 
 import { useState, useEffect } from "react";
-import { ShoppingBag, Search, Menu, X, User } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, User, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import CartDrawer from "./CartDrawer";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 
 const navLinks = [
   { label: "Coleção", href: "#collection" },
@@ -22,11 +23,14 @@ const navLinks = [
 
 export default function Navbar() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const { itemCount } = useCart();
+  const wishlistCount = trpc.wishlist.getWishlistCount.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -82,13 +86,27 @@ export default function Navbar() {
                 <Search size={18} strokeWidth={1.5} />
               </button>
               {user && (
-                <button
-                  onClick={() => setLocation("/profile")}
-                  className="text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
-                  aria-label="Perfil"
-                >
-                  <User size={18} strokeWidth={1.5} />
-                </button>
+                <>
+                  <button
+                    onClick={() => setLocation("/wishlist")}
+                    className="relative text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
+                    aria-label="Wishlist"
+                  >
+                    <Heart size={18} strokeWidth={1.5} />
+                    {(wishlistCount.data ?? 0) > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center font-mono">
+                        {(wishlistCount.data ?? 0) > 99 ? "99+" : wishlistCount.data}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setLocation("/profile")}
+                    className="text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
+                    aria-label="Perfil"
+                  >
+                    <User size={18} strokeWidth={1.5} />
+                  </button>
+                </>
               )}
               <button
                 onClick={() => setCartOpen(true)}

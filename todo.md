@@ -89,3 +89,15 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Integrate sleeve customization into CanvasSection (conditional display for models with sleeves)
 - [x] Update CartItem to store sleeve length preference (sleeveLength in customization)
 - [x] Test end-to-end: select model → customize sleeves → checkout (19 tests passing)
+
+
+## Favorites/Wishlist System (COMPLETE)
+- [x] Create wishlist table in database (user_id, product_id, created_at)
+- [x] Implement tRPC procedures: addToWishlist, removeFromWishlist, getWishlist, isInWishlist, getWishlistCount, clearWishlist
+- [x] Create Wishlist page component with product grid (Wishlist.tsx)
+- [x] Add heart/favorite button to product cards (FavoriteButton.tsx component)
+- [x] Add heart icon to navbar showing wishlist count (integrated in Navbar.tsx)
+- [x] Integrate wishlist into product detail pages (via FavoriteButton component)
+- [x] Add "Add to Cart from Wishlist" functionality (in Wishlist page)
+- [x] Create vitest tests for wishlist system (7 tests passing)
+- [x] Test end-to-end: add product → wishlist → view wishlist → add to cart (26 tests total passing)
