@@ -5,11 +5,12 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, Download, Share2, RotateCcw, Palette, Move, Save } from "lucide-react";
+import { Upload, Download, Share2, RotateCcw, Palette, Move, Save, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import DesignHistory from "./DesignHistory";
 import ModelSelector, { ClothingModel, CLOTHING_MODELS } from "./ModelSelector";
 import { getClothingSVG } from "@/utils/clothingModels";
+import { useCart } from "@/hooks/useCart";
 import { useDesignHistory, Design } from "@/hooks/useDesignHistory";
 
 // T-shirt SVG mockup with dynamic color support
@@ -37,6 +38,7 @@ const getTshirtSVG = (color: string) => `
 `;
 
 export default function CanvasSection() {
+  const { addItem } = useCart();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [shirtColor, setShirtColor] = useState("#000000");
@@ -132,6 +134,39 @@ export default function CanvasSection() {
     } else {
       navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
       toast.success("Link copiado!", { description: "Compartilhe com seus amigos." });
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (!uploadedImage) {
+      toast.error("Nada para adicionar");
+      return;
+    }
+
+    try {
+      const customId = `custom-${Date.now()}`;
+      const modelLabel = CLOTHING_MODELS.find(m => m.id === selectedModel)?.label || "Customizado";
+      
+      addItem({
+        id: customId,
+        name: `${modelLabel} Personalizado`,
+        price: 49.99,
+        quantity: 1,
+        image: uploadedImage,
+        customization: {
+          imageData: uploadedImage,
+          shirtColor: shirtColor,
+          selectedModel: selectedModel,
+        },
+      });
+      
+      toast.success("Adicionado ao carrinho!", { 
+        description: `${modelLabel} personalizado foi adicionado.` 
+      });
+      
+      handleReset();
+    } catch (error) {
+      toast.error("Erro ao adicionar ao carrinho");
     }
   };
 
@@ -481,9 +516,17 @@ export default function CanvasSection() {
               </p>
             </div>
 
-            {/* Download & Share Buttons */}
+            {/* Add to Cart, Download & Share Buttons */}
             {uploadedImage && (
-              <div className="w-full flex gap-3">
+              <div className="w-full flex flex-col gap-3">
+                <button
+                  onClick={handleAddToCart}
+                  className="w-full btn-primary py-3 flex items-center justify-center gap-2"
+                >
+                  <ShoppingBag size={16} />
+                  <span>Adicionar ao Carrinho</span>
+                </button>
+                <div className="flex gap-3">
                 <button
                   onClick={handleDownload}
                   className="flex-1 btn-outline py-3 flex items-center justify-center gap-2"
@@ -498,6 +541,7 @@ export default function CanvasSection() {
                   <Share2 size={16} />
                   <span>Compartilhar</span>
                 </button>
+                </div>
               </div>
             )}
           </div>

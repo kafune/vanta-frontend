@@ -78,6 +78,7 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Integrate model selection into Canvas customization
 - [x] Add visual previews for each model (clothingModels.ts with 7 SVG generators)
 - [x] Store selected model in customization state
-- [ ] Update checkout to include selected model
+- [x] Update checkout to include selected model (added selectedModel to CartItem.customization)
+- [x] Add "Adicionar ao Carrinho" button with model persistence
 - [ ] Create vitest tests for model selection
 - [ ] Test end-to-end: select model → customize → checkout

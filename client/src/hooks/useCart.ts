@@ -16,6 +16,7 @@ export interface CartItem {
   customization?: {
     imageData?: string;
     shirtColor?: string;
+    selectedModel?: string;
   };
 }
 
