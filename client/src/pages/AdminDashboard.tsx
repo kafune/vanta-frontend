@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Edit, Trash2, Check, X } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, Check, X, Mail } from "lucide-react";
+import { ResendNotificationDialog } from "@/components/ResendNotificationDialog";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -18,6 +19,8 @@ export default function AdminDashboard() {
   const [newCouponCode, setNewCouponCode] = useState("");
   const [newCouponDiscount, setNewCouponDiscount] = useState("");
   const [selectedOrderStatus, setSelectedOrderStatus] = useState<string | undefined>();
+  const [resendDialogOpen, setResendDialogOpen] = useState(false);
+  const [selectedOrderForResend, setSelectedOrderForResend] = useState<{ id: string; email?: string; status?: string } | null>(null);
 
   // Queries
   const salesSummary = trpc.admin.sales.summary.useQuery();
@@ -27,6 +30,15 @@ export default function AdminDashboard() {
   // Mutations
   const createCoupon = trpc.admin.coupons.create.useMutation();
   const updateOrderStatus = trpc.admin.orders.updateStatus.useMutation();
+
+  const handleOpenResendDialog = (order: any) => {
+    setSelectedOrderForResend({
+      id: order.id,
+      email: "customer@example.com",
+      status: order.status,
+    });
+    setResendDialogOpen(true);
+  };
 
   if (user?.role !== "admin") {
     return (
@@ -77,6 +89,10 @@ export default function AdminDashboard() {
     } catch (error) {
       toast.error("Erro ao atualizar status");
     }
+  };
+
+  const handleResendSuccess = () => {
+    ordersList.refetch();
   };
 
   const chartData = ordersList.data
@@ -270,31 +286,42 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="py-3 px-2">
-                            <Select
-                              value={order.status}
-                              onValueChange={(newStatus) => handleUpdateOrderStatus(order.id, newStatus)}
-                            >
-                              <SelectTrigger className="w-32 h-8 bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-[0.75rem]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-[#1a1a1a] border-[rgba(255,255,255,0.1)]">
-                                <SelectItem value="pendente" className="text-[#EFEFEF]">
-                                  Pendente
-                                </SelectItem>
-                                <SelectItem value="confirmado" className="text-[#EFEFEF]">
-                                  Confirmado
-                                </SelectItem>
-                                <SelectItem value="enviado" className="text-[#EFEFEF]">
-                                  Enviado
-                                </SelectItem>
-                                <SelectItem value="entregue" className="text-[#EFEFEF]">
-                                  Entregue
-                                </SelectItem>
-                                <SelectItem value="cancelado" className="text-[#EFEFEF]">
-                                  Cancelado
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div className="flex gap-2 items-center">
+                              <Select
+                                value={order.status}
+                                onValueChange={(newStatus) => handleUpdateOrderStatus(order.id, newStatus)}
+                              >
+                                <SelectTrigger className="w-32 h-8 bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-[0.75rem]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#1a1a1a] border-[rgba(255,255,255,0.1)]">
+                                  <SelectItem value="pendente" className="text-[#EFEFEF]">
+                                    Pendente
+                                  </SelectItem>
+                                  <SelectItem value="confirmado" className="text-[#EFEFEF]">
+                                    Confirmado
+                                  </SelectItem>
+                                  <SelectItem value="enviado" className="text-[#EFEFEF]">
+                                    Enviado
+                                  </SelectItem>
+                                  <SelectItem value="entregue" className="text-[#EFEFEF]">
+                                    Entregue
+                                  </SelectItem>
+                                  <SelectItem value="cancelado" className="text-[#EFEFEF]">
+                                    Cancelado
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleOpenResendDialog(order)}
+                                className="h-8 w-8 p-0 text-[rgba(239,239,239,0.6)] hover:text-blue-400 hover:bg-blue-500/10"
+                                title="Reenviar notificação"
+                              >
+                                <Mail className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -401,6 +428,17 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      {/* Resend Notification Dialog */}
+      {selectedOrderForResend && (
+        <ResendNotificationDialog
+          open={resendDialogOpen}
+          onOpenChange={setResendDialogOpen}
+          orderId={selectedOrderForResend.id}
+          customerEmail={selectedOrderForResend.email}
+          orderStatus={selectedOrderForResend.status}
+          onSuccess={handleResendSuccess}
+        />
+      )}
     </div>
   );
 }

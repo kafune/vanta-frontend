@@ -286,6 +286,109 @@ export const notificationsRouter = router({
     }),
 
   /**
+   * Resend notification for an order
+   */
+  resendNotification: publicProcedure.use(async ({ ctx, next }) => {
+    if (!ctx.user || ctx.user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
+    return next();
+  })
+    .input(
+      z.object({
+        orderId: z.string(),
+        customMessage: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        // Get order details
+        const orderResult = await db
+          .select()
+          .from(orders)
+          .where(eq(orders.id, input.orderId))
+          .limit(1);
+
+        if (!orderResult || orderResult.length === 0) {
+          throw new Error("Order not found");
+        }
+
+        const order = orderResult[0];
+
+        // Get user details
+        const userResult = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, order.userId))
+          .limit(1);
+
+        if (!userResult || userResult.length === 0) {
+          throw new Error("User not found");
+        }
+
+        const user = userResult[0];
+        const customerEmail = user.email || "customer@example.com";
+        const customerName = user.name || "Valued Customer";
+
+        // Generate email template
+        const html = getOrderStatusUpdateTemplate({
+          orderId: input.orderId,
+          trackingNumber: order.trackingNumber || "N/A",
+          customerName,
+          status: order.status,
+          message: input.customMessage || `Reenviando atualização de status: ${order.status}`,
+        });
+
+        // Send email
+        const mailOptions = {
+          from: '"VANTA Store" <noreply@vanta.com>',
+          to: customerEmail,
+          subject: `[REENVIO] Atualização de Pedido - ${order.trackingNumber || input.orderId}`,
+          html,
+        };
+
+        try {
+          await transporter.sendMail(mailOptions);
+          
+          // Log successful email
+          await logEmailNotification(
+            input.orderId,
+            order.userId,
+            customerEmail,
+            "resend",
+            mailOptions.subject,
+            true
+          );
+
+          console.log(`[Email] Resend notification sent to ${customerEmail} for order ${input.orderId}`);
+          return { success: true, message: "Notificação reenviada com sucesso" };
+        } catch (emailError) {
+          const errorMsg = emailError instanceof Error ? emailError.message : String(emailError);
+          
+          // Log failed email
+          await logEmailNotification(
+            input.orderId,
+            order.userId,
+            customerEmail,
+            "resend",
+            mailOptions.subject,
+            false,
+            errorMsg
+          );
+
+          console.error("[Email] Failed to resend notification:", emailError);
+          return { success: false, message: "Falha ao reenviar notificação" };
+        }
+      } catch (error) {
+        console.error("[Notification] Error resending notification:", error);
+        return { success: false, message: "Erro ao processar reenvio" };
+      }
+    }),
+
+  /**
    * Get email logs for a user
    */
   getUserEmailLogs: publicProcedure

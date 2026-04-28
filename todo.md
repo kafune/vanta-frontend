@@ -125,3 +125,60 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Test end-to-end: update order status → send notification email
 - [x] Add email templates with status-specific colors and messages
 - [x] Implement admin notification flag (sendNotification parameter)
+
+
+## Performance & Optimization
+- [ ] Implement image lazy loading for product grids
+- [ ] Add pagination to product listings (currently loading all)
+- [ ] Optimize database queries with proper indexing
+- [ ] Implement caching strategy for product data
+- [ ] Add service worker for offline support
+
+## Mobile & Responsive Design
+- [ ] Test and fix responsive design on mobile devices
+- [ ] Optimize touch interactions for mobile
+- [ ] Implement mobile-specific navigation drawer
+- [ ] Add mobile-specific checkout flow
+
+## Security & Compliance
+- [ ] Implement CSRF protection
+- [ ] Add rate limiting to API endpoints
+- [ ] Implement GDPR data export functionality
+- [ ] Add security headers (CSP, X-Frame-Options, etc.)
+- [ ] Implement PCI compliance for payment data
+
+## Analytics & Monitoring
+- [ ] Implement product view tracking
+- [ ] Add conversion funnel analytics
+- [ ] Create performance monitoring dashboard
+- [ ] Set up error tracking and alerting
+- [ ] Implement user behavior analytics
+
+## Payment Integration
+- [ ] Integrate Stripe payment processing
+- [ ] Add multiple payment method support
+- [ ] Implement payment retry logic
+- [ ] Add invoice generation
+
+## Inventory Management
+- [ ] Create inventory tracking system
+- [ ] Implement stock level alerts
+- [ ] Add product availability status
+- [ ] Create inventory adjustment interface
+
+## Marketing & Promotions
+- [ ] Implement seasonal promotions
+- [ ] Add email marketing integration
+- [ ] Create referral program
+- [ ] Implement loyalty rewards tier system
+- [ ] Add abandoned cart recovery emails
+
+
+## Resend Notification Feature (COMPLETE)
+- [x] Create resendNotification tRPC procedure
+- [x] Add resend button to AdminDashboard order table
+- [x] Create ResendNotificationDialog component with message customization
+- [x] Integrate resend with email logging
+- [x] Add resend history tracking
+- [x] Create vitest tests for resend functionality (10 tests passing)
+- [x] Test end-to-end: resend notification → verify email log
