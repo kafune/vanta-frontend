@@ -182,3 +182,17 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Add resend history tracking
 - [x] Create vitest tests for resend functionality (10 tests passing)
 - [x] Test end-to-end: resend notification → verify email log
+
+
+## Advanced Order Filters (COMPLETE)
+- [x] Create OrderFilters component with multiple filter options
+- [x] Add status filter with checkboxes for multiple selection
+- [x] Add date range filter (from/to dates)
+- [x] Add price range filter (min/max)
+- [x] Add order status counters/badges
+- [x] Implement filter persistence (localStorage)
+- [x] Add clear filters button
+- [x] Create tRPC procedure for advanced filtering
+- [x] Add sorting options (date, price, status)
+- [x] Create vitest tests for filter functionality (10 tests passing)
+- [x] Test end-to-end: apply multiple filters → verify results

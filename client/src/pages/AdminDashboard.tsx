@@ -11,6 +11,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Edit, Trash2, Check, X, Mail } from "lucide-react";
 import { ResendNotificationDialog } from "@/components/ResendNotificationDialog";
+import { OrderFilters, OrderFiltersState } from "@/components/OrderFilters";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -23,9 +24,20 @@ export default function AdminDashboard() {
   const [selectedOrderForResend, setSelectedOrderForResend] = useState<{ id: string; email?: string; status?: string } | null>(null);
 
   // Queries
+  const [orderFilters, setOrderFilters] = useState<OrderFiltersState>({
+    statuses: [],
+  });
   const salesSummary = trpc.admin.sales.summary.useQuery();
   const couponsList = trpc.admin.coupons.list.useQuery();
-  const ordersList = trpc.admin.orders.list.useQuery({ status: selectedOrderStatus as any });
+  const ordersList = trpc.admin.orders.list.useQuery({
+    statuses: orderFilters.statuses.length > 0 ? (orderFilters.statuses as any) : undefined,
+    dateFrom: orderFilters.dateFrom,
+    dateTo: orderFilters.dateTo,
+    priceMin: orderFilters.priceMin,
+    priceMax: orderFilters.priceMax,
+    sortBy: (orderFilters.sortBy || "date") as any,
+    sortOrder: (orderFilters.sortOrder || "desc") as any,
+  });
 
   // Mutations
   const createCoupon = trpc.admin.coupons.create.useMutation();
@@ -93,6 +105,19 @@ export default function AdminDashboard() {
 
   const handleResendSuccess = () => {
     ordersList.refetch();
+  };
+
+  const handleFiltersChange = (filters: OrderFiltersState) => {
+    setOrderFilters(filters);
+  };
+
+  // Calculate status counts
+  const statusCounts = {
+    pendente: salesSummary.data?.statusBreakdown.pendente || 0,
+    confirmado: salesSummary.data?.statusBreakdown.confirmado || 0,
+    enviado: salesSummary.data?.statusBreakdown.enviado || 0,
+    entregue: salesSummary.data?.statusBreakdown.entregue || 0,
+    cancelado: salesSummary.data?.statusBreakdown.cancelado || 0,
   };
 
   const chartData = ordersList.data
@@ -218,37 +243,12 @@ export default function AdminDashboard() {
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-6 mt-6">
-            <div className="flex gap-2">
-              <Select value={selectedOrderStatus} onValueChange={setSelectedOrderStatus}>
-                <SelectTrigger className="w-48 bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-[#EFEFEF]">
-                  <SelectValue placeholder="Filtrar por status" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1a1a1a] border-[rgba(255,255,255,0.1)]">
-                  <SelectItem value="pendente" className="text-[#EFEFEF]">
-                    Pendente
-                  </SelectItem>
-                  <SelectItem value="confirmado" className="text-[#EFEFEF]">
-                    Confirmado
-                  </SelectItem>
-                  <SelectItem value="enviado" className="text-[#EFEFEF]">
-                    Enviado
-                  </SelectItem>
-                  <SelectItem value="entregue" className="text-[#EFEFEF]">
-                    Entregue
-                  </SelectItem>
-                  <SelectItem value="cancelado" className="text-[#EFEFEF]">
-                    Cancelado
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={() => setSelectedOrderStatus(undefined)}
-                variant="outline"
-                className="border-[rgba(255,255,255,0.1)] text-[rgba(239,239,239,0.6)]"
-              >
-                Limpar Filtro
-              </Button>
-            </div>
+            {/* Advanced Filters */}
+            <OrderFilters
+              onFiltersChange={handleFiltersChange}
+              statusCounts={statusCounts}
+              isExpanded={true}
+            />
 
             <Card className="bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)]">
               <CardHeader>
