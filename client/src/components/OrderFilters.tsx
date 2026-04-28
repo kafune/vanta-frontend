@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 export interface OrderFiltersState {
   statuses: string[];
@@ -25,6 +26,7 @@ interface OrderFiltersProps {
   onFiltersChange: (filters: OrderFiltersState) => void;
   statusCounts?: Record<string, number>;
   isExpanded?: boolean;
+  resultsCount?: number;
 }
 
 const ORDER_STATUSES = [
@@ -60,9 +62,20 @@ export function OrderFilters({
   }, []);
 
   // Save filters to localStorage whenever they change
+  const logFilterUsage = trpc.analytics.logFilterUsage.useMutation();
+
   useEffect(() => {
     localStorage.setItem("orderFilters", JSON.stringify(filters));
     onFiltersChange(filters);
+
+    // Log filter usage
+    const filterType = filters.statuses.length > 0 ? "status" : filters.dateFrom || filters.dateTo ? "date" : filters.priceMin || filters.priceMax ? "price" : filters.sortBy ? "sort" : null;
+    if (filterType) {
+      logFilterUsage.mutate({
+        filterType: filterType as any,
+        filterValue: filters,
+      });
+    }
   }, [filters]);
 
   const handleStatusToggle = (status: string) => {

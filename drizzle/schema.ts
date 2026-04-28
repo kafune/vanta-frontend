@@ -167,3 +167,18 @@ export const wishlist = mysqlTable("wishlist", {
 
 export type Wishlist = typeof wishlist.$inferSelect;
 export type InsertWishlist = typeof wishlist.$inferInsert;
+
+
+// Filter usage logs table - track admin filter usage for analytics
+export const filterUsageLogs = mysqlTable("filterUsageLogs", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: int("userId").notNull(),
+  filterType: varchar("filterType", { length: 64 }).notNull(), // "status", "date", "price", "sort"
+  filterValue: text("filterValue"), // JSON string of filter values
+  resultsCount: int("resultsCount").default(0), // number of results returned
+  duration: int("duration").default(0), // time spent in milliseconds
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FilterUsageLog = typeof filterUsageLogs.$inferSelect;
+export type InsertFilterUsageLog = typeof filterUsageLogs.$inferInsert;

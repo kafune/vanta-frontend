@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Plus, Edit, Trash2, Check, X, Mail } from "lucide-react";
 import { ResendNotificationDialog } from "@/components/ResendNotificationDialog";
 import { OrderFilters, OrderFiltersState } from "@/components/OrderFilters";
+import { FilterAnalytics } from "@/components/FilterAnalytics";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -408,23 +409,7 @@ export default function AdminDashboard() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6 mt-6">
-            <Card className="bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)]">
-              <CardHeader>
-                <CardTitle className="text-[#EFEFEF]">Distribuição de Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie data={statusData} cx="50%" cy="50%" labelLine={false} label={{ fill: "rgba(239,239,239,0.7)" }} outerRadius={80} fill="#8884d8" dataKey="value">
-                      {statusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)" }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <FilterAnalytics />
           </TabsContent>
         </Tabs>
       </div>

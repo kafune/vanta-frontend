@@ -196,3 +196,19 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Add sorting options (date, price, status)
 - [x] Create vitest tests for filter functionality (10 tests passing)
 - [x] Test end-to-end: apply multiple filters → verify results
+
+
+## Filter Usage Analytics & Reporting (COMPLETE)
+- [x] Create filterUsageLogs table in database to track filter usage
+- [x] Implement tRPC procedure to log filter usage (logFilterUsage)
+- [x] Implement tRPC procedure to get filter usage statistics (getFilterStats)
+- [x] Implement tRPC procedure to get top used filters (getTopFilters)
+- [x] Implement tRPC procedure to get filter trends (getFilterTrends)
+- [x] Implement tRPC procedure to get usage by user (getFilterUsageByUser)
+- [x] Integrate filter logging into OrderFilters component
+- [x] Create FilterAnalytics component with charts (most used filters, usage trends)
+- [x] Add date range selector for analytics
+- [x] Add CSV report download functionality
+- [x] Create vitest tests for filter analytics (9 tests passing)
+- [x] Test end-to-end: use filters → view analytics → download report
+- [x] Create comprehensive documentation (FILTER_ANALYTICS.md)
