@@ -21,7 +21,6 @@ export default function AdminDashboard() {
 
   // Queries
   const salesSummary = trpc.admin.sales.summary.useQuery();
-  const recentOrders = trpc.admin.sales.recentOrders.useQuery({ limit: 10 });
   const couponsList = trpc.admin.coupons.list.useQuery();
   const ordersList = trpc.admin.orders.list.useQuery({ status: selectedOrderStatus as any });
 
@@ -35,7 +34,7 @@ export default function AdminDashboard() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-[#EFEFEF] mb-4">Acesso Negado</h1>
           <p className="text-[rgba(239,239,239,0.6)] mb-6">Você não tem permissão para acessar esta página.</p>
-          <Button onClick={() => setLocation("/")} className="bg-white text-black hover:bg-[rgba(255,255,255,0.9)]">
+          <Button onClick={() => window.location.href = "/"} className="bg-white text-black hover:bg-[rgba(255,255,255,0.9)]">
             Voltar para Home
           </Button>
         </div>
@@ -71,6 +70,7 @@ export default function AdminDashboard() {
       await updateOrderStatus.mutateAsync({
         orderId,
         status: newStatus as any,
+        sendNotification: true,
       });
       toast.success("Status do pedido atualizado!");
       ordersList.refetch();
@@ -79,8 +79,8 @@ export default function AdminDashboard() {
     }
   };
 
-  const chartData = recentOrders.data
-    ? recentOrders.data.slice(0, 7).map((order) => ({
+  const chartData = ordersList.data
+    ? ordersList.data.slice(0, 7).map((order: any) => ({
         id: order.id.slice(0, 8),
         valor: order.totalPrice,
       }))

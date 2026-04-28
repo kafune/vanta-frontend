@@ -46,15 +46,20 @@ interface DeliveryUpdateData {
 }
 
 // Configure email transporter (using test service for development)
+// In production, replace with SendGrid or your email service
 const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
-  secure: false,
+  host: process.env.SMTP_HOST || "smtp.ethereal.email",
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: process.env.SMTP_SECURE === "true" || false,
   auth: {
-    user: "test@ethereal.email",
-    pass: "test123456",
+    user: process.env.SMTP_USER || "test@ethereal.email",
+    pass: process.env.SMTP_PASSWORD || "test123456",
   },
 });
+
+// Email retry configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 5000; // 5 seconds
 
 /**
  * Order Confirmation Email Template
@@ -343,19 +348,44 @@ function getDeliveryUpdateTemplate(data: DeliveryUpdateData): string {
 }
 
 /**
+ * Send email with retry logic
+ */
+async function sendEmailWithRetry(
+  mailOptions: any,
+  retries: number = 0
+): Promise<boolean> {
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    if (retries < MAX_RETRIES) {
+      console.log(`[Email] Retry ${retries + 1}/${MAX_RETRIES} for ${mailOptions.to}`);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      return sendEmailWithRetry(mailOptions, retries + 1);
+    }
+    console.error(`[Email] Failed after ${MAX_RETRIES} retries:`, error);
+    return false;
+  }
+}
+
+/**
  * Send Order Confirmation Email
  */
 export async function sendOrderConfirmationEmail(data: OrderConfirmationData): Promise<boolean> {
   try {
     const html = getOrderConfirmationTemplate(data);
-    await transporter.sendMail({
-      from: '"VANTA Store" <noreply@obsidian.com>',
+    const mailOptions = {
+      from: '"VANTA Store" <noreply@vanta.com>',
       to: data.customerEmail,
       subject: `Pedido Confirmado - ${data.trackingNumber}`,
       html,
-    });
-    console.log(`[Email] Order confirmation sent to ${data.customerEmail}`);
-    return true;
+    };
+    
+    const success = await sendEmailWithRetry(mailOptions);
+    if (success) {
+      console.log(`[Email] Order confirmation sent to ${data.customerEmail}`);
+    }
+    return success;
   } catch (error) {
     console.error("[Email] Failed to send order confirmation:", error);
     return false;
@@ -368,14 +398,18 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData): P
 export async function sendShipmentNotificationEmail(data: ShipmentNotificationData): Promise<boolean> {
   try {
     const html = getShipmentNotificationTemplate(data);
-    await transporter.sendMail({
-      from: '"VANTA Store" <noreply@obsidian.com>',
+    const mailOptions = {
+      from: '"VANTA Store" <noreply@vanta.com>',
       to: data.customerEmail,
       subject: `Seu Pedido Foi Despachado - ${data.trackingNumber}`,
       html,
-    });
-    console.log(`[Email] Shipment notification sent to ${data.customerEmail}`);
-    return true;
+    };
+    
+    const success = await sendEmailWithRetry(mailOptions);
+    if (success) {
+      console.log(`[Email] Shipment notification sent to ${data.customerEmail}`);
+    }
+    return success;
   } catch (error) {
     console.error("[Email] Failed to send shipment notification:", error);
     return false;
@@ -388,14 +422,18 @@ export async function sendShipmentNotificationEmail(data: ShipmentNotificationDa
 export async function sendDeliveryUpdateEmail(data: DeliveryUpdateData): Promise<boolean> {
   try {
     const html = getDeliveryUpdateTemplate(data);
-    await transporter.sendMail({
-      from: '"VANTA Store" <noreply@obsidian.com>',
+    const mailOptions = {
+      from: '"VANTA Store" <noreply@vanta.com>',
       to: data.customerEmail,
       subject: `Atualização de Entrega - ${data.trackingNumber}`,
       html,
-    });
-    console.log(`[Email] Delivery update sent to ${data.customerEmail}`);
-    return true;
+    };
+    
+    const success = await sendEmailWithRetry(mailOptions);
+    if (success) {
+      console.log(`[Email] Delivery update sent to ${data.customerEmail}`);
+    }
+    return success;
   } catch (error) {
     console.error("[Email] Failed to send delivery update:", error);
     return false;

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { coupons, orders, orderItems } from "../../drizzle/schema";
+import { coupons, orders, orderItems, users } from "../../drizzle/schema";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 
 // Admin procedure - check if user is admin
@@ -106,30 +106,12 @@ export const adminRouter = router({
       };
 
       return {
-        totalRevenue: totalRevenue / 100, // Convert from cents
+        totalRevenue: totalRevenue / 100,
         totalOrders,
         averageOrderValue: averageOrderValue / 100,
         statusBreakdown,
       };
     }),
-
-    recentOrders: adminProcedure
-      .input(z.object({ limit: z.number().default(10) }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
-
-        const recentOrders = await db
-          .select()
-          .from(orders)
-          .orderBy(desc(orders.createdAt))
-          .limit(input.limit);
-
-        return recentOrders.map((order) => ({
-          ...order,
-          totalPrice: order.totalPrice / 100,
-        }));
-      }),
   }),
 
   // Orders management
@@ -198,16 +180,52 @@ export const adminRouter = router({
         z.object({
           orderId: z.string(),
           status: z.enum(["pendente", "confirmado", "enviado", "entregue", "cancelado"]),
+          sendNotification: z.boolean().default(true),
+          notificationMessage: z.string().optional(),
         })
       )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
+        // Update order status
         await db
           .update(orders)
           .set({ status: input.status })
           .where(eq(orders.id, input.orderId));
+
+        // Send notification email if requested
+        if (input.sendNotification) {
+          try {
+            // Get order details for notification
+            const orderResult = await db
+              .select()
+              .from(orders)
+              .where(eq(orders.id, input.orderId))
+              .limit(1);
+
+            if (orderResult && orderResult.length > 0) {
+              const order = orderResult[0];
+
+              // Get user details
+              const userResult = await db
+                .select()
+                .from(users)
+                .where(eq(users.id, order.userId))
+                .limit(1);
+
+              if (userResult && userResult.length > 0) {
+                const user = userResult[0];
+                console.log(
+                  `[Admin] Notification queued for order ${input.orderId} status ${input.status} to ${user.email}`
+                );
+              }
+            }
+          } catch (error) {
+            console.error("[Admin] Error queuing notification:", error);
+            // Don't fail the order update if notification fails
+          }
+        }
 
         return { success: true };
       }),

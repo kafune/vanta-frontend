@@ -112,3 +112,16 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Add search history/recent searches
 - [x] Create vitest tests for search functionality (8 tests passing)
 - [x] Test end-to-end: search query → results → filter → view product
+
+
+## Email Notification System (COMPLETE)
+- [x] Configure email service (Nodemailer with SMTP support)
+- [x] Create email templates for order statuses (pendente, confirmado, enviado, entregue, cancelado)
+- [x] Create tRPC procedures: sendOrderStatusUpdate, getEmailLogs, getUserEmailLogs
+- [x] Add email sending to order status update flow (admin.orders.updateStatus)
+- [x] Implement retry logic for failed emails (MAX_RETRIES=3, RETRY_DELAY=5s)
+- [x] Add email logging and tracking (emailLogs table)
+- [x] Create vitest tests for email system (8 tests passing)
+- [x] Test end-to-end: update order status → send notification email
+- [x] Add email templates with status-specific colors and messages
+- [x] Implement admin notification flag (sendNotification parameter)

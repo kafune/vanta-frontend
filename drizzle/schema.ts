@@ -55,6 +55,24 @@ export const orderItems = mysqlTable("orderItems", {
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = typeof orderItems.$inferInsert;
 
+// Email logs table for tracking notifications
+export const emailLogs = mysqlTable("emailLogs", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  orderId: varchar("orderId", { length: 64 }).notNull(),
+  userId: int("userId").notNull(),
+  recipientEmail: varchar("recipientEmail", { length: 320 }).notNull(),
+  emailType: mysqlEnum("emailType", ["order_confirmation", "order_shipped", "order_delivered", "status_update"]).notNull(),
+  status: mysqlEnum("status", ["sent", "failed", "pending"]).default("pending").notNull(),
+  subject: text("subject"),
+  errorMessage: text("errorMessage"),
+  sentAt: timestamp("sentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type InsertEmailLog = typeof emailLogs.$inferInsert;
+
 // Reviews table
 export const reviews = mysqlTable("reviews", {
   id: varchar("id", { length: 64 }).primaryKey(),
