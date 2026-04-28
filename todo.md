@@ -101,3 +101,14 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Add "Add to Cart from Wishlist" functionality (in Wishlist page)
 - [x] Create vitest tests for wishlist system (7 tests passing)
 - [x] Test end-to-end: add product → wishlist → view wishlist → add to cart (26 tests total passing)
+
+
+## Search Mechanism (COMPLETE)
+- [x] Create search tRPC procedure with filters (name, category, tags)
+- [x] Add search sorting options (relevance, price, newest)
+- [x] Create SearchBar component with autocomplete
+- [x] Create Search Results page with product grid
+- [x] Integrate search into navbar
+- [x] Add search history/recent searches
+- [x] Create vitest tests for search functionality (8 tests passing)
+- [x] Test end-to-end: search query → results → filter → view product

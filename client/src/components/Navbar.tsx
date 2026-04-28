@@ -13,6 +13,7 @@ import CartDrawer from "./CartDrawer";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { SearchBar } from "./SearchBar";
 
 const navLinks = [
   { label: "Coleção", href: "#collection" },
@@ -78,9 +79,15 @@ export default function Navbar() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-4">
+              {/* Search Bar - Desktop */}
+              <div className="hidden md:block">
+                <SearchBar />
+              </div>
+              
+              {/* Search Icon - Mobile */}
               <button
-                onClick={() => toast("Pesquisa em breve", { description: "Funcionalidade a ser implementada." })}
-                className="text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
+                onClick={() => setLocation("/search")}
+                className="md:hidden text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
                 aria-label="Pesquisar"
               >
                 <Search size={18} strokeWidth={1.5} />
