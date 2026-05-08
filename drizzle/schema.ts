@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, tinyint } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -182,3 +182,20 @@ export const filterUsageLogs = mysqlTable("filterUsageLogs", {
 
 export type FilterUsageLog = typeof filterUsageLogs.$inferSelect;
 export type InsertFilterUsageLog = typeof filterUsageLogs.$inferInsert;
+
+
+// Saved filter presets table - store frequently used filter combinations
+export const savedFilters = mysqlTable("savedFilters", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(), // e.g., "Pedidos Pendentes"
+  description: text("description"), // optional description
+  filterData: text("filterData").notNull(), // JSON string of filter values
+  isDefault: tinyint("isDefault").default(0), // mark as default filter (0 or 1)
+  usageCount: int("usageCount").default(0), // track how many times this filter is used
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SavedFilter = typeof savedFilters.$inferSelect;
+export type InsertSavedFilter = typeof savedFilters.$inferInsert;

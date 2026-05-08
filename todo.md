@@ -212,3 +212,19 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Create vitest tests for filter analytics (9 tests passing)
 - [x] Test end-to-end: use filters → view analytics → download report
 - [x] Create comprehensive documentation (FILTER_ANALYTICS.md)
+
+
+## Saved Filter Presets (COMPLETE)
+- [x] Create savedFilters table in database
+- [x] Implement tRPC procedures: create, list, get, load, update, delete, getMostUsed, getDefault, setDefault
+- [x] Create SavedFiltersList component to display saved filters
+- [x] Add "Save Filter" button to OrderFilters component
+- [x] Add "Load Filter" functionality in SavedFiltersList
+- [x] Implement quick-load buttons for saved filters
+- [x] Add filter name and description fields
+- [x] Create modal for naming and saving filters
+- [x] Implement edit/rename functionality for saved filters
+- [x] Add delete confirmation dialog
+- [x] Create vitest tests for saved filters (10 tests passing)
+- [x] Test end-to-end: save filter → load filter → verify values → delete filter
+- [x] Integrate SavedFiltersList into AdminDashboard

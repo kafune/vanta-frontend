@@ -13,6 +13,7 @@ import { ArrowLeft, Plus, Edit, Trash2, Check, X, Mail } from "lucide-react";
 import { ResendNotificationDialog } from "@/components/ResendNotificationDialog";
 import { OrderFilters, OrderFiltersState } from "@/components/OrderFilters";
 import { FilterAnalytics } from "@/components/FilterAnalytics";
+import { SavedFiltersList } from "@/components/SavedFiltersList";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -244,6 +245,20 @@ export default function AdminDashboard() {
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-6 mt-6">
+            {/* Saved Filters */}
+            <Card className="bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)]">
+              <CardHeader>
+                <CardTitle className="text-[#EFEFEF]">Filtros Salvos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SavedFiltersList
+                  onLoadFilter={(filter) => {
+                    handleFiltersChange(filter.filterData as OrderFiltersState);
+                  }}
+                />
+              </CardContent>
+            </Card>
+
             {/* Advanced Filters */}
             <OrderFilters
               onFiltersChange={handleFiltersChange}

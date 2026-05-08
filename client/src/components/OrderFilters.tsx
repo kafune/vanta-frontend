@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { X, ChevronDown, ChevronUp, Save } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export interface OrderFiltersState {
   statuses: string[];
@@ -46,6 +47,35 @@ export function OrderFilters({
   const [filters, setFilters] = useState<OrderFiltersState>({
     statuses: [],
   });
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [filterName, setFilterName] = useState("");
+  const [filterDescription, setFilterDescription] = useState("");
+
+  // Mutation for saving filters
+  const saveFilter = trpc.savedFilters.create.useMutation({
+    onSuccess: () => {
+      toast.success("Filtro salvo com sucesso!");
+      setFilterName("");
+      setFilterDescription("");
+      setSaveDialogOpen(false);
+    },
+    onError: (error) => {
+      toast.error("Erro ao salvar filtro: " + error.message);
+    },
+  });
+
+  const handleSaveFilter = () => {
+    if (!filterName.trim()) {
+      toast.error("Por favor, digite um nome para o filtro");
+      return;
+    }
+
+    saveFilter.mutate({
+      name: filterName,
+      description: filterDescription,
+      filterData: filters,
+    });
+  };
 
   // Load filters from localStorage on mount
   useEffect(() => {
@@ -310,16 +340,72 @@ export function OrderFilters({
             </div>
           </div>
 
-          {/* Clear Filters Button */}
-          {hasActiveFilters && (
+          {/* Save and Clear Filters Buttons */}
+          <div className="flex gap-2">
             <Button
-              onClick={handleClearFilters}
-              variant="outline"
-              className="w-full border-[rgba(255,255,255,0.1)] text-[rgba(239,239,239,0.7)] hover:bg-red-500/10"
+              onClick={() => setSaveDialogOpen(true)}
+              className="flex-1 bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E]"
             >
-              <X className="w-4 h-4 mr-2" />
-              Limpar Filtros
+              <Save className="w-4 h-4 mr-2" />
+              Salvar
             </Button>
+            {hasActiveFilters && (
+              <Button
+                onClick={handleClearFilters}
+                variant="outline"
+                className="flex-1 border-[rgba(255,255,255,0.1)] text-[rgba(239,239,239,0.7)] hover:bg-red-500/10"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Limpar
+              </Button>
+            )}
+          </div>
+
+          {/* Save Filter Dialog */}
+          {saveDialogOpen && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <Card className="bg-[#0B0B0B] border-[rgba(255,255,255,0.1)] w-96">
+                <CardHeader>
+                  <CardTitle className="text-[#EFEFEF]">Salvar Filtro</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-[rgba(239,239,239,0.7)] mb-2 block">Nome</Label>
+                    <Input
+                      value={filterName}
+                      onChange={(e) => setFilterName(e.target.value)}
+                      placeholder="Ex: Pedidos Pendentes"
+                      className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-[#EFEFEF]"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[rgba(239,239,239,0.7)] mb-2 block">Descrição</Label>
+                    <Input
+                      value={filterDescription}
+                      onChange={(e) => setFilterDescription(e.target.value)}
+                      placeholder="Descrição do filtro"
+                      className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-[#EFEFEF]"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={handleSaveFilter}
+                      className="flex-1 bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E]"
+                      disabled={saveFilter.isPending}
+                    >
+                      {saveFilter.isPending ? "Salvando..." : "Salvar"}
+                    </Button>
+                    <Button
+                      onClick={() => setSaveDialogOpen(false)}
+                      variant="outline"
+                      className="flex-1 border-[rgba(255,255,255,0.1)]"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </CardContent>
       )}
