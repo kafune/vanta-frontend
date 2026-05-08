@@ -14,6 +14,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
+import { PixCheckout } from "@/components/PixCheckout";
 
 interface CartDrawerProps {
   open: boolean;
@@ -28,6 +29,9 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const [couponCode, setCouponCode] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [applyCashback, setApplyCashback] = useState(false);
+  const [showPixCheckout, setShowPixCheckout] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"pix" | "other">("pix");
   
   const sendOrderConfirmationMutation = trpc.email.sendOrderConfirmation.useMutation();
   const recordCouponUsageMutation = trpc.coupons.recordUsage.useMutation();
@@ -286,23 +290,51 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <span>€{finalTotal.toFixed(2)}</span>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2 pt-2">
-              <Button
-                onClick={handleCheckout}
-                disabled={isCheckingOut || sendOrderConfirmationMutation.isPending}
-                className="w-full bg-[#FFFFFF] text-[#0B0B0B] hover:bg-[#F0F0F0] font-heading font-semibold"
-              >
-                {isCheckingOut || sendOrderConfirmationMutation.isPending ? "Processando..." : "Checkout"}
-              </Button>
-              <Button
-                onClick={() => clearCart()}
-                variant="outline"
-                className="w-full border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
-              >
-                Limpar Carrinho
-              </Button>
-            </div>
+            {/* PIX Checkout */}
+            {showPixCheckout && currentOrderId ? (
+              <PixCheckout
+                orderId={currentOrderId}
+                amount={Math.round(finalTotal * 100)}
+                onPaymentConfirmed={() => {
+                  setShowPixCheckout(false);
+                  clearCart();
+                  removeCoupon();
+                  setApplyCashback(false);
+                  setIsCheckingOut(false);
+                  onOpenChange(false);
+                  setLocation(`/checkout/success?orderId=${currentOrderId}`);
+                }}
+                onCancel={() => {
+                  setShowPixCheckout(false);
+                  setCurrentOrderId(null);
+                }}
+              />
+            ) : (
+              <>
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button
+                    onClick={() => {
+                      const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
+                      setCurrentOrderId(orderId);
+                      setShowPixCheckout(true);
+                      setIsCheckingOut(true);
+                    }}
+                    disabled={isCheckingOut || sendOrderConfirmationMutation.isPending || items.length === 0}
+                    className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
+                  >
+                    💳 Pagar com PIX
+                  </Button>
+                  <Button
+                    onClick={() => clearCart()}
+                    variant="outline"
+                    className="w-full border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
+                  >
+                    Limpar Carrinho
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </DrawerContent>

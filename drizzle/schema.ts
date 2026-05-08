@@ -199,3 +199,35 @@ export const savedFilters = mysqlTable("savedFilters", {
 
 export type SavedFilter = typeof savedFilters.$inferSelect;
 export type InsertSavedFilter = typeof savedFilters.$inferInsert;
+
+
+// PIX Payments table - store PIX payment transactions
+export const pixPayments = mysqlTable("pixPayments", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  orderId: varchar("orderId", { length: 64 }).notNull(),
+  userId: int("userId").notNull(),
+  amount: int("amount").notNull(), // in cents
+  pixKey: varchar("pixKey", { length: 255 }).notNull(), // PIX key used
+  qrCode: text("qrCode").notNull(), // QR code data (base64 or string)
+  brCode: text("brCode").notNull(), // BR Code for PIX
+  status: mysqlEnum("status", ["pending", "confirmed", "failed", "expired"]).default("pending").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(), // QR code expiration time
+  confirmedAt: timestamp("confirmedAt"), // when payment was confirmed
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PixPayment = typeof pixPayments.$inferSelect;
+export type InsertPixPayment = typeof pixPayments.$inferInsert;
+
+// PIX Transactions log - track all PIX payment attempts
+export const pixTransactions = mysqlTable("pixTransactions", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  pixPaymentId: varchar("pixPaymentId", { length: 64 }).notNull(),
+  status: mysqlEnum("status", ["pending", "confirmed", "failed"]).default("pending").notNull(),
+  message: text("message"), // error or success message
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PixTransaction = typeof pixTransactions.$inferSelect;
+export type InsertPixTransaction = typeof pixTransactions.$inferInsert;

@@ -228,3 +228,21 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Create vitest tests for saved filters (10 tests passing)
 - [x] Test end-to-end: save filter → load filter → verify values → delete filter
 - [x] Integrate SavedFiltersList into AdminDashboard
+
+
+## PIX Payment System (COMPLETE)
+- [x] Research and select PIX API provider (Mercado Pago, Asaas, Braspag, or similar)
+- [x] Configure PIX API credentials and environment variables
+- [x] Create payments and transactions tables in database
+- [x] Implement tRPC procedure to generate PIX QR Code (dynamic)
+- [x] Implement tRPC procedure to generate random PIX key (chave aleatória)
+- [x] Create PIX payment component with QR Code display
+- [x] Create PIX payment component with random key display
+- [x] Integrate PIX into checkout flow
+- [x] Add PIX payment method selection in CartDrawer
+- [x] Implement webhook for payment confirmation
+- [x] Add payment status tracking (pending, confirmed, failed)
+- [x] Create vitest tests for PIX system (10+ tests)
+- [x] Test end-to-end: checkout → generate PIX → simulate payment confirmation
+- [x] Add order status update on payment confirmation
+- [x] Create PIX payment documentation
