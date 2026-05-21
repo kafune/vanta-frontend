@@ -128,8 +128,8 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 
 
 ## Performance & Optimization
-- [ ] Implement image lazy loading for product grids
-- [ ] Add pagination to product listings (currently loading all)
+- [x] Implement image lazy loading for product grids (via React.lazy + Suspense)
+- [x] Add pagination to product listings (getPaginated procedure with limit/offset)
 - [ ] Optimize database queries with proper indexing
 - [ ] Implement caching strategy for product data
 - [ ] Add service worker for offline support
