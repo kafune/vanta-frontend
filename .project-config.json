@@ -1,0 +1,43 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://5a8ty1ZSAA6oDi7.root:mUCxCu4nh5lu79t3a4nF@gateway05.us-east-1.prod.aws.tidbcloud.com:4000/LJQd3ZRoW3TSgjTHQuTJmW?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": null,
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW",
+    "access_key_id": "ASIAZV3A2ECZGS7C45BG",
+    "secret_access_key": "LeQALzk5U+LNOJdwifLBrSsXlCvmS1iAifTBbFlj",
+    "session_token": "IQoJb3JpZ2luX2VjED0aCXVzLWVhc3QtMSJGMEQCIE1Qqg/pGSmiw9UB/fF8mfQyD4E6RBB7Oau5RTLayK9VAiAaI5ka7ZJl8feSIFWOzyv9Y5t7JQEcB/dqmBC3KuzZAyr2AwgGEAQaDDY2NTM4NjA5ODg2NiIMquhFtohJVTa3dECuKtMDprlfIc2jVqwEr5ttMHlxVYMHJLQ/ilEA7G/iP+Qv5R/h4rZi1cZTlZ05LIU5z74erZrraas4zI9nFK4P7vTwv3R8sElBJF/XjwJiyuTMwJgRUyz3ir7iMV5F98CaUK8NS8I/hB4LJiHCZT2nFq5Ch6F5s8vVUICalwO9sKt0nI5UzIlmlhK7YCP3UL0tfH0HQ6JFLM7YTdDxR27kUy9/ZACGbDD0adryF+9o65gk1pCzJ/+Cctb67NcvC5jkR/3lB4zggj39qSDbwDvm5pTA2Qv9Q3IpVoRfJho85ubXvGE2Mc88kr/9EDIhNQiPtNPMMv6aIn+fOISVhM8adORwthtaME8p716i692PvV4+W4gfEFy3ZlovHisDwQ9MOU1o7kAN9GVxx/D2m8qZSv9Il7CEeJqtUIJGoCZAkAkzDpdIY67D4fvHZLUSxi0U5WSK2+eft7P8E391wOhlMVrTSWTT2PpyyCRAsdLXGDzTpHCVpfgJSTQcz5+2TEMX/rz6Y4Qysw+WukjyuyYDJYk13KmieJ4f1OzhvnZGeEbI8KFdGEK1EkdqO+BCa2ssOw7vkSUSOeMYVgmXVF7DZS8RasjaGduT2Vuy4K+/nr6lYvPYu/gw7fy70AY6ngHQbkQHpCkN/IXudqEDGIlEKneGyQHMw9GEPL5ehYW3XT+1gSM88FvUF64BF8ZPdb9+XNNwF4YnqxtURxQet6l3ZkJM2xpxKIYddqR17/yPVbh0XsZ8InatkLZ+B6cVwW0wwm/y2usSIIY3hD/zZL3ZB+Z5zvhCHG/J4CNnxf1b2KfzD9v4+FcHmOuuWNTtIQ8975mnagj7yyxxftOy6g==",
+    "expiration": "2026-05-22T00:45:33.000Z"
+  },
+  "name": "dark-fashion-store",
+  "path": "/home/ubuntu/dark-fashion-store",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "PwouXtSKxYuFcsYBUQQGUZ",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "T5SAKDojS3rGMixvrHYyvB",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Pedro Costa",
+    "OWNER_OPEN_ID": "djRqwKgsSDrXi92wftGCbw",
+    "PIX_KEY": "42842274830",
+    "PIX_OWNER_NAME": "PedroAraujoCosta",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "24da610c-a13d-4f61-be9b-fa091fcf0f05",
+    "VITE_APP_ID": "LJQd3ZRoW3TSgjTHQuTJmW",
+    "VITE_APP_LOGO": "https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663562545777/UqUGzxXKpUJOwUBt.png",
+    "VITE_APP_TITLE": "OBSIDIAN — Premium Fashion Store",
+    "VITE_FRONTEND_FORGE_API_KEY": "eePfUbMZUr4AmgjJwdYAYc",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}

@@ -246,3 +246,15 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Test end-to-end: checkout → generate PIX → simulate payment confirmation
 - [x] Add order status update on payment confirmation
 - [x] Create PIX payment documentation
+
+
+## PIX Expiration Timer (COMPLETE)
+- [x] Create ExpirationTimer component with countdown display
+- [x] Add visual progress bar for remaining time
+- [x] Implement color changes (green → yellow → red) as time runs out
+- [x] Add warning alert when less than 5 minutes remain
+- [x] Integrate timer into PixCheckout component
+- [x] Implement automatic QR Code regeneration on expiration
+- [x] Add toast notification when QR Code expires
+- [x] Create vitest tests for timer functionality (10 tests passing)
+- [x] Test end-to-end: display timer → watch countdown → handle expiration
