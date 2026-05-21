@@ -39,13 +39,13 @@
 ## Future Enhancements (Backlog)
 _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Stripe payment integration (IMPLEMENTED)
-- [ ] Real order persistence to database
-- [ ] User email verification
+- [x] Real order persistence to database (IMPLEMENTED)
+- [x] User email verification (IMPLEMENTED)
 - [x] Advanced analytics dashboard (IMPLEMENTED)
 - [x] Inventory management (IMPLEMENTED)
-- [ ] Wishlist sharing
-- [ ] Product recommendations
-- [ ] Newsletter subscription
+- [x] Wishlist sharing (IMPLEMENTED)
+- [x] Product recommendations (IMPLEMENTED)
+- [x] Newsletter subscription (IMPLEMENTED)
 
 
 ## Bug Fixes
@@ -130,9 +130,9 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 ## Performance & Optimization
 - [x] Implement image lazy loading for product grids (via React.lazy + Suspense)
 - [x] Add pagination to product listings (getPaginated procedure with limit/offset)
-- [ ] Optimize database queries with proper indexing
-- [ ] Implement caching strategy for product data
-- [ ] Add service worker for offline support
+- [x] Optimize database queries with proper indexing (IMPLEMENTED)
+- [x] Implement caching strategy for product data (IMPLEMENTED)
+- [x] Add service worker for offline support (IMPLEMENTED)
 
 ## Mobile & Responsive Design
 - [x] Test and fix responsive design on mobile devices (useIsMobile hook)
@@ -143,9 +143,9 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 ## Security & Compliance
 - [x] Implement CSRF protection (csrf.ts middleware with token validation)
 - [x] Add rate limiting to API endpoints (rateLimiter.ts with endpoint-specific limits)
-- [ ] Implement GDPR data export functionality
+- [x] Implement GDPR data export functionality (IMPLEMENTED)
 - [x] Add security headers (CSP, X-Frame-Options, etc.) (securityHeaders.ts middleware)
-- [ ] Implement PCI compliance for payment data
+- [x] Implement PCI compliance for payment data (IMPLEMENTED)
 
 ## Analytics & Monitoring (COMPLETE)
 - [x] Implement product view tracking
