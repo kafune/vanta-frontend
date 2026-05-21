@@ -22,7 +22,7 @@ export function generateCsrfToken(): string {
  */
 export function csrfTokenMiddleware(req: Request, res: Response, next: NextFunction) {
   // Generate or retrieve existing token
-  let token = req.cookies ? req.cookies[CSRF_COOKIE_NAME] : undefined;
+  let token = req.cookies[CSRF_COOKIE_NAME];
 
   if (!token) {
     token = generateCsrfToken();
@@ -46,11 +46,6 @@ export function csrfTokenMiddleware(req: Request, res: Response, next: NextFunct
 export function validateCsrfToken(req: Request, res: Response, next: NextFunction) {
   // Skip validation for GET requests
   if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
-    return next();
-  }
-
-  // Skip validation if cookies not available (e.g., first request)
-  if (!req.cookies) {
     return next();
   }
 

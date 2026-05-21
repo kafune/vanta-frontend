@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { ShoppingBag, Search, Menu, X, User, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
-import EnhancedCartDrawer from "./EnhancedCartDrawer";
+import CartDrawer from "./CartDrawer";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -138,8 +138,8 @@ export default function Navbar() {
 
 
 
-      {/* Enhanced Cart Drawer with Real-Time Inventory Validation & Promotions */}
-      <EnhancedCartDrawer open={cartOpen} onOpenChange={setCartOpen} />
+      {/* Cart Drawer */}
+      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
     </>
   );
 }

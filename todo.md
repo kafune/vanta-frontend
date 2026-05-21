@@ -39,13 +39,13 @@
 ## Future Enhancements (Backlog)
 _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Stripe payment integration (IMPLEMENTED)
-- [x] Real order persistence to database (IMPLEMENTED)
-- [x] User email verification (IMPLEMENTED)
+- [ ] Real order persistence to database
+- [ ] User email verification
 - [x] Advanced analytics dashboard (IMPLEMENTED)
 - [x] Inventory management (IMPLEMENTED)
-- [x] Wishlist sharing (IMPLEMENTED)
-- [x] Product recommendations (IMPLEMENTED)
-- [x] Newsletter subscription (IMPLEMENTED)
+- [ ] Wishlist sharing
+- [ ] Product recommendations
+- [ ] Newsletter subscription
 
 
 ## Bug Fixes
@@ -130,9 +130,9 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 ## Performance & Optimization
 - [x] Implement image lazy loading for product grids (via React.lazy + Suspense)
 - [x] Add pagination to product listings (getPaginated procedure with limit/offset)
-- [x] Optimize database queries with proper indexing (IMPLEMENTED)
-- [x] Implement caching strategy for product data (IMPLEMENTED)
-- [x] Add service worker for offline support (IMPLEMENTED)
+- [ ] Optimize database queries with proper indexing
+- [ ] Implement caching strategy for product data
+- [ ] Add service worker for offline support
 
 ## Mobile & Responsive Design
 - [x] Test and fix responsive design on mobile devices (useIsMobile hook)
@@ -143,9 +143,9 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 ## Security & Compliance
 - [x] Implement CSRF protection (csrf.ts middleware with token validation)
 - [x] Add rate limiting to API endpoints (rateLimiter.ts with endpoint-specific limits)
-- [x] Implement GDPR data export functionality (IMPLEMENTED)
+- [ ] Implement GDPR data export functionality
 - [x] Add security headers (CSP, X-Frame-Options, etc.) (securityHeaders.ts middleware)
-- [x] Implement PCI compliance for payment data (IMPLEMENTED)
+- [ ] Implement PCI compliance for payment data
 
 ## Analytics & Monitoring (COMPLETE)
 - [x] Implement product view tracking
@@ -258,12 +258,3 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Add toast notification when QR Code expires
 - [x] Create vitest tests for timer functionality (10 tests passing)
 - [x] Test end-to-end: display timer → watch countdown → handle expiration
-
-
-## Shopping Cart Enhancement (COMPLETE)
-- [x] Create enhanced CartDrawer component with real-time inventory validation (EnhancedCartDrawer.tsx)
-- [x] Implement promotion code input and validation UI (integrated in EnhancedCartDrawer)
-- [x] Add discount calculation and display (PromotionBanner component)
-- [x] Create cart item quantity validation against inventory (useInventoryValidation hook)
-- [x] Add promotion code error handling and feedback (usePromotions hook)
-- [x] Create comprehensive tests for cart drawer with promotions (3 test files)
