@@ -22,7 +22,8 @@ export function generateCsrfToken(): string {
  */
 export function csrfTokenMiddleware(req: Request, res: Response, next: NextFunction) {
   // Generate or retrieve existing token
-  let token = req.cookies[CSRF_COOKIE_NAME];
+  const cookies = req.cookies || {};
+  let token = cookies[CSRF_COOKIE_NAME];
 
   if (!token) {
     token = generateCsrfToken();
@@ -49,7 +50,8 @@ export function validateCsrfToken(req: Request, res: Response, next: NextFunctio
     return next();
   }
 
-  const tokenFromCookie = req.cookies[CSRF_COOKIE_NAME];
+  const cookies = req.cookies || {};
+  const tokenFromCookie = cookies[CSRF_COOKIE_NAME];
   const tokenFromHeader = req.headers[CSRF_HEADER_NAME] as string;
 
   if (!tokenFromCookie) {
