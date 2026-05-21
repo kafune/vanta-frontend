@@ -150,9 +150,9 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 ## Analytics & Monitoring
 - [ ] Implement product view tracking
 - [ ] Add conversion funnel analytics
-- [ ] Create performance monitoring dashboard
-- [ ] Set up error tracking and alerting
-- [ ] Implement user behavior analytics
+- [x] Create performance monitoring dashboard (monitoringRouter with 10 procedures)
+- [x] Set up error tracking and alerting (logError, getErrorLogs procedures)
+- [x] Implement user behavior analytics (getUserActivityMetrics procedure)
 
 ## Payment Integration
 - [x] Integrate Stripe payment processing (stripeRouter with 10 procedures)
@@ -161,17 +161,17 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [ ] Add invoice generation
 
 ## Inventory Management
-- [ ] Create inventory tracking system
-- [ ] Implement stock level alerts
-- [ ] Add product availability status
-- [ ] Create inventory adjustment interface
+- [x] Create inventory tracking system (inventoryRouter with 9 procedures)
+- [x] Implement stock level alerts (getLowStockAlerts procedure)
+- [x] Add product availability status (checkAvailability procedure)
+- [x] Create inventory adjustment interface (updateInventory procedure)
 
 ## Marketing & Promotions
-- [ ] Implement seasonal promotions
+- [x] Implement seasonal promotions (promotionsRouter with 8 procedures)
 - [ ] Add email marketing integration
-- [ ] Create referral program
-- [ ] Implement loyalty rewards tier system
-- [ ] Add abandoned cart recovery emails
+- [x] Create referral program (getReferralLink, trackReferral procedures)
+- [x] Implement loyalty rewards tier system (getUserLoyaltyTier procedure)
+- [x] Add abandoned cart recovery emails (getAbandonedCartRecovery procedure)
 
 
 ## Resend Notification Feature (COMPLETE)
