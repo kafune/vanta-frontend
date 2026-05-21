@@ -11,6 +11,11 @@ import { Request, Response, NextFunction } from "express";
 export function securityHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
   // Content Security Policy
   // Restricts resources that can be loaded
+  // Allow framing from Manus preview panel in development
+  const frameAncestors = process.env.NODE_ENV === "development" 
+    ? "frame-ancestors 'self' https://*.manus.computer https://manus.im" 
+    : "frame-ancestors 'none'";
+  
   res.setHeader(
     "Content-Security-Policy",
     "default-src 'self'; " +
@@ -19,7 +24,7 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
     "font-src 'self' https://fonts.gstatic.com data:; " +
     "img-src 'self' https: data: blob:; " +
     "connect-src 'self' https:; " +
-    "frame-ancestors 'none'; " +
+    frameAncestors + "; " +
     "base-uri 'self'; " +
     "form-action 'self'"
   );
@@ -30,7 +35,11 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
 
   // X-Frame-Options
   // Prevents clickjacking attacks
-  res.setHeader("X-Frame-Options", "DENY");
+  // Allow framing from Manus in development for preview panel
+  const xFrameOptions = process.env.NODE_ENV === "development" 
+    ? "ALLOWALL" 
+    : "DENY";
+  res.setHeader("X-Frame-Options", xFrameOptions);
 
   // X-XSS-Protection
   // Enables browser XSS protection
