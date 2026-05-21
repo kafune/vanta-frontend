@@ -1,9 +1,9 @@
 /**
  * useInventoryValidation Hook
- * Validates product inventory in real-time
+ * Validates product inventory in real-time using tRPC queries
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 
 export interface InventoryItem {
@@ -24,66 +24,71 @@ export function useInventoryValidation(items: CartItemForValidation[]) {
   const [isValidating, setIsValidating] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
-  const checkInventoryMutation = trpc.inventory.checkAvailability.useMutation?.() || { mutateAsync: async () => ({ available: 0, reserved: 0 }) };
+  // Extract product IDs for batch inventory check
+  const productIds = useMemo(() => items.map((item) => item.id), [items]);
 
-  const validateInventory = useCallback(async () => {
-    if (items.length === 0) {
+  // Use tRPC query to fetch inventory for all products at once
+  const { data: inventoryData, isLoading } = trpc.inventory.getInventoryBatch.useQuery(
+    { productIds },
+    {
+      enabled: productIds.length > 0,
+      staleTime: 30000, // Cache for 30 seconds
+    }
+  );
+
+  // Validate inventory whenever items or inventory data changes
+  const validateInventory = useCallback(() => {
+    if (!inventoryData || items.length === 0) {
       setInventoryStatus(new Map());
       setErrors([]);
       return;
     }
 
-    setIsValidating(true);
     const errorList: string[] = [];
     const statusMap = new Map<string, InventoryItem>();
 
-    try {
-      for (const item of items) {
-        try {
-          const result = await (checkInventoryMutation?.mutateAsync || (async () => ({ available: 0, reserved: 0 })))({
-            productId: item.id,
-            quantity: item.quantity,
-          });
+    for (const item of items) {
+      const inv = inventoryData.find((i) => i.productId === item.id);
 
-          const status: InventoryItem = {
-            productId: item.id,
-            available: result.available,
-            reserved: result.reserved,
-            status:
-              result.available === 0
-                ? "out_of_stock"
-                : result.available < item.quantity
-                  ? "low"
-                  : "available",
-          };
-
-          statusMap.set(item.id, status);
-
-          if (result.available < item.quantity) {
-            errorList.push(
-              `${item.name}: apenas ${result.available} unidade(s) disponível(is)`
-            );
-          }
-
-          if (result.available === 0) {
-            errorList.push(`${item.name}: fora de estoque`);
-          }
-        } catch (error) {
-          errorList.push(`Erro ao validar ${item.name}`);
-        }
+      if (!inv) {
+        errorList.push(`${item.name}: produto não encontrado`);
+        continue;
       }
 
-      setInventoryStatus(statusMap);
-      setErrors(errorList);
-    } finally {
-      setIsValidating(false);
-    }
-  }, [items, checkInventoryMutation]);
+      const status: InventoryItem = {
+        productId: item.id,
+        available: inv.available || 0,
+        reserved: inv.reserved || 0,
+        status:
+          inv.available === 0
+            ? "out_of_stock"
+            : inv.available < item.quantity
+              ? "low"
+              : "available",
+      };
 
-  // Validate inventory whenever items change
+      statusMap.set(item.id, status);
+
+      if (inv.available < item.quantity) {
+        errorList.push(
+          `${item.name}: apenas ${inv.available} unidade(s) disponível(is)`
+        );
+      }
+
+      if (inv.available === 0) {
+        errorList.push(`${item.name}: fora de estoque`);
+      }
+    }
+
+    setInventoryStatus(statusMap);
+    setErrors(errorList);
+  }, [items, inventoryData]);
+
+  // Validate whenever items or inventory data changes
   useEffect(() => {
+    setIsValidating(isLoading);
     validateInventory();
-  }, [items, validateInventory]);
+  }, [items, inventoryData, isLoading, validateInventory]);
 
   const hasErrors = errors.length > 0;
   const allAvailable = items.every((item) => {
@@ -93,7 +98,7 @@ export function useInventoryValidation(items: CartItemForValidation[]) {
 
   return {
     inventoryStatus,
-    isValidating,
+    isValidating: isValidating || isLoading,
     errors,
     hasErrors,
     allAvailable,

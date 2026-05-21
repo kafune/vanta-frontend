@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Minus, X, ShoppingBag, AlertCircle, CheckCircle, Tag } from "lucide-react";
 import { useCart, CartItem } from "@/hooks/useCart";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useInventoryValidation } from "@/hooks/useInventoryValidation";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -41,68 +42,31 @@ export default function EnhancedCartDrawer({ open, onOpenChange }: EnhancedCartD
   // Promotion and inventory state
   const [promotionCode, setPromotionCode] = useState("");
   const [appliedPromotion, setAppliedPromotion] = useState<AppliedPromotion | null>(null);
-  const [inventoryStatus, setInventoryStatus] = useState<Map<string, InventoryStatus>>(new Map());
-  const [isValidatingInventory, setIsValidatingInventory] = useState(false);
   const [isApplyingPromotion, setIsApplyingPromotion] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  
+  // Local state for syncing with hook
+  const [inventoryStatus, setInventoryStatus] = useState<Map<string, InventoryStatus>>(new Map());
+  const [isValidatingInventory, setIsValidatingInventory] = useState(false);
   const [inventoryErrors, setInventoryErrors] = useState<string[]>([]);
 
   // tRPC mutations and queries
-  const checkInventoryMutation = trpc.inventory.checkAvailability.useMutation();
   const applyPromotionMutation = trpc.promotions.applyPromotionCode.useMutation();
   const sendOrderConfirmationMutation = trpc.email.sendOrderConfirmation.useMutation();
+  
+  // Use the useInventoryValidation hook for real-time inventory checks
+  const { inventoryStatus: hookInventoryStatus, isValidating: isValidatingInventoryHook, errors: inventoryErrorsHook } = useInventoryValidation(items);
 
-  // Validate inventory on cart change
+  // Sync inventory validation from hook
   useEffect(() => {
-    if (items.length === 0) {
-      setInventoryStatus(new Map());
-      setInventoryErrors([]);
-      return;
+    setInventoryStatus(hookInventoryStatus);
+    setInventoryErrors(inventoryErrorsHook);
+    setIsValidatingInventory(isValidatingInventoryHook);
+
+    if (inventoryErrorsHook.length > 0) {
+      toast.error("Alguns itens têm disponibilidade limitada");
     }
-
-    const validateInventory = async () => {
-      setIsValidatingInventory(true);
-      const errors: string[] = [];
-      const statusMap = new Map<string, InventoryStatus>();
-
-      try {
-        for (const item of items) {
-          try {
-            const result = await checkInventoryMutation.mutateAsync({
-              productId: item.id,
-              quantity: item.quantity,
-            });
-
-            statusMap.set(item.id, {
-              productId: item.id,
-              available: result.available,
-              reserved: result.reserved,
-              status: result.available >= item.quantity ? "available" : "low",
-            });
-
-            if (result.available < item.quantity) {
-              errors.push(
-                `${item.name}: apenas ${result.available} unidade(s) disponível(is)`
-              );
-            }
-          } catch (error) {
-            errors.push(`Erro ao validar ${item.name}`);
-          }
-        }
-
-        setInventoryStatus(statusMap);
-        setInventoryErrors(errors);
-
-        if (errors.length > 0) {
-          toast.error("Alguns itens têm disponibilidade limitada");
-        }
-      } finally {
-        setIsValidatingInventory(false);
-      }
-    };
-
-    validateInventory();
-  }, [items, checkInventoryMutation]);
+  }, [hookInventoryStatus, isValidatingInventoryHook, inventoryErrorsHook]);
 
   // Handle promotion code application
   const handleApplyPromotion = async () => {
