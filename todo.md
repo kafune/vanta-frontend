@@ -258,3 +258,12 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Add toast notification when QR Code expires
 - [x] Create vitest tests for timer functionality (10 tests passing)
 - [x] Test end-to-end: display timer → watch countdown → handle expiration
+
+
+## Shopping Cart Enhancement (COMPLETE)
+- [x] Create enhanced CartDrawer component with real-time inventory validation (EnhancedCartDrawer.tsx)
+- [x] Implement promotion code input and validation UI (integrated in EnhancedCartDrawer)
+- [x] Add discount calculation and display (PromotionBanner component)
+- [x] Create cart item quantity validation against inventory (useInventoryValidation hook)
+- [x] Add promotion code error handling and feedback (usePromotions hook)
+- [x] Create comprehensive tests for cart drawer with promotions (3 test files)
