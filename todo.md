@@ -155,9 +155,9 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [ ] Implement user behavior analytics
 
 ## Payment Integration
-- [ ] Integrate Stripe payment processing
-- [ ] Add multiple payment method support
-- [ ] Implement payment retry logic
+- [x] Integrate Stripe payment processing (stripeRouter with 10 procedures)
+- [x] Add multiple payment method support (getPaymentMethods, deletePaymentMethod)
+- [x] Implement payment retry logic (handleWebhook with retry logic)
 - [ ] Add invoice generation
 
 ## Inventory Management

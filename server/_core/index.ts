@@ -10,7 +10,7 @@ import { serveStatic, setupVite } from "./vite";
 import { securityHeadersMiddleware } from "../middleware/securityHeaders";
 import { csrfTokenMiddleware, validateCsrfToken } from "../middleware/csrf";
 import { rateLimiters, startRateLimitCleanup } from "../middleware/rateLimiter";
-
+import cookieParser from "cookie-parser";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
