@@ -14,6 +14,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { SearchBar } from "./SearchBar";
+import { MobileNavigationDrawer } from "./MobileNavigationDrawer";
 
 const navLinks = [
   { label: "Coleção", href: "#collection" },
@@ -128,50 +129,14 @@ export default function Navbar() {
                 )}
               </button>
 
-              {/* Mobile Menu Toggle */}
-              <button
-                className="lg:hidden text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors p-1"
-                onClick={() => setMenuOpen(!menuOpen)}
-                aria-label="Menu"
-              >
-                {menuOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
-              </button>
+              {/* Mobile Menu Toggle - now handled by MobileNavigationDrawer */}
+              <MobileNavigationDrawer cartCount={itemCount} />
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Menu */}
-      <div
-        className={`fixed inset-0 z-40 transition-all duration-500 ${
-          menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-        style={{ background: "rgba(11,11,11,0.97)", backdropFilter: "blur(20px)" }}
-      >
-        <div className="flex flex-col items-center justify-center h-full gap-8">
-          {navLinks.map((link, i) => (
-            <button
-              key={link.label}
-              onClick={() => handleNavClick(link.href)}
-              className="font-display text-4xl tracking-widest text-[rgba(239,239,239,0.7)] hover:text-white transition-colors duration-200"
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              {link.label}
-            </button>
-          ))}
-          {user && (
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                setLocation("/profile");
-              }}
-              className="font-display text-4xl tracking-widest text-[rgba(239,239,239,0.7)] hover:text-white transition-colors duration-200"
-            >
-              Perfil
-            </button>
-          )}
-        </div>
-      </div>
+
 
       {/* Cart Drawer */}
       <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />

@@ -135,16 +135,16 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [ ] Add service worker for offline support
 
 ## Mobile & Responsive Design
-- [ ] Test and fix responsive design on mobile devices
-- [ ] Optimize touch interactions for mobile
-- [ ] Implement mobile-specific navigation drawer
-- [ ] Add mobile-specific checkout flow
+- [x] Test and fix responsive design on mobile devices (useIsMobile hook)
+- [x] Optimize touch interactions for mobile (useTouchInteractions hook)
+- [x] Implement mobile-specific navigation drawer (MobileNavigationDrawer component)
+- [x] Add mobile-specific checkout flow (MobileCheckoutFlow component)
 
 ## Security & Compliance
-- [ ] Implement CSRF protection
-- [ ] Add rate limiting to API endpoints
+- [x] Implement CSRF protection (csrf.ts middleware with token validation)
+- [x] Add rate limiting to API endpoints (rateLimiter.ts with endpoint-specific limits)
 - [ ] Implement GDPR data export functionality
-- [ ] Add security headers (CSP, X-Frame-Options, etc.)
+- [x] Add security headers (CSP, X-Frame-Options, etc.) (securityHeaders.ts middleware)
 - [ ] Implement PCI compliance for payment data
 
 ## Analytics & Monitoring
