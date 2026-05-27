@@ -131,8 +131,8 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Implement image lazy loading for product grids (via React.lazy + Suspense)
 - [x] Add pagination to product listings (getPaginated procedure with limit/offset)
 - [x] Optimize database queries with proper indexing (DATABASE_OPTIMIZATION.md with 16 tables and comprehensive indexing strategy)
-- [ ] Implement caching strategy for product data
-- [ ] Add service worker for offline support
+- [x] Implement caching strategy for product data (CACHING_STRATEGY.md + useProductCache hook with 35 tests)
+- [x] Add service worker for offline support (service-worker.js + offline.html + manifest.json + PWA meta tags)
 
 ## Mobile & Responsive Design
 - [x] Test and fix responsive design on mobile devices (useIsMobile hook)
