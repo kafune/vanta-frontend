@@ -15,6 +15,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
 import Wishlist from "./pages/Wishlist";
 import SearchResults from "./pages/SearchResults";
+import Collections from "./pages/Collections";
+import CollectionDetail from "./pages/CollectionDetail";
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
@@ -27,6 +29,8 @@ function Router() {
       <Route path={"/profile"} component={Profile} />
       <Route path={"/wishlist"} component={Wishlist} />
       <Route path={"/search"} component={SearchResults} />
+      <Route path={"/collections"} component={Collections} />
+      <Route path={"/collection/:collectionId"} component={CollectionDetail} />
       <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/checkout/success"} component={CheckoutSuccess} />
       <Route path={"/track/:orderId"} component={OrderTracking} />

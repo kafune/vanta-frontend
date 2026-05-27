@@ -71,6 +71,13 @@
       "when": 1778264671151,
       "tag": "0009_majestic_wolverine",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1779883105026,
+      "tag": "0010_kind_silvermane",
+      "breakpoints": true
     }
   ]
 }

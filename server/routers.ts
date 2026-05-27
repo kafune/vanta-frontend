@@ -20,6 +20,7 @@ import { inventoryRouter } from "./routers/inventory";
 import { promotionsRouter } from "./routers/promotions";
 import { monitoringRouter } from "./routers/monitoring";
 import { emailMarketingRouter } from "./routers/email-marketing";
+import { collectionsRouter } from "./routers/collections";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -51,6 +52,7 @@ export const appRouter = router({
   promotions: promotionsRouter,
   monitoring: monitoringRouter,
   emailMarketing: emailMarketingRouter,
+  collections: collectionsRouter,
 
   email: router({
     sendOrderConfirmation: publicProcedure

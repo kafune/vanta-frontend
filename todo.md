@@ -258,3 +258,16 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Add toast notification when QR Code expires
 - [x] Create vitest tests for timer functionality (10 tests passing)
 - [x] Test end-to-end: display timer → watch countdown → handle expiration
+
+
+## Collections Feature (COMPLETE)
+- [x] Create Collections page with category grid (Collections.tsx with 6 collections)
+- [x] Create CollectionDetail page for products (CollectionDetail.tsx with product selection)
+- [x] Add collections data to database (collections & collectionProducts tables)
+- [x] Integrate Collections link in Navbar (added to navLinks and routing)
+- [x] Create tests for Collections pages (171 tests passing)
+- [x] Fix collections router to use async database initialization (getDb())
+- [x] Update Collections.tsx to use tRPC queries instead of hardcoded data
+- [x] Update CollectionDetail.tsx to use tRPC queries for products
+- [x] Fix imports and navigation hooks (useLocation from wouter)
+- [x] All 177 tests passing including 6 collections router tests

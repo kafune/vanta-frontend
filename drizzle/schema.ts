@@ -231,3 +231,31 @@ export const pixTransactions = mysqlTable("pixTransactions", {
 
 export type PixTransaction = typeof pixTransactions.$inferSelect;
 export type InsertPixTransaction = typeof pixTransactions.$inferInsert;
+
+
+// Collections table - store product collections
+export const collections = mysqlTable("collections", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  image: varchar("image", { length: 500 }),
+  featured: tinyint("featured").default(0).notNull(),
+  displayOrder: int("displayOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Collection = typeof collections.$inferSelect;
+export type InsertCollection = typeof collections.$inferInsert;
+
+// Collection products table - link products to collections
+export const collectionProducts = mysqlTable("collectionProducts", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  collectionId: varchar("collectionId", { length: 64 }).notNull(),
+  productId: varchar("productId", { length: 64 }).notNull(),
+  displayOrder: int("displayOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CollectionProduct = typeof collectionProducts.$inferSelect;
+export type InsertCollectionProduct = typeof collectionProducts.$inferInsert;

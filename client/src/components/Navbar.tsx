@@ -17,7 +17,7 @@ import { SearchBar } from "./SearchBar";
 import { MobileNavigationDrawer } from "./MobileNavigationDrawer";
 
 const navLinks = [
-  { label: "Coleção", href: "#collection" },
+  { label: "Coleções", href: "/collections", isRoute: true },
   { label: "Categorias", href: "#categories" },
   { label: "Personalize sua peça", href: "#canvas" },
   { label: "Sobre", href: "#about" },
@@ -40,10 +40,14 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleNavClick = (href: string) => {
+  const handleNavClick = (href: string, isRoute?: boolean) => {
     setMenuOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    if (isRoute) {
+      setLocation(href);
+    } else {
+      const el = document.querySelector(href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
@@ -66,10 +70,10 @@ export default function Navbar() {
 
             {/* Desktop Nav Links */}
             <div className="hidden lg:flex items-center gap-8">
-              {navLinks.map((link) => (
+              {navLinks.map((link: any) => (
                 <button
                   key={link.label}
-                  onClick={() => handleNavClick(link.href)}
+                  onClick={() => handleNavClick(link.href, link.isRoute)}
                   className="relative font-heading text-xs font-medium tracking-[0.15em] uppercase text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] transition-colors duration-200 group"
                 >
                   {link.label}
