@@ -49,12 +49,12 @@ describe("Recommendations Router", () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it("should get trending products by category", async () => {
+  it("should get trending products by collection", async () => {
     const caller = appRouter.createCaller(mockUserContext);
 
     const result = await caller.recommendations.getTrending({
       limit: 6,
-      category: "camisetas",
+      collectionId: "col-1",
     });
 
     expect(Array.isArray(result)).toBe(true);
@@ -71,11 +71,11 @@ describe("Recommendations Router", () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it("should get recommendations by category", async () => {
+  it("should get recommendations by collection", async () => {
     const caller = appRouter.createCaller(mockUserContext);
 
-    const result = await caller.recommendations.getByCategory({
-      category: "camisetas",
+    const result = await caller.recommendations.getByCollection({
+      collectionId: "col-1",
       limit: 6,
     });
 
@@ -92,12 +92,12 @@ describe("Recommendations Router", () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it("should get new arrivals by category", async () => {
+  it("should get new arrivals by collection", async () => {
     const caller = appRouter.createCaller(mockUserContext);
 
     const result = await caller.recommendations.getNewArrivals({
       limit: 6,
-      category: "camisetas",
+      collectionId: "col-1",
     });
 
     expect(Array.isArray(result)).toBe(true);
@@ -113,12 +113,12 @@ describe("Recommendations Router", () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it("should get best sellers by category", async () => {
+  it("should get best sellers by collection", async () => {
     const caller = appRouter.createCaller(mockUserContext);
 
     const result = await caller.recommendations.getBestSellers({
       limit: 6,
-      category: "camisetas",
+      collectionId: "col-1",
     });
 
     expect(Array.isArray(result)).toBe(true);
@@ -145,11 +145,11 @@ describe("Recommendations Router", () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it("should get guest recommendations by category", async () => {
+  it("should get guest recommendations by collection", async () => {
     const caller = appRouter.createCaller(mockUserContext);
 
     const result = await caller.recommendations.getForGuest({
-      category: "camisetas",
+      collectionId: "col-1",
       limit: 6,
     });
 

@@ -1,12 +1,14 @@
 /**
  * Product Recommendations Router
  * Handles product recommendations based on user behavior and preferences
+ * Note: collectionProducts only has id, collectionId, productId, displayOrder, createdAt
+ * For full product details, would need to join with products table (not available)
  */
 
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { collectionProducts, reviews, wishlist, orderItems } from "../../drizzle/schema";
+import { collectionProducts, wishlist, orderItems } from "../../drizzle/schema";
 import { eq, inArray, desc } from "drizzle-orm";
 
 export const recommendationsRouter = {
@@ -36,31 +38,31 @@ export const recommendationsRouter = {
           .from(orderItems)
           .where(inArray(orderItems.orderId, [])); // Would need to join with orders table
 
-        // Get highly rated products
-        const topRatedProducts = await db
+        // Get collection products (newest first)
+        const recommendations = await db
           .select()
           .from(collectionProducts)
-          .orderBy(desc(collectionProducts.rating))
-          .limit(input.limit) as any;
+          .orderBy(desc(collectionProducts.createdAt))
+          .limit(input.limit);
 
         // Filter out products already in wishlist
-        const recommendations = topRatedProducts.filter(
-          (p: any) => !wishlistProductIds.includes(p.id)
+        const filtered = recommendations.filter(
+          (p: any) => !wishlistProductIds.includes(p.productId)
         );
 
-        return recommendations.slice(0, input.limit);
+        return filtered.slice(0, input.limit);
       } catch (error) {
         console.error("[Recommendations] Error getting personalized recommendations:", error);
         return [];
       }
     }),
 
-  // Get trending products
+  // Get trending products (by display order)
   getTrending: publicProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(20).default(6),
-        category: z.string().optional(),
+        collectionId: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
@@ -68,12 +70,12 @@ export const recommendationsRouter = {
       if (!db) return [];
 
       try {
-        if (input.category) {
+        if (input.collectionId) {
           const trending = await db
             .select()
             .from(collectionProducts)
-            .where(eq(collectionProducts.category, input.category))
-            .orderBy(desc(collectionProducts.views))
+            .where(eq(collectionProducts.collectionId, input.collectionId))
+            .orderBy(desc(collectionProducts.displayOrder))
             .limit(input.limit);
           return trending;
         }
@@ -81,7 +83,7 @@ export const recommendationsRouter = {
         const trending = await db
           .select()
           .from(collectionProducts)
-          .orderBy(desc(collectionProducts.views))
+          .orderBy(desc(collectionProducts.displayOrder))
           .limit(input.limit);
 
         return trending;
@@ -91,7 +93,7 @@ export const recommendationsRouter = {
       }
     }),
 
-  // Get similar products
+  // Get similar products (from same collection)
   getSimilar: publicProcedure
     .input(
       z.object({
@@ -108,22 +110,22 @@ export const recommendationsRouter = {
         const product = await db
           .select()
           .from(collectionProducts)
-          .where(eq(collectionProducts.id, input.productId))
+          .where(eq(collectionProducts.productId, input.productId))
           .limit(1);
 
         if (!product.length) return [];
 
-        // Get similar products by category and tags
+        // Get similar products from same collection
         const similarProducts = await db
           .select()
           .from(collectionProducts)
-          .where(eq(collectionProducts.category, product[0].category))
-          .orderBy(desc(collectionProducts.rating))
+          .where(eq(collectionProducts.collectionId, product[0].collectionId))
+          .orderBy(desc(collectionProducts.displayOrder))
           .limit(input.limit + 1); // +1 to exclude the original product
 
         // Filter out the original product
         return similarProducts
-          .filter((p) => p.id !== input.productId)
+          .filter((p) => p.productId !== input.productId)
           .slice(0, input.limit);
       } catch (error) {
         console.error("[Recommendations] Error getting similar products:", error);
@@ -131,11 +133,11 @@ export const recommendationsRouter = {
       }
     }),
 
-  // Get recommendations based on category
-  getByCategory: publicProcedure
+  // Get recommendations based on collection
+  getByCollection: publicProcedure
     .input(
       z.object({
-        category: z.string(),
+        collectionId: z.string(),
         limit: z.number().min(1).max(20).default(6),
       })
     )
@@ -144,26 +146,26 @@ export const recommendationsRouter = {
       if (!db) return [];
 
       try {
-        const categoryProducts = await db
+        const collectionItems = await db
           .select()
           .from(collectionProducts)
-          .where(eq(collectionProducts.category, input.category))
-          .orderBy(desc(collectionProducts.rating))
+          .where(eq(collectionProducts.collectionId, input.collectionId))
+          .orderBy(desc(collectionProducts.displayOrder))
           .limit(input.limit);
 
-        return categoryProducts;
+        return collectionItems;
       } catch (error) {
-        console.error("[Recommendations] Error getting category recommendations:", error);
+        console.error("[Recommendations] Error getting collection recommendations:", error);
         return [];
       }
     }),
 
-  // Get new arrivals
+  // Get new arrivals (newest products)
   getNewArrivals: publicProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(20).default(6),
-        category: z.string().optional(),
+        collectionId: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
@@ -171,11 +173,11 @@ export const recommendationsRouter = {
       if (!db) return [];
 
       try {
-        if (input.category) {
+        if (input.collectionId) {
           const newArrivals = await db
             .select()
             .from(collectionProducts)
-            .where(eq(collectionProducts.category, input.category))
+            .where(eq(collectionProducts.collectionId, input.collectionId))
             .orderBy(desc(collectionProducts.createdAt))
             .limit(input.limit);
           return newArrivals;
@@ -194,12 +196,12 @@ export const recommendationsRouter = {
       }
     }),
 
-  // Get best sellers
+  // Get best sellers (by display order - assuming higher order = more popular)
   getBestSellers: publicProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(20).default(6),
-        category: z.string().optional(),
+        collectionId: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
@@ -207,12 +209,12 @@ export const recommendationsRouter = {
       if (!db) return [];
 
       try {
-        if (input.category) {
+        if (input.collectionId) {
           const bestSellers = await db
             .select()
             .from(collectionProducts)
-            .where(eq(collectionProducts.category, input.category))
-            .orderBy(desc(collectionProducts.sold))
+            .where(eq(collectionProducts.collectionId, input.collectionId))
+            .orderBy(desc(collectionProducts.displayOrder))
             .limit(input.limit);
           return bestSellers;
         }
@@ -220,7 +222,7 @@ export const recommendationsRouter = {
         const bestSellers = await db
           .select()
           .from(collectionProducts)
-          .orderBy(desc(collectionProducts.sold))
+          .orderBy(desc(collectionProducts.displayOrder))
           .limit(input.limit);
 
         return bestSellers;
@@ -235,7 +237,7 @@ export const recommendationsRouter = {
     .input(
       z.object({
         productId: z.string().optional(),
-        category: z.string().optional(),
+        collectionId: z.string().optional(),
         limit: z.number().min(1).max(20).default(6),
       })
     )
@@ -245,11 +247,11 @@ export const recommendationsRouter = {
 
       try {
         if (input.productId) {
-          // Return similar products
+          // Return similar products from same collection
           const product = await db
             .select()
             .from(collectionProducts)
-            .where(eq(collectionProducts.id, input.productId))
+            .where(eq(collectionProducts.productId, input.productId))
             .limit(1);
 
           if (!product.length) return [];
@@ -257,28 +259,28 @@ export const recommendationsRouter = {
           const similar = await db
             .select()
             .from(collectionProducts)
-            .where(eq(collectionProducts.category, product[0].category))
-            .orderBy(desc(collectionProducts.rating))
+            .where(eq(collectionProducts.collectionId, product[0].collectionId))
+            .orderBy(desc(collectionProducts.displayOrder))
             .limit(input.limit + 1);
 
-          return similar.filter((p) => p.id !== input.productId).slice(0, input.limit);
+          return similar.filter((p) => p.productId !== input.productId).slice(0, input.limit);
         }
 
-        if (input.category) {
-          // Return top products in category
+        if (input.collectionId) {
+          // Return top products in collection
           return await db
             .select()
             .from(collectionProducts)
-            .where(eq(collectionProducts.category, input.category))
-            .orderBy(desc(collectionProducts.rating))
+            .where(eq(collectionProducts.collectionId, input.collectionId))
+            .orderBy(desc(collectionProducts.displayOrder))
             .limit(input.limit);
         }
 
-        // Return trending products
+        // Return newest products
         return await db
           .select()
           .from(collectionProducts)
-          .orderBy(desc(collectionProducts.views))
+          .orderBy(desc(collectionProducts.createdAt))
           .limit(input.limit);
       } catch (error) {
         console.error("[Recommendations] Error getting guest recommendations:", error);
