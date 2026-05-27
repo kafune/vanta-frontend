@@ -21,6 +21,12 @@ import { promotionsRouter } from "./routers/promotions";
 import { monitoringRouter } from "./routers/monitoring";
 import { emailMarketingRouter } from "./routers/email-marketing";
 import { collectionsRouter } from "./routers/collections";
+import { ordersRouter } from "./routers/orders";
+import { emailVerificationRouter } from "./routers/email-verification";
+import { wishlistSharingRouter } from "./routers/wishlist-sharing";
+import { recommendationsRouter } from "./routers/recommendations";
+import { newsletterRouter } from "./routers/newsletter";
+import { gdprRouter } from "./routers/gdpr";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -53,6 +59,12 @@ export const appRouter = router({
   monitoring: monitoringRouter,
   emailMarketing: emailMarketingRouter,
   collections: collectionsRouter,
+  orders: ordersRouter,
+  emailVerification: emailVerificationRouter,
+  wishlistSharing: wishlistSharingRouter,
+  recommendations: recommendationsRouter,
+  newsletter: newsletterRouter,
+  gdpr: gdprRouter,
 
   email: router({
     sendOrderConfirmation: publicProcedure
