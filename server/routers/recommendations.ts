@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { products, reviews, wishlist, orderItems } from "../../drizzle/schema";
+import { collectionProducts, reviews, wishlist, orderItems } from "../../drizzle/schema";
 import { eq, inArray, desc } from "drizzle-orm";
 
 export const recommendationsRouter = {
@@ -39,13 +39,13 @@ export const recommendationsRouter = {
         // Get highly rated products
         const topRatedProducts = await db
           .select()
-          .from(products)
-          .orderBy(desc(products.rating))
+          .from(collectionProducts)
+          .orderBy(desc(collectionProducts.rating))
           .limit(input.limit) as any;
 
         // Filter out products already in wishlist
         const recommendations = topRatedProducts.filter(
-          (p) => !wishlistProductIds.includes(p.id)
+          (p: any) => !wishlistProductIds.includes(p.id)
         );
 
         return recommendations.slice(0, input.limit);
@@ -68,22 +68,22 @@ export const recommendationsRouter = {
       if (!db) return [];
 
       try {
-        let query = db
-          .select()
-          .from(products)
-          .orderBy(desc(products.views))
-          .limit(input.limit) as any;
-
         if (input.category) {
-          query = db
+          const trending = await db
             .select()
-            .from(products)
-            .where(eq(products.category, input.category))
-            .orderBy(desc(products.views))
-            .limit(input.limit) as any;
+            .from(collectionProducts)
+            .where(eq(collectionProducts.category, input.category))
+            .orderBy(desc(collectionProducts.views))
+            .limit(input.limit);
+          return trending;
         }
 
-        const trending = await query;
+        const trending = await db
+          .select()
+          .from(collectionProducts)
+          .orderBy(desc(collectionProducts.views))
+          .limit(input.limit);
+
         return trending;
       } catch (error) {
         console.error("[Recommendations] Error getting trending products:", error);
@@ -107,8 +107,8 @@ export const recommendationsRouter = {
         // Get the product
         const product = await db
           .select()
-          .from(products)
-          .where(eq(products.id, input.productId))
+          .from(collectionProducts)
+          .where(eq(collectionProducts.id, input.productId))
           .limit(1);
 
         if (!product.length) return [];
@@ -116,9 +116,9 @@ export const recommendationsRouter = {
         // Get similar products by category and tags
         const similarProducts = await db
           .select()
-          .from(products)
-          .where(eq(products.category, product[0].category))
-          .orderBy(desc(products.rating))
+          .from(collectionProducts)
+          .where(eq(collectionProducts.category, product[0].category))
+          .orderBy(desc(collectionProducts.rating))
           .limit(input.limit + 1); // +1 to exclude the original product
 
         // Filter out the original product
@@ -146,9 +146,9 @@ export const recommendationsRouter = {
       try {
         const categoryProducts = await db
           .select()
-          .from(products)
-          .where(eq(products.category, input.category))
-          .orderBy(desc(products.rating))
+          .from(collectionProducts)
+          .where(eq(collectionProducts.category, input.category))
+          .orderBy(desc(collectionProducts.rating))
           .limit(input.limit);
 
         return categoryProducts;
@@ -171,13 +171,22 @@ export const recommendationsRouter = {
       if (!db) return [];
 
       try {
-        let query = db.select().from(products).orderBy(desc(products.createdAt));
-
         if (input.category) {
-          query = query.where(eq(products.category, input.category));
+          const newArrivals = await db
+            .select()
+            .from(collectionProducts)
+            .where(eq(collectionProducts.category, input.category))
+            .orderBy(desc(collectionProducts.createdAt))
+            .limit(input.limit);
+          return newArrivals;
         }
 
-        const newArrivals = await query.limit(input.limit);
+        const newArrivals = await db
+          .select()
+          .from(collectionProducts)
+          .orderBy(desc(collectionProducts.createdAt))
+          .limit(input.limit);
+
         return newArrivals;
       } catch (error) {
         console.error("[Recommendations] Error getting new arrivals:", error);
@@ -198,13 +207,22 @@ export const recommendationsRouter = {
       if (!db) return [];
 
       try {
-        let query = db.select().from(products).orderBy(desc(products.sold));
-
         if (input.category) {
-          query = query.where(eq(products.category, input.category));
+          const bestSellers = await db
+            .select()
+            .from(collectionProducts)
+            .where(eq(collectionProducts.category, input.category))
+            .orderBy(desc(collectionProducts.sold))
+            .limit(input.limit);
+          return bestSellers;
         }
 
-        const bestSellers = await query.limit(input.limit);
+        const bestSellers = await db
+          .select()
+          .from(collectionProducts)
+          .orderBy(desc(collectionProducts.sold))
+          .limit(input.limit);
+
         return bestSellers;
       } catch (error) {
         console.error("[Recommendations] Error getting best sellers:", error);
@@ -230,17 +248,17 @@ export const recommendationsRouter = {
           // Return similar products
           const product = await db
             .select()
-            .from(products)
-            .where(eq(products.id, input.productId))
+            .from(collectionProducts)
+            .where(eq(collectionProducts.id, input.productId))
             .limit(1);
 
           if (!product.length) return [];
 
           const similar = await db
             .select()
-            .from(products)
-            .where(eq(products.category, product[0].category))
-            .orderBy(desc(products.rating))
+            .from(collectionProducts)
+            .where(eq(collectionProducts.category, product[0].category))
+            .orderBy(desc(collectionProducts.rating))
             .limit(input.limit + 1);
 
           return similar.filter((p) => p.id !== input.productId).slice(0, input.limit);
@@ -250,17 +268,17 @@ export const recommendationsRouter = {
           // Return top products in category
           return await db
             .select()
-            .from(products)
-            .where(eq(products.category, input.category))
-            .orderBy(desc(products.rating))
+            .from(collectionProducts)
+            .where(eq(collectionProducts.category, input.category))
+            .orderBy(desc(collectionProducts.rating))
             .limit(input.limit);
         }
 
         // Return trending products
         return await db
           .select()
-          .from(products)
-          .orderBy(desc(products.views))
+          .from(collectionProducts)
+          .orderBy(desc(collectionProducts.views))
           .limit(input.limit);
       } catch (error) {
         console.error("[Recommendations] Error getting guest recommendations:", error);
