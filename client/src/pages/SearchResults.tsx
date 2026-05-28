@@ -1,17 +1,30 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ShoppingBag } from "lucide-react";
-import { useCart } from "@/hooks/useCart";
-import { toast } from "sonner";
+import { Loader2, ArrowLeft } from "lucide-react";
+import { ProductFilters } from "@/components/ProductFilters";
+import { Card } from "@/components/ui/card";
+
+interface FilterState {
+  sizes: string[];
+  colors: string[];
+  minPrice: number;
+  maxPrice: number;
+  sortBy: "relevance" | "newest" | "price_asc" | "price_desc" | "popularity";
+}
 
 export default function SearchResults() {
-  const [location] = useLocation();
-  const { addItem } = useCart();
-  const [sortBy, setSortBy] = useState<"relevance" | "price-asc" | "price-desc" | "newest">("relevance");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [, navigate] = useLocation();
+  const [filters, setFilters] = useState<FilterState>({
+    sizes: [],
+    colors: [],
+    minPrice: 0,
+    maxPrice: 999999,
+    sortBy: "relevance",
+  });
+  const [page, setPage] = useState(0);
+  const limit = 12;
 
   // Get query from URL
   const query = useMemo(() => {
@@ -19,31 +32,34 @@ export default function SearchResults() {
     return params.get("q") || "";
   }, []);
 
-  // Fetch search results
-  const { data: searchResults, isLoading } = trpc.search.search.useQuery(
-    {
-      query,
-      category: selectedCategory && selectedCategory !== "all" ? selectedCategory : undefined,
-      sortBy,
-      limit: 20,
-      offset: 0,
-    },
-    { enabled: !!query }
-  );
+  // Fetch search results using new filter router
+  const { data: searchResults = { results: [], total: 0 }, isLoading } =
+    trpc.productsFilter.search.useQuery(
+      {
+        query,
+        sizes: filters.sizes.length > 0 ? filters.sizes : undefined,
+        colors: filters.colors.length > 0 ? filters.colors : undefined,
+        minPrice: filters.minPrice > 0 ? filters.minPrice : undefined,
+        maxPrice: filters.maxPrice < 999999 ? filters.maxPrice : undefined,
+        sortBy: filters.sortBy,
+        limit,
+        offset: page * limit,
+      },
+      { enabled: query.length > 0 }
+    );
 
-  // Fetch categories
-  const { data: categories = [] } = trpc.search.categories.useQuery();
-
-  const handleAddToCart = (product: any) => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image: "https://via.placeholder.com/300x400?text=" + encodeURIComponent(product.name),
-    });
-    toast.success("Adicionado ao carrinho!", { description: product.name });
+  const handleFiltersChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    setPage(0);
   };
+
+  const handleSearch = (newQuery: string) => {
+    const params = new URLSearchParams();
+    params.set("q", newQuery);
+    window.history.pushState({}, "", `?${params.toString()}`);
+  };
+
+  const totalPages = Math.ceil(searchResults.total / limit);
 
   if (!query) {
     return (
@@ -51,106 +67,141 @@ export default function SearchResults() {
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-3xl font-bold mb-4">Nenhuma busca realizada</h1>
           <p className="text-muted-foreground">Use a barra de pesquisa para encontrar produtos</p>
+          <Button onClick={() => navigate("/collections")} className="mt-4">
+            Ver Coleções
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Resultados da busca</h1>
-          <p className="text-muted-foreground">
-            {searchResults?.total ?? 0} produtos encontrados para "{query}"
-          </p>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="flex-1">
-            <label className="text-sm font-medium mb-2 block">Categoria</label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todas as categorias" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.length > 0 && (
-                  <>
-                    <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex-1">
-            <label className="text-sm font-medium mb-2 block">Ordenar por</label>
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="relevance">Relevância</SelectItem>
-                <SelectItem value="price-asc">Menor preço</SelectItem>
-                <SelectItem value="price-desc">Maior preço</SelectItem>
-                <SelectItem value="newest">Mais recente</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+            className="rounded-full"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Resultados da Busca</h1>
+            <p className="text-muted-foreground">
+              {searchResults.total} produtos encontrados para "{query}"
+            </p>
           </div>
         </div>
 
-        {/* Results */}
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Filters Sidebar */}
+          <div className="lg:col-span-1">
+            <ProductFilters
+              onFiltersChange={handleFiltersChange}
+              onSearch={handleSearch}
+            />
           </div>
-        ) : searchResults?.results.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-muted-foreground mb-4">Nenhum produto encontrado</p>
-            <p className="text-sm text-muted-foreground">Tente refinar sua busca ou explorar outras categorias</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {searchResults?.results.map((product) => (
-              <div key={product.id} className="group">
-                {/* Product image placeholder */}
-                <div className="relative overflow-hidden rounded-lg bg-gray-900 mb-4 aspect-square">
-                  <div className="w-full h-full flex items-center justify-center text-gray-600">
-                    <ShoppingBag className="w-12 h-12" />
-                  </div>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddToCart(product)}
-                      className="bg-white text-black hover:bg-gray-200"
-                    >
-                      Adicionar
-                    </Button>
-                  </div>
+
+          {/* Results */}
+          <div className="lg:col-span-3">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                  <p className="text-muted-foreground">Carregando resultados...</p>
+                </div>
+              </div>
+            ) : searchResults.total === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-muted-foreground mb-4">
+                  Nenhum produto encontrado
+                </p>
+                <Button onClick={() => navigate("/collections")}>
+                  Ver Coleções
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Results Info */}
+                <div className="mb-6">
+                  <p className="text-sm text-muted-foreground">
+                    Mostrando {page * limit + 1} a {Math.min((page + 1) * limit, searchResults.total)} de{" "}
+                    {searchResults.total} resultados
+                  </p>
                 </div>
 
-                {/* Product info */}
-                <h3 className="font-medium text-sm mb-2 line-clamp-2">{product.name}</h3>
-                <p className="text-muted-foreground text-xs mb-3 capitalize">{product.category}</p>
-                <p className="text-lg font-bold">€{(product.price / 100).toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
-        )}
+                {/* Products Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  {searchResults.results.map((product) => (
+                    <Card
+                      key={product.id}
+                      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/collection/${product.collectionId}`)}
+                    >
+                      <div className="aspect-square bg-muted overflow-hidden">
+                        {product.collectionImage ? (
+                          <img
+                            src={product.collectionImage}
+                            alt={product.collectionName}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            Sem imagem
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold truncate">
+                          {product.collectionName}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Produto #{product.productId}
+                        </p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
 
-        {/* Pagination info */}
-        {searchResults && searchResults.total > 20 && (
-          <div className="text-center text-sm text-muted-foreground mb-8">
-            Mostrando {searchResults.results.length} de {searchResults.total} produtos
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      disabled={page === 0}
+                      onClick={() => setPage(page - 1)}
+                    >
+                      Anterior
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }).map((_, i) => (
+                        <Button
+                          key={i}
+                          variant={page === i ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setPage(i)}
+                          className="w-8 h-8"
+                        >
+                          {i + 1}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      disabled={page === totalPages - 1}
+                      onClick={() => setPage(page + 1)}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

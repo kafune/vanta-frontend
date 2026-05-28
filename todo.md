@@ -289,12 +289,12 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 
 - [x] Create product filters database schema (size, color, price range, tags)
 - [x] Implement tRPC procedures for filtering (filterProducts, getAvailableFilters, searchProducts)
-- [x] Create ProductFilters component with UI controls
+- [x] Create ProductFilters component with UI controls (ProductFilters.tsx)
 - [x] Implement price range slider
 - [x] Add size selector (XS, S, M, L, XL, XXL)
 - [x] Add color picker/selector
 - [x] Implement tag-based filtering
-- [x] Create search results page with filters
+- [x] Create search results page with filters (SearchResults.tsx updated)
 - [x] Add filter persistence (localStorage)
 - [x] Implement sorting options (relevance, price, newest, popularity)
 - [x] Create vitest tests for filter system (10 tests passing, 272 total tests)
