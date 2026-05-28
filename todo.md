@@ -296,3 +296,14 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Display login prompt in checkout modal (PIX button shows login prompt when not authenticated)
 - [x] Test end-to-end: unauthenticated user → checkout → redirect to login (272 tests passing)
 - [x] Create vitest tests for authentication guard (CheckoutAuthGuard.test.ts with 8 tests)
+
+
+## Checkout Login Animations & Feedback (COMPLETE)
+- [x] Create CheckoutLoadingOverlay component with smooth animations (CheckoutLoadingOverlay.tsx)
+- [x] Add loading spinner with pulsing effect (rotating ring + pulsing inner ring)
+- [x] Implement fade-in/fade-out transitions (scale and opacity animations)
+- [x] Add progress indicator for login flow (animated progress bar)
+- [x] Create success/error feedback states (CheckCircle and AlertCircle icons)
+- [x] Integrate animations into CheckoutAuthGuard (loading state management)
+- [x] Add button feedback during login ("Conectando..." state)
+- [x] Create vitest tests for animation components (CheckoutLoadingOverlay.test.ts with 12 tests)
