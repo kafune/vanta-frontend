@@ -286,3 +286,13 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Implement sorting options (relevance, price, newest, popularity)
 - [x] Create vitest tests for filter system (10 tests passing, 272 total tests)
 - [x] Test end-to-end: apply filters → search → view results
+
+
+## Mandatory Checkout Authentication (COMPLETE)
+- [x] Modify CartDrawer to check authentication before checkout (conditional render based on user state)
+- [x] Add login redirect for unauthenticated users (OAuth login URL)
+- [x] Convert checkout procedures to protectedProcedure (already implemented in orders router)
+- [x] Add authentication guard in checkout flow (CheckoutAuthGuard component created)
+- [x] Display login prompt in checkout modal (PIX button shows login prompt when not authenticated)
+- [x] Test end-to-end: unauthenticated user → checkout → redirect to login (272 tests passing)
+- [x] Create vitest tests for authentication guard (CheckoutAuthGuard.test.ts with 8 tests)

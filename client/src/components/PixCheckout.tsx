@@ -10,6 +10,9 @@ import { ExpirationTimer } from "./ExpirationTimer";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Copy, Check, AlertCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { CheckoutAuthGuard } from "./CheckoutAuthGuard";
+import { getLoginUrl } from "@/const";
 
 interface PixCheckoutProps {
   orderId: string;
@@ -19,10 +22,25 @@ interface PixCheckoutProps {
 }
 
 export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: PixCheckoutProps) {
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
+
+  // Require authentication for PIX checkout
+  if (!user) {
+    return (
+      <CheckoutAuthGuard
+        onAuthRequired={() => {
+          // Redirect to login with return path
+          window.location.href = getLoginUrl();
+        }}
+      >
+        <div />
+      </CheckoutAuthGuard>
+    );
+  }
 
   // Generate PIX payment
   const generatePayment = trpc.pix.generatePayment.useMutation({

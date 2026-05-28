@@ -313,18 +313,31 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <>
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 pt-2">
-                  <Button
-                    onClick={() => {
-                      const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
-                      setCurrentOrderId(orderId);
-                      setShowPixCheckout(true);
-                      setIsCheckingOut(true);
-                    }}
-                    disabled={isCheckingOut || sendOrderConfirmationMutation.isPending || items.length === 0}
-                    className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
-                  >
-                    💳 Pagar com PIX
-                  </Button>
+                  {!user ? (
+                    <Button
+                      onClick={() => {
+                        const loginUrl = new URL(window.location.origin);
+                        loginUrl.pathname = '/api/oauth/login';
+                        window.location.href = loginUrl.toString();
+                      }}
+                      className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
+                    >
+                      🔐 Fazer Login para Comprar
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
+                        setCurrentOrderId(orderId);
+                        setShowPixCheckout(true);
+                        setIsCheckingOut(true);
+                      }}
+                      disabled={isCheckingOut || sendOrderConfirmationMutation.isPending || items.length === 0}
+                      className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
+                    >
+                      💳 Pagar com PIX
+                    </Button>
+                  )}
                   <Button
                     onClick={() => clearCart()}
                     variant="outline"
