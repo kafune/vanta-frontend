@@ -11,11 +11,15 @@ proxy (Traefik), HTTPS/Let's Encrypt e deploy a partir do GitHub.
 - **MySQL** — criado dentro do próprio Dokploy (sem serviço externo).
 - **Pix** — self-contained (só `PIX_KEY` / `PIX_OWNER_NAME`).
 - **E-mail** — SMTP opcional (qualquer servidor; em branco = desativado).
-- **Login (OAuth)** — ainda chama o servidor do Manus. Migração p/ auth próprio
-  ficou para depois; até lá, ou preenche `OAUTH_SERVER_URL`/`OWNER_OPEN_ID` com os
-  valores do Manus, ou sobe sem login.
-- **Imagens de produto** — são URLs em texto no banco; não há upload. (O storage
-  do Manus só seria usado pela geração de imagem por IA, que não está ligada.)
+- **Login** — local (email + senha), sem Manus. Admin inicial criado no boot via
+  `ADMIN_EMAIL` / `ADMIN_PASSWORD`. (O OAuth do Manus virou legado/opcional.)
+- **Uploads de imagem** — self-hosted em disco. O servidor grava em `/app/uploads`
+  e serve em `/uploads`. **Monte um volume persistente do Dokploy em `/app/uploads`**,
+  senão as imagens enviadas (produtos/estampas) somem a cada redeploy.
+
+## Volume de uploads (Dokploy)
+No app → **Advanced → Volumes** (ou Mounts), adicione um **volume** montado em
+`/app/uploads`. Sem isso o upload funciona, mas os arquivos não sobrevivem a deploys.
 
 ## Passo a passo no Dokploy
 

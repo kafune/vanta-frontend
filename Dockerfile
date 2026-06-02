@@ -47,6 +47,11 @@ COPY --from=build /app/dist ./dist
 COPY drizzle ./drizzle
 COPY drizzle.config.ts package.json ./
 
+# Pasta de uploads (imagens de catálogo / estampas). Monte um VOLUME do Dokploy
+# aqui (/app/uploads) para os arquivos sobreviverem a redeploys.
+RUN mkdir -p /app/uploads
+VOLUME ["/app/uploads"]
+
 EXPOSE 3000
 
 # Aplica migrações pendentes (idempotente) e sobe o servidor.

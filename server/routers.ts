@@ -2,6 +2,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { authRouter } from "./routers/auth";
+import { uploadsRouter } from "./routers/uploads";
 import { sendOrderConfirmationEmail, sendShipmentNotificationEmail, sendDeliveryUpdateEmail } from "./email";
 import { reviewsRouter } from "./routers/reviews";
 import { couponsRouter } from "./routers/coupons";
@@ -32,6 +33,7 @@ export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: authRouter,
+  uploads: uploadsRouter,
 
   reviews: reviewsRouter,
   coupons: couponsRouter,

@@ -11,6 +11,7 @@ import { securityHeadersMiddleware } from "../middleware/securityHeaders";
 import { csrfTokenMiddleware, validateCsrfToken } from "../middleware/csrf";
 import { rateLimiters, startRateLimitCleanup } from "../middleware/rateLimiter";
 import { ensureAdminUser } from "../db";
+import { getUploadsDir } from "./uploads";
 import cookieParser from "cookie-parser";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -64,6 +65,9 @@ async function startServer() {
       createContext,
     })
   );
+  // Arquivos enviados (imagens de catálogo / estampas) — servidos do volume.
+  app.use("/uploads", express.static(getUploadsDir()));
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
