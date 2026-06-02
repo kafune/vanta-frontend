@@ -17,6 +17,7 @@ import Wishlist from "./pages/Wishlist";
 import SearchResults from "./pages/SearchResults";
 import Collections from "./pages/Collections";
 import CollectionDetail from "./pages/CollectionDetail";
+import Login from "./pages/Login";
 // Envolve uma página com o Layout compartilhado (Navbar + Footer), repassando
 // os props que o wouter injeta (ex.: params de rota como :id, :collectionId).
 const withLayout = (Component: React.ComponentType<any>) => (props: any) => (
@@ -36,6 +37,7 @@ function Router() {
       <Route path={"/account"} component={UserAccount} />
 
       {/* Páginas que antes ficavam sem navegação — agora com Navbar + Footer via Layout */}
+      <Route path={"/login"} component={withLayout(Login)} />
       <Route path={"/categoria/:category"} component={withLayout(CategoryProducts)} />
       <Route path={"/profile"} component={withLayout(Profile)} />
       <Route path={"/wishlist"} component={withLayout(Wishlist)} />

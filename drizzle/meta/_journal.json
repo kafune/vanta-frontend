@@ -92,6 +92,13 @@
       "when": 1780429985302,
       "tag": "0012_seed_products",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1780431599005,
+      "tag": "0013_add_password_hash",
+      "breakpoints": true
     }
   ]
 }
