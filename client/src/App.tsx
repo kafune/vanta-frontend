@@ -34,11 +34,11 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/produto/:id"} component={Product} />
-      <Route path={"/categoria/:category"} component={CategoryProducts} />
       <Route path={"/modelo/:id"} component={ModelDetails} />
       <Route path={"/account"} component={UserAccount} />
 
       {/* Páginas que antes ficavam sem navegação — agora com Navbar + Footer via Layout */}
+      <Route path={"/categoria/:category"} component={withLayout(CategoryProducts)} />
       <Route path={"/profile"} component={withLayout(Profile)} />
       <Route path={"/wishlist"} component={withLayout(Wishlist)} />
       <Route path={"/search"} component={withLayout(SearchResults)} />

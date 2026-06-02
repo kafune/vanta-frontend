@@ -248,6 +248,30 @@ export const collections = mysqlTable("collections", {
 export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = typeof collections.$inferInsert;
 
+// Products table - catálogo de produtos (id é um slug, ex.: "essential-tee-280g",
+// para casar com productId já usado em orderItems, wishlist, reviews e collectionProducts).
+export const products = mysqlTable("products", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 64 }).notNull(),
+  description: text("description"),
+  price: int("price").notNull(), // em centavos
+  originalPrice: int("originalPrice"), // em centavos, nullable (preço "de")
+  tag: varchar("tag", { length: 64 }), // Bestseller, Novo, Promoção...
+  image: varchar("image", { length: 500 }), // imagem principal (URL)
+  images: text("images"), // JSON array de URLs adicionais
+  sizes: text("sizes"), // JSON array, ex.: ["P","M","G","GG"]
+  colors: text("colors"), // JSON array de nomes de cor
+  featured: tinyint("featured").default(0).notNull(),
+  active: tinyint("active").default(1).notNull(),
+  displayOrder: int("displayOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = typeof products.$inferInsert;
+
 // Collection products table - link products to collections
 export const collectionProducts = mysqlTable("collectionProducts", {
   id: varchar("id", { length: 64 }).primaryKey(),
