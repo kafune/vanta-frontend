@@ -10,7 +10,6 @@ import Product from "./pages/Product";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import OrderTracking from "./pages/OrderTracking";
 import CategoryProducts from "./pages/CategoryProducts";
-import ModelDetails from "./pages/ModelDetails";
 import UserAccount from "./pages/UserAccount";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
@@ -34,7 +33,6 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/produto/:id"} component={Product} />
-      <Route path={"/modelo/:id"} component={ModelDetails} />
       <Route path={"/account"} component={UserAccount} />
 
       {/* Páginas que antes ficavam sem navegação — agora com Navbar + Footer via Layout */}

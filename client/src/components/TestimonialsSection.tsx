@@ -1,49 +1,18 @@
 /**
  * VANTA Testimonials Section — Carbon Fiber Design System
- * Social proof with customer reviews in horizontal scroll
+ * Prova social com avaliações REAIS (aprovadas) vindas do banco.
+ * Quando não há avaliações, a seção não é renderizada.
  */
 
 import { useRef, useEffect, useState } from "react";
 import { Star } from "lucide-react";
-
-const testimonials = [
-  {
-    id: 1,
-    name: "Lucas M.",
-    handle: "@lucasm_style",
-    rating: 5,
-    text: "A qualidade do algodão é incomparável. Já comprei em outras marcas premium e a VANTA está num nível acima. O processo de customização é incrível.",
-    product: "Essential Tee 280g",
-  },
-  {
-    id: 2,
-    name: "Ana P.",
-    handle: "@anapires",
-    rating: 5,
-    text: "O Hoodie chegou numa embalagem linda e a qualidade do tecido é absurda. Parece que vai durar anos. Já fiz o segundo pedido.",
-    product: "Luxury Hoodie",
-  },
-  {
-    id: 3,
-    name: "Rafael S.",
-    handle: "@rafaelstreet",
-    rating: 5,
-    text: "Usei o Your Canvas para criar uma estampa personalizada e ficou exatamente como eu imaginei. O mockup em tempo real ajudou muito na decisão.",
-    product: "Your Canvas — Oversized",
-  },
-  {
-    id: 4,
-    name: "Mariana C.",
-    handle: "@mari.creates",
-    rating: 5,
-    text: "Finalmente uma marca que entende o que é moda premium acessível. O Dry Fit é perfeito para treinos e ainda fica estiloso no dia a dia.",
-    product: "Performance Pro",
-  },
-];
+import { trpc } from "@/lib/trpc";
 
 export default function TestimonialsSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+
+  const { data: testimonials = [] } = trpc.reviews.getApproved.useQuery({ limit: 6 });
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -53,6 +22,12 @@ export default function TestimonialsSection() {
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
+
+  // Sem avaliações reais ainda → não renderiza a seção (nada de social proof fake).
+  if (testimonials.length === 0) return null;
+
+  const avgRating =
+    Math.round((testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length) * 10) / 10;
 
   return (
     <section className="py-24 lg:py-28 overflow-hidden" style={{ background: "#0B0B0B" }} ref={sectionRef}>
@@ -69,12 +44,18 @@ export default function TestimonialsSection() {
             </div>
             <div className="flex items-center gap-3">
               <div className="flex">
-                {[1,2,3,4,5].map(i => (
-                  <Star key={i} size={14} className="fill-[#EFEFEF] text-[#EFEFEF]" />
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star
+                    key={i}
+                    size={14}
+                    className={i <= Math.round(avgRating) ? "fill-[#EFEFEF] text-[#EFEFEF]" : "text-[rgba(239,239,239,0.25)]"}
+                  />
                 ))}
               </div>
-              <span className="font-heading font-semibold text-[#EFEFEF]">4.9</span>
-              <span className="font-mono-label text-[rgba(239,239,239,0.35)]">/ 500+ avaliações</span>
+              <span className="font-heading font-semibold text-[#EFEFEF]">{avgRating}</span>
+              <span className="font-mono-label text-[rgba(239,239,239,0.35)]">
+                / {testimonials.length} {testimonials.length === 1 ? "avaliação" : "avaliações"}
+              </span>
             </div>
           </div>
         </div>
@@ -96,18 +77,19 @@ export default function TestimonialsSection() {
 
               {/* Quote */}
               <p className="font-heading text-sm font-light text-[rgba(239,239,239,0.65)] leading-relaxed mb-5">
-                "{t.text}"
+                "{t.comment ?? t.title ?? ""}"
               </p>
 
               {/* Author */}
               <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-heading font-semibold text-[#EFEFEF] text-sm">{t.name}</div>
-                  <div className="font-mono-label text-[rgba(239,239,239,0.3)] text-[0.6rem]">{t.handle}</div>
+                <div className="font-heading font-semibold text-[#EFEFEF] text-sm">
+                  {t.authorName ?? "Cliente"}
                 </div>
-                <div className="font-mono-label text-[rgba(239,239,239,0.25)] text-[0.6rem] text-right">
-                  {t.product}
-                </div>
+                {t.productName && (
+                  <div className="font-mono-label text-[rgba(239,239,239,0.25)] text-[0.6rem] text-right">
+                    {t.productName}
+                  </div>
+                )}
               </div>
             </div>
           ))}
