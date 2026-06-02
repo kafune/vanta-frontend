@@ -274,6 +274,16 @@ export const products = mysqlTable("products", {
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
 
+// Settings table - configurações da loja (chave/valor)
+export const settings = mysqlTable("settings", {
+  key: varchar("key", { length: 64 }).primaryKey(),
+  value: text("value"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Setting = typeof settings.$inferSelect;
+export type InsertSetting = typeof settings.$inferInsert;
+
 // Collection products table - link products to collections
 export const collectionProducts = mysqlTable("collectionProducts", {
   id: varchar("id", { length: 64 }).primaryKey(),

@@ -3,6 +3,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { authRouter } from "./routers/auth";
 import { uploadsRouter } from "./routers/uploads";
+import { settingsRouter } from "./routers/settings";
 import { sendOrderConfirmationEmail, sendShipmentNotificationEmail, sendDeliveryUpdateEmail } from "./email";
 import { reviewsRouter } from "./routers/reviews";
 import { couponsRouter } from "./routers/coupons";
@@ -34,6 +35,7 @@ export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
   uploads: uploadsRouter,
+  settings: settingsRouter,
 
   reviews: reviewsRouter,
   coupons: couponsRouter,
