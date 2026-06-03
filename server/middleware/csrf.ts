@@ -27,13 +27,17 @@ export function csrfTokenMiddleware(req: Request, res: Response, next: NextFunct
 
   if (!token) {
     token = generateCsrfToken();
-    res.cookie(CSRF_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    });
   }
+
+  // Sempre re-emite o cookie (não só quando ausente) para garantir o atributo
+  // httpOnly:false — assim usuários que já tinham o cookie httpOnly antigo
+  // passam a conseguir lê-lo no JS (double-submit CSRF).
+  res.cookie(CSRF_COOKIE_NAME, token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  });
 
   // Attach token to response for client to use
   res.locals.csrfToken = token;
