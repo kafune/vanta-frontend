@@ -188,73 +188,30 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
         </Card>
       )}
 
-      {/* QR Code */}
-      {!isExpired && (
-        <Card className="bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)]">
-          <CardHeader>
-            <CardTitle className="text-[#EFEFEF]">Escanear QR Code</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            {pixData.qrCode && (
-              <img src={pixData.qrCode} alt="PIX QR Code" className="w-64 h-64 border-2 border-[rgba(255,255,255,0.1)] rounded-lg p-4 bg-white" />
-            )}
-            <p className="text-sm text-[rgba(239,239,239,0.5)] mt-4 text-center">
-              Abra o seu banco e escaneie o QR Code acima para fazer o pagamento
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* PIX Key / BR Code */}
+      {/* PIX Key (telefone) */}
       {!isExpired && (
         <Card className="bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)]">
           <CardHeader>
             <CardTitle className="text-[#EFEFEF]">Chave PIX</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {/* Display PIX Key */}
-              <div>
-                <p className="text-xs text-[rgba(239,239,239,0.5)] mb-2">Chave PIX para transferência:</p>
-                <div className="flex items-center gap-2 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg p-3">
-                  <code className="flex-1 text-sm text-[#EFEFEF] break-all font-mono">{pixData.pixKey}</code>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      navigator.clipboard.writeText(pixData.pixKey);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                      toast.success("Chave PIX copiada!");
-                    }}
-                    className="text-[#4ECDC4] hover:bg-[rgba(78,205,196,0.1)]"
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Display BR Code */}
-              <div>
-                <p className="text-xs text-[rgba(239,239,239,0.5)] mb-2">BR Code (copiar e colar no banco):</p>
-                <div className="flex items-center gap-2 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg p-3">
-                  <code className="flex-1 text-xs text-[#EFEFEF] break-all font-mono overflow-auto max-h-20">
-                    {pixData.brCode}
-                  </code>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      navigator.clipboard.writeText(pixData.brCode);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                      toast.success("BR Code copiado!");
-                    }}
-                    className="text-[#4ECDC4] hover:bg-[rgba(78,205,196,0.1)] flex-shrink-0"
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
+            <div>
+              <p className="text-xs text-[rgba(239,239,239,0.5)] mb-2">Telefone para transferência via PIX:</p>
+              <div className="flex items-center gap-2 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg p-3">
+                <code className="flex-1 text-base text-[#EFEFEF] break-all font-mono">{pixData.pixKey}</code>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    navigator.clipboard.writeText(pixData.pixKey);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                    toast.success("Chave PIX copiada!");
+                  }}
+                  className="text-[#4ECDC4] hover:bg-[rgba(78,205,196,0.1)]"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -299,13 +256,8 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
           </CardHeader>
           <CardContent className="text-sm text-[rgba(239,239,239,0.6)] space-y-2">
             <p>1. Abra o aplicativo do seu banco</p>
-            <p>2. Selecione a opção "Pagar com PIX"</p>
-            <p>3. Escolha uma das opções:</p>
-            <ul className="ml-4 space-y-1">
-              <li>• Escanear o QR Code acima</li>
-              <li>• Copiar e colar a chave PIX</li>
-              <li>• Copiar e colar o BR Code</li>
-            </ul>
+            <p>2. Selecione a opção "Pagar com PIX" usando chave</p>
+            <p>3. Informe a chave PIX (telefone) acima e o valor</p>
             <p>4. Confirme o pagamento no seu banco</p>
             <p>5. Clique em "Confirmar Pagamento" aqui após a conclusão</p>
           </CardContent>
