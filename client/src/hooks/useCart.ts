@@ -1,9 +1,12 @@
 /**
  * VANTA useCart Hook
- * Manages shopping cart state with localStorage persistence
+ * Carrinho com store COMPARTILHADO entre todas as instâncias do hook
+ * (Navbar, CartDrawer, páginas) via useSyncExternalStore — assim adicionar
+ * um item reflete na hora em todo lugar, sem precisar recarregar a página.
+ * Persistência em localStorage.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export interface CartItem {
   id: string;
@@ -24,105 +27,94 @@ export interface CartItem {
 const STORAGE_KEY = "obsidian_cart";
 const MAX_QUANTITY = 99;
 
+// ── Store compartilhado (module-level) ───────────────────────
+function loadFromStorage(): CartItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? (JSON.parse(stored) as CartItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+let cartItems: CartItem[] = loadFromStorage();
+const listeners = new Set<() => void>();
+
+function emit() {
+  listeners.forEach((l) => l());
+}
+
+function setCart(next: CartItem[]) {
+  cartItems = next;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch (error) {
+    console.error("Error saving cart:", error);
+  }
+  emit();
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+// Sincroniza entre abas
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === STORAGE_KEY) {
+      cartItems = loadFromStorage();
+      emit();
+    }
+  });
+}
+
 export function useCart() {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const items = useSyncExternalStore(subscribe, () => cartItems, () => cartItems);
 
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as CartItem[];
-        setItems(parsed);
-      }
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error loading cart:", error);
-      setIsLoading(false);
+  const addItem = useCallback((item: CartItem) => {
+    const existing = cartItems.find(
+      (i) =>
+        i.id === item.id &&
+        i.size === item.size &&
+        i.color === item.color &&
+        JSON.stringify(i.customization) === JSON.stringify(item.customization)
+    );
+    if (existing) {
+      setCart(
+        cartItems.map((i) =>
+          i === existing ? { ...i, quantity: Math.min(i.quantity + item.quantity, MAX_QUANTITY) } : i
+        )
+      );
+    } else {
+      setCart([...cartItems, { ...item, quantity: Math.min(item.quantity, MAX_QUANTITY) }]);
     }
   }, []);
 
-  // Persist cart to localStorage
-  const persistCart = useCallback((newItems: CartItem[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
-      setItems(newItems);
-    } catch (error) {
-      console.error("Error saving cart:", error);
-    }
+  const removeItem = useCallback((itemId: string) => {
+    setCart(cartItems.filter((i) => i.id !== itemId));
   }, []);
 
-  // Add item to cart
-  const addItem = useCallback(
-    (item: CartItem) => {
-      const existingItem = items.find(
-        (i) =>
-          i.id === item.id &&
-          i.size === item.size &&
-          i.color === item.color &&
-          JSON.stringify(i.customization) === JSON.stringify(item.customization)
-      );
+  const updateQuantity = useCallback((itemId: string, quantity: number) => {
+    if (quantity <= 0) {
+      setCart(cartItems.filter((i) => i.id !== itemId));
+      return;
+    }
+    setCart(cartItems.map((i) => (i.id === itemId ? { ...i, quantity: Math.min(quantity, MAX_QUANTITY) } : i)));
+  }, []);
 
-      if (existingItem) {
-        // Update quantity if item already exists
-        const updated = items.map((i) =>
-          i === existingItem
-            ? { ...i, quantity: Math.min(i.quantity + item.quantity, MAX_QUANTITY) }
-            : i
-        );
-        persistCart(updated);
-      } else {
-        // Add new item
-        const updated = [...items, { ...item, quantity: Math.min(item.quantity, MAX_QUANTITY) }];
-        persistCart(updated);
-      }
-    },
-    [items, persistCart]
-  );
+  const clearCart = useCallback(() => setCart([]), []);
 
-  // Remove item from cart
-  const removeItem = useCallback(
-    (itemId: string) => {
-      const updated = items.filter((i) => i.id !== itemId);
-      persistCart(updated);
-    },
-    [items, persistCart]
-  );
-
-  // Update item quantity
-  const updateQuantity = useCallback(
-    (itemId: string, quantity: number) => {
-      if (quantity <= 0) {
-        removeItem(itemId);
-        return;
-      }
-
-      const updated = items.map((i) =>
-        i.id === itemId ? { ...i, quantity: Math.min(quantity, MAX_QUANTITY) } : i
-      );
-      persistCart(updated);
-    },
-    [items, persistCart, removeItem]
-  );
-
-  // Clear cart
-  const clearCart = useCallback(() => {
-    persistCart([]);
-  }, [persistCart]);
-
-  // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.1; // 10% tax
-  const shipping = subtotal > 0 ? (subtotal > 100 ? 0 : 10) : 0; // Free shipping over €100
+  const tax = subtotal * 0.1; // 10%
+  const shipping = subtotal > 0 ? (subtotal > 100 ? 0 : 10) : 0; // grátis acima de R$100
   const total = subtotal + tax + shipping;
-
-  // Get item count
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return {
     items,
-    isLoading,
+    isLoading: false,
     addItem,
     removeItem,
     updateQuantity,

@@ -140,6 +140,33 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           </div>
         </DrawerHeader>
 
+        {showPixCheckout && currentOrderId ? (
+          <div className="overflow-y-auto p-4" style={{ maxHeight: "78vh" }}>
+            <button
+              onClick={() => { setShowPixCheckout(false); setCurrentOrderId(null); setIsCheckingOut(false); }}
+              className="mb-4 text-sm text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
+            >
+              ← Voltar ao carrinho
+            </button>
+            <PixCheckout
+              orderId={currentOrderId}
+              amount={Math.round(finalTotal * 100)}
+              onPaymentConfirmed={() => {
+                const oid = currentOrderId;
+                void recordPostPayment(oid);
+                setShowPixCheckout(false);
+                clearCart();
+                removeCoupon();
+                setApplyCashback(false);
+                setIsCheckingOut(false);
+                onOpenChange(false);
+                setLocation(`/checkout/success?orderId=${oid}`);
+              }}
+              onCancel={() => { setShowPixCheckout(false); setCurrentOrderId(null); setIsCheckingOut(false); }}
+            />
+          </div>
+        ) : (
+        <>
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto max-h-[60vh] p-4 space-y-3">
           {items.length === 0 ? (
@@ -261,61 +288,38 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <span>R${finalTotal.toFixed(2)}</span>
             </div>
 
-            {/* PIX Checkout */}
-            {showPixCheckout && currentOrderId ? (
-              <PixCheckout
-                orderId={currentOrderId}
-                amount={Math.round(finalTotal * 100)}
-                onPaymentConfirmed={() => {
-                  const oid = currentOrderId;
-                  void recordPostPayment(oid);
-                  setShowPixCheckout(false);
-                  clearCart();
-                  removeCoupon();
-                  setApplyCashback(false);
-                  setIsCheckingOut(false);
-                  onOpenChange(false);
-                  setLocation(`/checkout/success?orderId=${oid}`);
-                }}
-                onCancel={() => {
-                  setShowPixCheckout(false);
-                  setCurrentOrderId(null);
-                }}
-              />
-            ) : (
-              <>
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-2 pt-2">
-                  {!user ? (
-                    <Button
-                      onClick={() => {
-                        onOpenChange(false);
-                        setLocation(getLoginUrl());
-                      }}
-                      className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
-                    >
-                      🔐 Fazer Login para Comprar
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleStartCheckout}
-                      disabled={isCheckingOut || createOrderMutation.isPending || items.length === 0}
-                      className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
-                    >
-                      💳 Pagar com PIX
-                    </Button>
-                  )}
-                  <Button
-                    onClick={() => clearCart()}
-                    variant="outline"
-                    className="w-full border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
-                  >
-                    Limpar Carrinho
-                  </Button>
-                </div>
-              </>
-            )}
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2 pt-2">
+              {!user ? (
+                <Button
+                  onClick={() => {
+                    onOpenChange(false);
+                    setLocation(getLoginUrl());
+                  }}
+                  className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
+                >
+                  🔐 Fazer Login para Comprar
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleStartCheckout}
+                  disabled={isCheckingOut || createOrderMutation.isPending || items.length === 0}
+                  className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
+                >
+                  💳 Pagar com PIX
+                </Button>
+              )}
+              <Button
+                onClick={() => clearCart()}
+                variant="outline"
+                className="w-full border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
+              >
+                Limpar Carrinho
+              </Button>
+            </div>
           </div>
+        )}
+        </>
         )}
       </DrawerContent>
     </Drawer>
