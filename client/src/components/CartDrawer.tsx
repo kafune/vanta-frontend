@@ -100,100 +100,28 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
     }
   };
 
-  const handleCheckout = async () => {
-    if (items.length === 0) {
-      toast.error("Carrinho vazio");
-      return;
+  // Registra uso de cupom e cashback após o pagamento confirmado (orderId real).
+  const recordPostPayment = async (orderId: string) => {
+    if (appliedCoupon?.couponId) {
+      try {
+        await recordCouponUsageMutation.mutateAsync({ couponId: appliedCoupon.couponId, orderId });
+      } catch (error) {
+        console.error("Erro ao registrar uso de cupom:", error);
+      }
     }
-
-    setIsCheckingOut(true);
-    try {
-      // Generate order ID
-      const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
-      const trackingNumber = `VANTA-${orderId}-2025`;
-      
-      // Send order confirmation email
-      const emailData = {
-        orderId,
-        trackingNumber,
-        customerEmail: "customer@example.com", // TODO: Get from user auth
-        customerName: "Valued Customer",
-        items: items.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          size: item.size,
-        })),
-        subtotal,
-        tax,
-        shipping,
-        total: finalTotal,
-        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-PT", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
-      };
-
-      await sendOrderConfirmationMutation.mutateAsync(emailData);
-      
-      // Record coupon usage if a coupon was applied
-      if (appliedCoupon?.couponId) {
-        try {
-          await recordCouponUsageMutation.mutateAsync({
-            couponId: appliedCoupon.couponId,
-            orderId,
-          });
-        } catch (error) {
-          console.error("Error recording coupon usage:", error);
-          // Don't block checkout if coupon recording fails
-        }
+    if (applyCashback && cashbackDiscount > 0 && user) {
+      try {
+        await recordCashbackSpentMutation.mutateAsync({ orderId, spentAmount: Math.round(cashbackDiscount * 100) });
+      } catch (error) {
+        console.error("Erro ao registrar cashback gasto:", error);
       }
-      
-      // Record cashback spent if applied
-      if (applyCashback && cashbackDiscount > 0 && user) {
-        try {
-          await recordCashbackSpentMutation.mutateAsync({
-            orderId,
-            spentAmount: Math.round(cashbackDiscount * 100),
-          });
-        } catch (error) {
-          console.error("Error recording cashback spent:", error);
-        }
+    }
+    if (user) {
+      try {
+        await recordCashbackEarnedMutation.mutateAsync({ orderId, orderTotal: Math.round(finalTotal * 100) });
+      } catch (error) {
+        console.error("Erro ao registrar cashback ganho:", error);
       }
-      
-      // Record cashback earned (10% of final total)
-      if (user) {
-        try {
-          await recordCashbackEarnedMutation.mutateAsync({
-            orderId,
-            orderTotal: Math.round(finalTotal * 100),
-          });
-        } catch (error) {
-          console.error("Error recording cashback earned:", error);
-        }
-      }
-      
-      // TODO: Integrate with Stripe checkout
-      // For now, simulate successful checkout and redirect
-      toast.success("Pedido processado com sucesso!", {
-        description: "Email de confirmação enviado...",
-      });
-      
-      // Clear cart and redirect to success page
-      setTimeout(() => {
-        clearCart();
-        removeCoupon();
-        setApplyCashback(false);
-        setIsCheckingOut(false);
-        onOpenChange(false);
-        setLocation(`/checkout/success?orderId=${orderId}`);
-      }, 1500);
-    } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error("Erro ao processar checkout");
-      setIsCheckingOut(false);
     }
   };
 
@@ -339,13 +267,15 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 orderId={currentOrderId}
                 amount={Math.round(finalTotal * 100)}
                 onPaymentConfirmed={() => {
+                  const oid = currentOrderId;
+                  void recordPostPayment(oid);
                   setShowPixCheckout(false);
                   clearCart();
                   removeCoupon();
                   setApplyCashback(false);
                   setIsCheckingOut(false);
                   onOpenChange(false);
-                  setLocation(`/checkout/success?orderId=${currentOrderId}`);
+                  setLocation(`/checkout/success?orderId=${oid}`);
                 }}
                 onCancel={() => {
                   setShowPixCheckout(false);

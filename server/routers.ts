@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authRouter } from "./routers/auth";
 import { uploadsRouter } from "./routers/uploads";
 import { settingsRouter } from "./routers/settings";
+import { addressesRouter } from "./routers/addresses";
 import { sendOrderConfirmationEmail, sendShipmentNotificationEmail, sendDeliveryUpdateEmail } from "./email";
 import { reviewsRouter } from "./routers/reviews";
 import { couponsRouter } from "./routers/coupons";
@@ -36,6 +37,7 @@ export const appRouter = router({
   auth: authRouter,
   uploads: uploadsRouter,
   settings: settingsRouter,
+  addresses: addressesRouter,
 
   reviews: reviewsRouter,
   coupons: couponsRouter,

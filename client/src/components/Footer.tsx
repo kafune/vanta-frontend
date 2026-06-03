@@ -5,6 +5,7 @@
 
 import { Instagram, Twitter, Youtube, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 const socialLinks = [
   { icon: Instagram, label: "Instagram", href: "#" },
@@ -30,6 +31,8 @@ const paymentMethods = [
 ];
 
 export default function Footer() {
+  const { data: settings } = trpc.settings.getPublic.useQuery();
+  const storeName = settings?.storeName || "VANTA";
   return (
     <footer style={{ background: "#080808", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
       {/* Newsletter Banner */}
@@ -72,10 +75,26 @@ export default function Footer() {
         <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-1">
-            <div className="font-display text-2xl tracking-widest text-[#EFEFEF] mb-4">VANTA</div>
+            <div className="font-display text-2xl tracking-widest text-[#EFEFEF] mb-4">{storeName}</div>
             <p className="font-heading text-xs font-light text-[rgba(239,239,239,0.4)] leading-relaxed mb-6">
               Vestuário premium com personalização exclusiva. Qualidade certificada, design sem compromisso.
             </p>
+            {(settings?.contactEmail || settings?.contactWhatsapp) && (
+              <div className="font-heading text-xs font-light text-[rgba(239,239,239,0.45)] mb-6 space-y-1">
+                {settings?.contactEmail && (
+                  <p>
+                    <a href={`mailto:${settings.contactEmail}`} className="hover:text-[#EFEFEF] transition-colors">{settings.contactEmail}</a>
+                  </p>
+                )}
+                {settings?.contactWhatsapp && (
+                  <p>
+                    <a href={`https://wa.me/${settings.contactWhatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="hover:text-[#EFEFEF] transition-colors">
+                      WhatsApp: {settings.contactWhatsapp}
+                    </a>
+                  </p>
+                )}
+              </div>
+            )}
             {/* Social Icons */}
             <div className="flex gap-3">
               {socialLinks.map(({ icon: Icon, label, href }) => (
@@ -117,7 +136,7 @@ export default function Footer() {
       <div className="py-6 px-6 lg:px-8">
         <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <p className="font-mono-label text-[rgba(239,239,239,0.25)] text-[0.6rem]">
-            © 2025 VANTA Fashion Store. Todos os direitos reservados.
+            © 2025 {storeName}. Todos os direitos reservados.
           </p>
 
           {/* Payment Methods */}

@@ -276,6 +276,25 @@ export const products = mysqlTable("products", {
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
 
+// Addresses table - endereços de entrega por usuário
+export const addresses = mysqlTable("addresses", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: int("userId").notNull(),
+  label: varchar("label", { length: 100 }), // "Casa", "Trabalho"
+  recipient: varchar("recipient", { length: 255 }),
+  street: varchar("street", { length: 255 }).notNull(),
+  number: varchar("number", { length: 32 }),
+  complement: varchar("complement", { length: 255 }),
+  city: varchar("city", { length: 128 }).notNull(),
+  state: varchar("state", { length: 64 }),
+  zipCode: varchar("zipCode", { length: 20 }),
+  isDefault: tinyint("isDefault").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Address = typeof addresses.$inferSelect;
+export type InsertAddress = typeof addresses.$inferInsert;
+
 // Settings table - configurações da loja (chave/valor)
 export const settings = mysqlTable("settings", {
   key: varchar("key", { length: 64 }).primaryKey(),

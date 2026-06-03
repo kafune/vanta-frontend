@@ -115,6 +115,93 @@ function FavoritesTab() {
   );
 }
 
+// Aba de endereços (lista + adicionar + remover) com dados reais.
+function AddressesTab() {
+  const utils = trpc.useUtils();
+  const list = trpc.addresses.list.useQuery();
+  const createMut = trpc.addresses.create.useMutation();
+  const deleteMut = trpc.addresses.delete.useMutation();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ label: "", street: "", number: "", complement: "", city: "", state: "", zipCode: "" });
+
+  const inputClass = "w-full h-10 px-3 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.15)] text-[#EFEFEF] text-sm rounded focus:outline-none focus:border-[rgba(255,255,255,0.4)]";
+
+  const save = async () => {
+    if (!form.street.trim() || !form.city.trim()) return toast.error("Informe ao menos rua e cidade");
+    try {
+      await createMut.mutateAsync(form);
+      toast.success("Endereço adicionado");
+      setForm({ label: "", street: "", number: "", complement: "", city: "", state: "", zipCode: "" });
+      setShowForm(false);
+      utils.addresses.list.invalidate();
+    } catch (e: any) {
+      toast.error("Erro ao salvar", { description: e.message });
+    }
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Remover este endereço?")) return;
+    await deleteMut.mutateAsync({ id });
+    utils.addresses.list.invalidate();
+  };
+
+  return (
+    <div className="space-y-4">
+      {(list.data ?? []).map((a) => (
+        <Card key={a.id} className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-start gap-4">
+              <div className="space-y-1">
+                {a.label && <p className="text-[#EFEFEF] font-semibold">{a.label}</p>}
+                <p className="text-[rgba(239,239,239,0.7)] text-sm">{a.street}{a.number ? `, ${a.number}` : ""}{a.complement ? ` — ${a.complement}` : ""}</p>
+                <p className="text-[rgba(239,239,239,0.6)] text-sm">{a.zipCode ? `${a.zipCode} · ` : ""}{a.city}{a.state ? ` - ${a.state}` : ""}</p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => remove(a.id)} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+                <Trash2 size={14} />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+
+      {!list.isLoading && (list.data ?? []).length === 0 && !showForm && (
+        <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
+          <CardContent className="pt-6 text-center">
+            <MapPin className="mx-auto mb-3 text-[rgba(239,239,239,0.3)]" size={28} />
+            <p className="text-[rgba(239,239,239,0.6)]">Nenhum endereço cadastrado ainda.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {showForm ? (
+        <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
+          <CardContent className="pt-6 space-y-3">
+            <Input placeholder="Identificação (ex: Casa)" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} className={inputClass} />
+            <div className="grid grid-cols-3 gap-3">
+              <Input placeholder="Rua" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} className={`${inputClass} col-span-2`} />
+              <Input placeholder="Número" value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} className={inputClass} />
+            </div>
+            <Input placeholder="Complemento" value={form.complement} onChange={(e) => setForm({ ...form, complement: e.target.value })} className={inputClass} />
+            <div className="grid grid-cols-3 gap-3">
+              <Input placeholder="Cidade" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={`${inputClass} col-span-1`} />
+              <Input placeholder="UF" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className={inputClass} />
+              <Input placeholder="CEP" value={form.zipCode} onChange={(e) => setForm({ ...form, zipCode: e.target.value })} className={inputClass} />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={save} disabled={createMut.isPending} className="bg-[#EFEFEF] text-[#0B0B0B] hover:bg-white">Salvar</Button>
+              <Button variant="ghost" onClick={() => setShowForm(false)} className="text-[rgba(239,239,239,0.7)]">Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Button onClick={() => setShowForm(true)} className="w-full bg-[#EFEFEF] text-[#0B0B0B] hover:bg-white">
+          + Adicionar novo endereço
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export default function UserAccount() {
   const { user, logout, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -370,13 +457,7 @@ export default function UserAccount() {
 
             {/* Endereços */}
             <TabsContent value="addresses" className="mt-8 space-y-4">
-              <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
-                <CardContent className="pt-6 text-center">
-                  <MapPin className="mx-auto mb-3 text-[rgba(239,239,239,0.3)]" size={28} />
-                  <p className="text-[rgba(239,239,239,0.6)]">Nenhum endereço cadastrado ainda.</p>
-                  <p className="text-[rgba(239,239,239,0.4)] text-sm mt-1">O cadastro de endereços será disponibilizado em breve.</p>
-                </CardContent>
-              </Card>
+              <AddressesTab />
             </TabsContent>
 
             {/* Notificações */}

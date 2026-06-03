@@ -6,7 +6,8 @@
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { pixPayments, pixTransactions, orders } from "../../drizzle/schema";
+import { pixPayments, pixTransactions, orders, orderItems } from "../../drizzle/schema";
+import { notifyOwnerOfOrder } from "../_core/ownerNotify";
 import { generatePixPayment, validatePixKey, formatCurrency } from "../pix";
 import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
@@ -175,10 +176,11 @@ export const pixRouter = router({
       await db.update(pixPayments).set({ status: "confirmed", confirmedAt: new Date() }).where(eq(pixPayments.id, input.paymentId));
 
       // Marca o pedido correspondente como confirmado (pagamento recebido).
+      const orderId = payment[0].orderId;
       await db
         .update(orders)
         .set({ status: "confirmado", updatedAt: new Date() })
-        .where(and(eq(orders.id, payment[0].orderId), eq(orders.userId, ctx.user.id)));
+        .where(and(eq(orders.id, orderId), eq(orders.userId, ctx.user.id)));
 
       // Log transaction
       await db.insert(pixTransactions).values({
@@ -187,6 +189,27 @@ export const pixRouter = router({
         status: "confirmed",
         message: "PIX payment confirmed",
       });
+
+      // Notifica o dono da marca (WhatsApp/n8n) com valor + itens + estampa. Best-effort.
+      try {
+        const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+        await notifyOwnerOfOrder({
+          orderId,
+          totalPrice: payment[0].amount,
+          items: items.map((it) => ({
+            productName: it.productName,
+            quantity: it.quantity,
+            price: it.price,
+            size: it.size,
+            color: it.color,
+            customImageUrl: it.customImageUrl,
+          })),
+          customerName: ctx.user.name,
+          customerEmail: ctx.user.email,
+        });
+      } catch (e) {
+        console.error("[PIX] Falha ao notificar dono:", e);
+      }
 
       return {
         success: true,
