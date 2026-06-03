@@ -3,7 +3,7 @@
  * Enables offline functionality and caching strategies
  */
 
-const CACHE_VERSION = 'vanta-v1';
+const CACHE_VERSION = 'vanta-v2';
 const CACHE_ASSETS = `${CACHE_VERSION}-assets`;
 const CACHE_API = `${CACHE_VERSION}-api`;
 const CACHE_IMAGES = `${CACHE_VERSION}-images`;
@@ -54,12 +54,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML/JS/CSS - Stale While Revalidate
-  if (
-    request.destination === 'document' ||
-    request.destination === 'script' ||
-    request.destination === 'style'
-  ) {
+  // Documento HTML (app shell) - Network First.
+  // CRÍTICO: o index.html referencia bundles com hash que mudam a cada deploy.
+  // Servir HTML do cache (stale) aponta para um JS antigo que não existe mais
+  // após o redeploy → tela branca. Sempre buscar o HTML fresco da rede.
+  if (request.destination === 'document') {
+    event.respondWith(networkFirstStrategy(request, CACHE_ASSETS));
+    return;
+  }
+
+  // JS/CSS com hash (imutáveis) - Stale While Revalidate (URL muda por build)
+  if (request.destination === 'script' || request.destination === 'style') {
     event.respondWith(staleWhileRevalidateStrategy(request, CACHE_ASSETS));
     return;
   }
