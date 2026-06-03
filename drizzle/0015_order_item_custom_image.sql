@@ -1,0 +1,1 @@
+ALTER TABLE `orderItems` ADD `customImageUrl` varchar(500);

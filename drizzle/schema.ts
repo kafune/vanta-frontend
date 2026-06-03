@@ -51,6 +51,8 @@ export const orderItems = mysqlTable("orderItems", {
   price: int("price").notNull(), // in cents
   color: varchar("color", { length: 64 }),
   size: varchar("size", { length: 10 }),
+  /** URL da estampa personalizada enviada pelo cliente (self-hosted em /uploads). */
+  customImageUrl: varchar("customImageUrl", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

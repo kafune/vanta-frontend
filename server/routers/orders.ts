@@ -23,6 +23,7 @@ export const ordersRouter = {
             price: z.number().min(0),
             color: z.string().optional(),
             size: z.string().optional(),
+            customImageUrl: z.string().optional(),
           })
         ),
         totalPrice: z.number().min(0),
@@ -57,6 +58,7 @@ export const ordersRouter = {
           price: Math.round(item.price * 100), // Store in cents
           color: item.color || null,
           size: item.size || null,
+          customImageUrl: item.customImageUrl || null,
           createdAt: now,
         }));
 

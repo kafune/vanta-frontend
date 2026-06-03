@@ -33,7 +33,7 @@ function ProductCard({ product }: { product: any }) {
     addItem({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: product.price / 100, // carrinho em reais; produto vem em centavos
       quantity: 1,
       image: product.image,
       size: selectedSize,

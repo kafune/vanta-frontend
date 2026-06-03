@@ -58,7 +58,7 @@ export default function Product() {
     addItem({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: product.price / 100, // carrinho em reais; produto vem em centavos
       quantity,
       image: product.image ?? "",
       size: selectedSize,

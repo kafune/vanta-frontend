@@ -13,6 +13,7 @@ import { useLocation } from "wouter";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart } from "@/hooks/useCart";
 import ProductReviews from "@/components/ProductReviews";
+import { trpc } from "@/lib/trpc";
 
 interface Order {
   id: string;
@@ -34,60 +35,11 @@ interface Address {
   isDefault: boolean;
 }
 
-// Mock data
-const mockOrders: Order[] = [
-  {
-    id: "ORD-001",
-    date: "2026-04-10",
-    total: 149.99,
-    status: "entregue",
-    items: 2,
-    trackingNumber: "TRACK-2026-001",
-  },
-  {
-    id: "ORD-002",
-    date: "2026-04-05",
-    total: 89.99,
-    status: "entregue",
-    items: 1,
-    trackingNumber: "TRACK-2026-002",
-  },
-  {
-    id: "ORD-003",
-    date: "2026-03-28",
-    total: 199.99,
-    status: "preparacao",
-    items: 3,
-    trackingNumber: "TRACK-2026-003",
-  },
-];
-
-const mockAddresses: Address[] = [
-  {
-    id: "addr-1",
-    name: "Casa",
-    street: "Rua Principal",
-    number: "123",
-    city: "Lisboa",
-    state: "Lisboa",
-    zipCode: "1000-001",
-    isDefault: true,
-  },
-  {
-    id: "addr-2",
-    name: "Trabalho",
-    street: "Avenida Comercial",
-    number: "456",
-    city: "Porto",
-    state: "Porto",
-    zipCode: "4000-001",
-    isDefault: false,
-  },
-];
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
+  pendente: { bg: "bg-yellow-500/10", text: "text-yellow-400", label: "Aguardando pagamento" },
   confirmado: { bg: "bg-blue-500/10", text: "text-blue-400", label: "Confirmado" },
-  preparacao: { bg: "bg-yellow-500/10", text: "text-yellow-400", label: "Em Preparação" },
+  enviado: { bg: "bg-indigo-500/10", text: "text-indigo-400", label: "Enviado" },
   entregue: { bg: "bg-green-500/10", text: "text-green-400", label: "Entregue" },
   cancelado: { bg: "bg-red-500/10", text: "text-red-400", label: "Cancelado" },
 };
@@ -172,8 +124,9 @@ export default function UserAccount() {
     email: user?.email || "",
     phone: "+351 912 345 678",
   });
-  const [addresses, setAddresses] = useState<Address[]>(mockAddresses);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const ordersQuery = trpc.orders.getByUser.useQuery(undefined, { enabled: !!user });
+  const myOrders = ordersQuery.data ?? [];
 
   if (loading) {
     return (
@@ -371,43 +324,40 @@ export default function UserAccount() {
 
             {/* Pedidos */}
             <TabsContent value="orders" className="mt-8 space-y-4">
-              {mockOrders.length > 0 ? (
-                mockOrders.map((order) => (
-                  <Card
-                    key={order.id}
-                    className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] cursor-pointer hover:bg-[rgba(255,255,255,0.08)] transition-colors"
-                    onClick={() => setLocation(`/track/${order.id}`)}
-                  >
-                    <CardContent className="pt-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="space-y-2">
-                          <p className="text-[#EFEFEF] font-semibold">{order.id}</p>
-                          <p className="text-[rgba(239,239,239,0.6)] text-sm">
-                            {new Date(order.date).toLocaleDateString("pt-PT")}
-                          </p>
-                          <p className="text-[rgba(239,239,239,0.5)] text-sm">
-                            {order.items} item(ns)
-                          </p>
-                        </div>
-
-                        <div className="space-y-2 sm:text-right">
-                          <p className="text-[#EFEFEF] font-semibold">€{order.total.toFixed(2)}</p>
-                          <div
-                            className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold ${
-                              statusColors[order.status].bg
-                            } ${statusColors[order.status].text}`}
-                          >
-                            {statusColors[order.status].label}
+              {myOrders.length > 0 ? (
+                myOrders.map((order) => {
+                  const sc = statusColors[order.status] ?? { bg: "bg-[rgba(255,255,255,0.06)]", text: "text-[rgba(239,239,239,0.7)]", label: order.status };
+                  return (
+                    <Card
+                      key={order.id}
+                      className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] cursor-pointer hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+                      onClick={() => setLocation(`/track/${order.id}`)}
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="space-y-2">
+                            <p className="text-[#EFEFEF] font-semibold font-mono text-sm">{order.id}</p>
+                            <p className="text-[rgba(239,239,239,0.6)] text-sm">
+                              {new Date(order.createdAt).toLocaleDateString("pt-BR")}
+                            </p>
+                          </div>
+                          <div className="space-y-2 sm:text-right">
+                            <p className="text-[#EFEFEF] font-semibold">R$ {(order.totalPrice / 100).toFixed(2)}</p>
+                            <div className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold ${sc.bg} ${sc.text}`}>
+                              {sc.label}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      </CardContent>
+                    </Card>
+                  );
+                })
               ) : (
                 <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
                   <CardContent className="pt-6 text-center">
-                    <p className="text-[rgba(239,239,239,0.6)]">Nenhum pedido encontrado</p>
+                    <p className="text-[rgba(239,239,239,0.6)]">
+                      {ordersQuery.isLoading ? "Carregando..." : "Nenhum pedido encontrado"}
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -420,54 +370,13 @@ export default function UserAccount() {
 
             {/* Endereços */}
             <TabsContent value="addresses" className="mt-8 space-y-4">
-              {addresses.map((address) => (
-                <Card
-                  key={address.id}
-                  className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
-                >
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="text-[#EFEFEF] font-semibold">{address.name}</p>
-                          {address.isDefault && (
-                            <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">
-                              Padrão
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[rgba(239,239,239,0.6)] text-sm">
-                          {address.street}, {address.number}
-                        </p>
-                        <p className="text-[rgba(239,239,239,0.6)] text-sm">
-                          {address.zipCode} - {address.city}, {address.state}
-                        </p>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-[rgba(255,255,255,0.1)] text-[#EFEFEF] hover:bg-[rgba(255,255,255,0.05)]"
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-red-500/30 text-red-400 hover:bg-red-500/10"
-                        >
-                          Remover
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              <Button className="w-full bg-[#EFEFEF] text-[#0B0B0B] hover:bg-white">
-                + Adicionar Novo Endereço
-              </Button>
+              <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
+                <CardContent className="pt-6 text-center">
+                  <MapPin className="mx-auto mb-3 text-[rgba(239,239,239,0.3)]" size={28} />
+                  <p className="text-[rgba(239,239,239,0.6)]">Nenhum endereço cadastrado ainda.</p>
+                  <p className="text-[rgba(239,239,239,0.4)] text-sm mt-1">O cadastro de endereços será disponibilizado em breve.</p>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Notificações */}
@@ -523,21 +432,9 @@ export default function UserAccount() {
                   <CardDescription>Veja e gerencie suas avaliações de produtos</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    {mockOrders.map((order) => (
-                      <div key={order.id} className="border-b border-[rgba(255,255,255,0.1)] pb-6 last:border-b-0">
-                        <div className="mb-4">
-                          <p className="text-[#EFEFEF] font-semibold mb-1">{order.id}</p>
-                          <p className="text-[rgba(239,239,239,0.6)] text-sm">{order.date}</p>
-                        </div>
-                        <ProductReviews
-                          productId={`product-${order.id}`}
-                          orderId={order.id}
-                          canReview={order.status === "entregue"}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-[rgba(239,239,239,0.6)] text-center py-6">
+                    Você poderá avaliar os produtos após receber seus pedidos.
+                  </p>
                 </CardContent>
               </Card>
             </TabsContent>

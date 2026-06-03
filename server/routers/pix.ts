@@ -6,7 +6,7 @@
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { pixPayments, pixTransactions } from "../../drizzle/schema";
+import { pixPayments, pixTransactions, orders } from "../../drizzle/schema";
 import { generatePixPayment, validatePixKey, formatCurrency } from "../pix";
 import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
@@ -173,6 +173,12 @@ export const pixRouter = router({
 
       // Update payment status
       await db.update(pixPayments).set({ status: "confirmed", confirmedAt: new Date() }).where(eq(pixPayments.id, input.paymentId));
+
+      // Marca o pedido correspondente como confirmado (pagamento recebido).
+      await db
+        .update(orders)
+        .set({ status: "confirmado", updatedAt: new Date() })
+        .where(and(eq(orders.id, payment[0].orderId), eq(orders.userId, ctx.user.id)));
 
       // Log transaction
       await db.insert(pixTransactions).values({
