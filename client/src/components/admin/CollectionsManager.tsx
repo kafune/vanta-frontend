@@ -151,6 +151,8 @@ export default function CollectionsManager() {
           </div>
         </div>
 
+        {editing.mode === "edit" && <CollectionProductsEditor collectionId={f.id} />}
+
         <div className="flex gap-3">
           <Button onClick={handleSave} disabled={createMut.isPending || updateMut.isPending} className="bg-white text-black hover:bg-[rgba(255,255,255,0.9)]">
             {(createMut.isPending || updateMut.isPending) && <Loader2 size={16} className="animate-spin mr-2" />} Salvar
@@ -190,6 +192,99 @@ export default function CollectionsManager() {
             </div>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+// Gerencia os produtos vinculados a uma coleção (adicionar/remover ao vivo).
+function CollectionProductsEditor({ collectionId }: { collectionId: string }) {
+  const utils = trpc.useUtils();
+  const linksQuery = trpc.collections.getProductsByCollection.useQuery({ collectionId });
+  const productsQuery = trpc.admin.products.list.useQuery();
+  const addMut = trpc.collections.addProductToCollection.useMutation();
+  const removeMut = trpc.collections.removeProductFromCollection.useMutation();
+  const [toAdd, setToAdd] = useState("");
+
+  const refresh = () => utils.collections.getProductsByCollection.invalidate({ collectionId });
+
+  const links = linksQuery.data ?? [];
+  const allProducts: any[] = (productsQuery.data as any[]) ?? [];
+  const linkedIds = new Set(links.map((l: any) => l.productId));
+  const linked = allProducts.filter((p) => linkedIds.has(p.id));
+  const available = allProducts.filter((p) => !linkedIds.has(p.id));
+
+  const add = async () => {
+    if (!toAdd) return;
+    try {
+      await addMut.mutateAsync({
+        id: crypto.randomUUID(),
+        collectionId,
+        productId: toAdd,
+        displayOrder: links.length,
+      });
+      setToAdd("");
+      refresh();
+    } catch (e: any) {
+      toast.error("Erro ao adicionar", { description: e.message });
+    }
+  };
+
+  const remove = async (productId: string) => {
+    try {
+      await removeMut.mutateAsync({ collectionId, productId });
+      refresh();
+    } catch (e: any) {
+      toast.error("Erro ao remover", { description: e.message });
+    }
+  };
+
+  const selectClass =
+    "h-10 px-3 bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.15)] text-[#EFEFEF] text-sm rounded focus:outline-none focus:border-[rgba(255,255,255,0.4)]";
+
+  return (
+    <div className="border-t border-[rgba(255,255,255,0.08)] pt-5">
+      <h4 className="text-sm font-semibold text-[#EFEFEF] mb-3">Produtos da coleção</h4>
+
+      {linksQuery.isLoading || productsQuery.isLoading ? (
+        <Loader2 className="animate-spin text-[#EFEFEF]" size={18} />
+      ) : (
+        <>
+          {linked.length === 0 ? (
+            <p className="text-[rgba(239,239,239,0.5)] text-sm mb-3">Nenhum produto nesta coleção ainda.</p>
+          ) : (
+            <div className="space-y-2 mb-4">
+              {linked.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 p-2 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] rounded">
+                  <div className="w-9 h-9 bg-[rgba(255,255,255,0.05)] rounded overflow-hidden flex-shrink-0">
+                    {p.image && <img src={p.image} alt="" className="w-full h-full object-cover" />}
+                  </div>
+                  <span className="flex-1 text-sm text-[#EFEFEF] truncate">{p.name}</span>
+                  <button onClick={() => remove(p.id)} disabled={removeMut.isPending} className="p-1.5 text-[rgba(239,107,107,0.7)] hover:text-[#FF6B6B]" title="Remover da coleção">
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {available.length > 0 ? (
+            <div className="flex gap-2">
+              <select value={toAdd} onChange={(e) => setToAdd(e.target.value)} className={`${selectClass} flex-1`}>
+                <option value="">Selecione um produto…</option>
+                {available.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name} — R$ {(p.price / 100).toFixed(2)}</option>
+                ))}
+              </select>
+              <Button type="button" onClick={add} disabled={!toAdd || addMut.isPending} className="bg-[rgba(255,255,255,0.1)] text-[#EFEFEF] hover:bg-[rgba(255,255,255,0.18)]">
+                {addMut.isPending ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                <span className="ml-1">Adicionar</span>
+              </Button>
+            </div>
+          ) : (
+            <p className="text-[rgba(239,239,239,0.4)] text-xs">Todos os produtos já estão nesta coleção.</p>
+          )}
+        </>
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { publicProcedure, adminProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { collections, collectionProducts } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export const collectionsRouter = {
   getAll: publicProcedure.query(async () => {
@@ -125,12 +125,36 @@ export const collectionsRouter = {
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const result = await db.insert(collectionProducts).values({
+      // Evita duplicar o mesmo produto na coleção.
+      const existing = await db
+        .select()
+        .from(collectionProducts)
+        .where(eq(collectionProducts.collectionId, input.collectionId));
+      if (existing.some((cp) => cp.productId === input.productId)) {
+        return { ok: true, already: true };
+      }
+      await db.insert(collectionProducts).values({
         id: input.id,
         collectionId: input.collectionId,
         productId: input.productId,
         displayOrder: input.displayOrder,
       });
-      return result;
+      return { ok: true };
+    }),
+
+  removeProductFromCollection: adminProcedure
+    .input(z.object({ collectionId: z.string(), productId: z.string() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db
+        .delete(collectionProducts)
+        .where(
+          and(
+            eq(collectionProducts.collectionId, input.collectionId),
+            eq(collectionProducts.productId, input.productId)
+          )
+        );
+      return { ok: true };
     }),
 };
