@@ -1,10 +1,15 @@
 /**
+<<<<<<< Updated upstream
  * VANTA Product Page — Carbon Fiber Design System
  * Página de produto com galeria, seletor de tamanho e relacionados.
  * Dados vêm do banco via trpc.products.getById / getRelated.
+=======
+ * VANTA Product Page – Carbon Fiber Design System
+ * Detailed product page with gallery, size selector, and specifications
+>>>>>>> Stashed changes
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { Heart, Share2, Truck, RotateCcw, Shield, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -14,8 +19,11 @@ import ProductGallery from "@/components/ProductGallery";
 import SizeSelector from "@/components/SizeSelector";
 import { trpc } from "@/lib/trpc";
 import { useCart } from "@/hooks/useCart";
+<<<<<<< Updated upstream
 
 const formatPrice = (cents: number) => `R$ ${(cents / 100).toFixed(2)}`;
+=======
+>>>>>>> Stashed changes
 
 export default function Product() {
   const [, params] = useRoute("/produto/:id");
@@ -24,8 +32,10 @@ export default function Product() {
   const [liked, setLiked] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const { addItem } = useCart();
 
   const productId = params?.id as string;
+<<<<<<< Updated upstream
 
   const { data: product, isLoading, isError } = trpc.products.getById.useQuery(
     { id: productId },
@@ -47,6 +57,14 @@ export default function Product() {
       </div>
     );
   }
+=======
+
+  // Busca o produto via API (igual ao que o CollectionSection já faz)
+  const { data: product, isLoading, error } = trpc.products.getById.useQuery(
+    { id: productId },
+    { enabled: !!productId }
+  );
+>>>>>>> Stashed changes
 
   const galleryImages = product.images.length > 0 ? product.images : product.image ? [product.image] : [];
 
@@ -55,6 +73,7 @@ export default function Product() {
       toast.error("Selecione um tamanho", { description: "É necessário escolher um tamanho para adicionar ao carrinho." });
       return;
     }
+<<<<<<< Updated upstream
     addItem({
       id: product.id,
       name: product.name,
@@ -65,16 +84,65 @@ export default function Product() {
     });
     toast.success(`${product.name} adicionado!`, {
       description: `Tamanho ${selectedSize} × ${quantity} - ${formatPrice(product.price * quantity)}`,
+=======
+    if (!product) return;
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity,
+      image: product.image,
+      size: selectedSize,
+    });
+    toast.success(`${product.name} adicionado!`, {
+      description: `Tamanho ${selectedSize} × ${quantity} unidade(s) - R$ ${(product.price / 100 * quantity).toFixed(2)}`,
+>>>>>>> Stashed changes
     });
   };
 
   const handleShare = () => {
     if (navigator.share) {
+<<<<<<< Updated upstream
       navigator.share({ title: product.name, text: product.description, url: window.location.href });
+=======
+      navigator.share({
+        title: product?.name,
+        text: product?.description,
+        url: window.location.href,
+      });
+>>>>>>> Stashed changes
     } else {
       toast.success("Link copiado!", { description: "Compartilhe com seus amigos." });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen" style={{ background: "#0B0B0B" }}>
+        <Navbar />
+        <div className="flex items-center justify-center py-32">
+          <p className="text-[rgba(239,239,239,0.5)]">Carregando produto...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen" style={{ background: "#0B0B0B" }}>
+        <Navbar />
+        <div className="flex items-center justify-center py-32">
+          <p className="text-red-400">Produto não encontrado.</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Preço já vem em centavos da API, dividimos por 100 para exibir em reais
+  const priceInReais = product.price / 100;
+  const originalPriceInReais = product.originalPrice ? product.originalPrice / 100 : null;
 
   return (
     <div className="min-h-screen" style={{ background: "#0B0B0B" }}>
@@ -102,6 +170,7 @@ export default function Product() {
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           {/* Gallery */}
           <div>
+<<<<<<< Updated upstream
             <ProductGallery images={galleryImages} productName={product.name} />
           </div>
 
@@ -141,11 +210,45 @@ export default function Product() {
               <div className="mt-4">
                 <span className="font-heading text-xs font-semibold tracking-widest uppercase text-[rgba(100,200,100,0.8)]">
                   ✓ Em Estoque
-                </span>
+=======
+            <ProductGallery images={[product.image]} productName={product.name} />
+          </div>
+
+          {/* Info */}
+          <div>
+            {/* Tag */}
+            {product.tag && (
+              <div className="font-mono-label text-[0.6rem] bg-[rgba(11,11,11,0.8)] text-[#EFEFEF] px-2 py-1 backdrop-blur-sm inline-block mb-4">
+                {product.tag}
               </div>
+            )}
+
+            <h1 className="font-display text-4xl text-[#EFEFEF] leading-none mb-2">{product.name}</h1>
+
+            <div className="font-mono-label text-[rgba(239,239,239,0.3)] text-[0.6rem] mb-6">{product.category}</div>
+
+            {/* Price */}
+            <div className="flex items-center gap-2 mb-6">
+              <span className="font-heading font-bold text-[#EFEFEF] text-2xl">
+                R$ {priceInReais.toFixed(2)}
+              </span>
+              {originalPriceInReais && (
+                <span className="font-heading text-sm text-[rgba(239,239,239,0.35)] line-through">
+                  R$ {originalPriceInReais.toFixed(2)}
+>>>>>>> Stashed changes
+                </span>
+              )}
+            </div>
+
+            {/* Stock status */}
+            <div className="mt-4">
+              <span className={`font-heading text-xs font-semibold tracking-widest uppercase text-[rgba(100,200,100,0.8)]`}>
+                ✓ Em Estoque
+              </span>
             </div>
 
             {/* Description */}
+<<<<<<< Updated upstream
             {product.description && (
               <p className="font-heading text-base font-light text-[rgba(239,239,239,0.6)] leading-relaxed">
                 {product.description}
@@ -156,16 +259,24 @@ export default function Product() {
             {product.sizes.length > 0 && (
               <SizeSelector sizes={product.sizes} onSizeSelect={setSelectedSize} selectedSize={selectedSize} />
             )}
+=======
+            <p className="font-heading text-base font-light text-[rgba(239,239,239,0.6)] leading-relaxed mt-4 mb-6">
+              {product.description}
+            </p>
+
+            {/* Size Selector */}
+            <SizeSelector sizes={product.sizes ?? ["P", "M", "G", "GG"]} onSizeSelect={setSelectedSize} selectedSize={selectedSize} />
+>>>>>>> Stashed changes
 
             {/* Quantity */}
-            <div>
+            <div className="mt-6 mb-6">
               <label className="font-heading font-semibold text-[#EFEFEF] block mb-3">Quantidade</label>
               <div className="flex items-center gap-3 w-fit">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="w-10 h-10 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all"
                 >
-                  −
+                  –
                 </button>
                 <input
                   type="number"
@@ -202,8 +313,13 @@ export default function Product() {
               </button>
             </div>
 
+<<<<<<< Updated upstream
             {/* Benefits (políticas da loja) */}
             <div className="space-y-3 pt-4 border-t border-[rgba(255,255,255,0.06)]">
+=======
+            {/* Benefits */}
+            <div className="space-y-3 pt-4 border-t border-[rgba(255,255,255,0.06)] mt-6">
+>>>>>>> Stashed changes
               {[
                 { icon: Truck, text: "Entrega express em 48h" },
                 { icon: RotateCcw, text: "Devoluções grátis em 30 dias" },
@@ -220,6 +336,7 @@ export default function Product() {
             </div>
           </div>
         </div>
+<<<<<<< Updated upstream
 
         {/* Produtos relacionados */}
         {related.length > 0 && (
@@ -249,6 +366,8 @@ export default function Product() {
             </div>
           </div>
         )}
+=======
+>>>>>>> Stashed changes
       </div>
 
       <Footer />
