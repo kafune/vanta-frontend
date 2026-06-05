@@ -1,5 +1,5 @@
 /**
- * VANTA Collection Section – Carbon Fiber Design System
+ * VANTA Collection Section — Carbon Fiber Design System
  * Featured products grid with filter tabs
  */
 
@@ -8,19 +8,21 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { PaginatedProductGrid } from "./PaginatedProductGrid";
 
-// Removidas categorias: cotton, oversized, dryfit, hoodie
-// Mantido apenas "todos" para mostrar todos os produtos
-type FilterType = "todos";
+type FilterType = "todos" | "cotton" | "oversized" | "dryfit" | "hoodie";
 
 const filters: { key: FilterType; label: string }[] = [
   { key: "todos", label: "Todos" },
+  { key: "cotton", label: "Algodão" },
+  { key: "oversized", label: "Oversized" },
+  { key: "dryfit", label: "Dry Fit" },
+  { key: "hoodie", label: "Hoodies" },
 ];
 
 export default function CollectionSection() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("todos");
   const [, setLocation] = useLocation();
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(true); // Começa como true para carregar imediatamente
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -41,10 +43,25 @@ export default function CollectionSection() {
             <h2 className="font-display text-[clamp(2.5rem,6vw,5rem)] leading-none text-[#EFEFEF]">
               PRODUTOS<br />EM DESTAQUE
             </h2>
+
+
           </div>
         </div>
 
         <div className="section-divider mb-10" />
+
+        {/* Category Filter Tabs */}
+        <div className="flex flex-wrap gap-2 mb-10">
+          {filters.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setActiveFilter(f.key)}
+              className={`category-tag ${activeFilter === f.key ? "active" : ""}`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
 
         {/* Paginated Products Grid */}
         <PaginatedProductGrid

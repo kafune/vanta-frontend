@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { reviews, products, users, Review } from "../../drizzle/schema";
+import { reviews, Review } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { TRPCError } from "@trpc/server";
@@ -26,35 +26,6 @@ export const reviewsRouter = router({
         .orderBy(desc(reviews.createdAt));
 
       return result;
-    }),
-
-  // Avaliações aprovadas mais recentes (para a vitrine de depoimentos na Home).
-  // Junta nome do autor e do produto. Retorna [] quando não há avaliações.
-  getApproved: publicProcedure
-    .input(z.object({ limit: z.number().int().min(1).max(20).default(6) }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) return [];
-
-      const rows = await db
-        .select({
-          id: reviews.id,
-          rating: reviews.rating,
-          title: reviews.title,
-          comment: reviews.comment,
-          createdAt: reviews.createdAt,
-          authorName: users.name,
-          productId: reviews.productId,
-          productName: products.name,
-        })
-        .from(reviews)
-        .leftJoin(users, eq(reviews.userId, users.id))
-        .leftJoin(products, eq(reviews.productId, products.id))
-        .where(eq(reviews.status, "aprovado"))
-        .orderBy(desc(reviews.createdAt))
-        .limit(input.limit);
-
-      return rows;
     }),
 
   // Get reviews by user

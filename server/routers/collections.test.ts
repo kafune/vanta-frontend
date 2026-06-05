@@ -11,13 +11,6 @@ const caller = appRouter.createCaller({
   res: {} as any,
 });
 
-// create/update/delete de coleções exigem admin
-const adminCaller = appRouter.createCaller({
-  user: { id: 1, role: "admin", name: "Admin" } as any,
-  req: {} as any,
-  res: {} as any,
-});
-
 describe("Collections Router", () => {
   it("should get all collections", async () => {
     const result = await caller.collections.getAll();
@@ -40,7 +33,7 @@ describe("Collections Router", () => {
   });
 
   it("should create a new collection", async () => {
-    const result = await adminCaller.collections.create({
+    const result = await caller.collections.create({
       id: "test-collection-" + Date.now(),
       name: "Test Collection",
       description: "A test collection",
@@ -52,7 +45,7 @@ describe("Collections Router", () => {
   });
 
   it("should add product to collection", async () => {
-    const result = await adminCaller.collections.addProductToCollection({
+    const result = await caller.collections.addProductToCollection({
       id: "test-product-collection-" + Date.now(),
       collectionId: "test-collection",
       productId: "product-123",

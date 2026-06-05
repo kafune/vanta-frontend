@@ -1,104 +1,98 @@
 /**
  * Products Router
- * Catálogo de produtos servido a partir do banco (tabela `products`).
+ * Handles product listing, filtering, and pagination
  */
 
 import { publicProcedure, router } from "../_core/trpc";
-import { getDb } from "../db";
-import { products, reviews } from "../../drizzle/schema";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-type ProductRow = typeof products.$inferSelect;
+// Mock products data - in production, this would come from database
+const MOCK_PRODUCTS = [
+  { id: "essential-tee-280g", name: "Essential Tee 280g", category: "cotton", price: 8900, originalPrice: null, tag: "Bestseller" },
+  { id: "urban-oversized", name: "Urban Oversized", category: "oversized", price: 10900, originalPrice: null, tag: "Novo" },
+  { id: "performance-pro", name: "Performance Pro", category: "dryfit", price: 9900, originalPrice: 12900, tag: "Promoção" },
+  { id: "luxury-hoodie", name: "Moletom canguru", category: "hoodie", price: 18900, originalPrice: null, tag: "Premium" },
+  { id: "classic-cotton", name: "Classic Cotton", category: "cotton", price: 7900, originalPrice: null, tag: null },
+  { id: "street-oversized", name: "Street Oversized", category: "oversized", price: 11900, originalPrice: null, tag: "Exclusivo" },
+  { id: "tech-dryfit", name: "Tech DryFit", category: "dryfit", price: 10900, originalPrice: null, tag: null },
+  { id: "premium-cotton", name: "Premium Cotton 350g", category: "cotton", price: 12900, originalPrice: null, tag: "Premium" },
+  { id: "oversized-comfort", name: "Oversized Comfort", category: "oversized", price: 9900, originalPrice: null, tag: null },
+  { id: "hoodie-deluxe", name: "Hoodie Deluxe", category: "hoodie", price: 21900, originalPrice: null, tag: "Novo" },
+  { id: "dryfit-sport", name: "DryFit Sport", category: "dryfit", price: 8900, originalPrice: null, tag: null },
+  { id: "cotton-classic", name: "Cotton Classic", category: "cotton", price: 6900, originalPrice: null, tag: null },
+];
 
-function parseJsonArray(value: string | null): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-// Formato "card" usado nas listagens (grades, relacionados, destaques).
-function toCard(p: ProductRow) {
-  return {
-    id: p.id,
-    name: p.name,
-    category: p.category,
-    price: p.price,
-    originalPrice: p.originalPrice,
-    tag: p.tag,
-    image: p.image,
-  };
-}
+const CATEGORY_IMAGES = {
+  cotton: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-cotton-6C3ChDmVfT5oxo4PDhFrbf.webp",
+  oversized: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-oversized-fkaeTb24PqHL7RPsvGjmFY.webp",
+  dryfit: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-dryfit-fpbTLZXZdYCMYERV2Myz4g.webp",
+  hoodie: "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-hoodie-Z6BCR25Eed5suvi3SXqxEz.webp",
+};
 
 export const productsRouter = router({
   /**
-   * Lista paginada com filtro de categoria, busca e ordenação.
+   * Get paginated products with optional filtering
+   * Supports: category filter, search, sorting, and pagination
    */
   getPaginated: publicProcedure
     .input(
       z.object({
         page: z.number().int().min(1).default(1),
         limit: z.number().int().min(1).max(100).default(12),
-        category: z.string().default("todos"),
+        category: z.enum(["todos", "cotton", "oversized", "dryfit", "hoodie"]).default("todos"),
         search: z.string().optional(),
         sort: z.enum(["relevance", "price-asc", "price-desc", "newest"]).default("relevance"),
       })
     )
-    .query(async ({ input }) => {
-      const db = await getDb();
-      const emptyResult = {
-        products: [] as ReturnType<typeof toCard>[],
-        pagination: {
-          page: input.page,
-          limit: input.limit,
-          total: 0,
-          totalPages: 0,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
-      };
-      if (!db) return emptyResult;
+    .query(({ input }) => {
+      let filtered = MOCK_PRODUCTS;
 
-      let rows = await db.select().from(products).where(eq(products.active, 1));
-
+      // Apply category filter
       if (input.category !== "todos") {
-        rows = rows.filter((p) => p.category === input.category);
+        filtered = filtered.filter((p) => p.category === input.category);
       }
+
+      // Apply search filter
       if (input.search) {
-        const q = input.search.toLowerCase();
-        rows = rows.filter(
+        const searchLower = input.search.toLowerCase();
+        filtered = filtered.filter(
           (p) =>
-            p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+            p.name.toLowerCase().includes(searchLower) ||
+            p.category.toLowerCase().includes(searchLower)
         );
       }
 
+      // Apply sorting
       switch (input.sort) {
         case "price-asc":
-          rows.sort((a, b) => a.price - b.price);
+          filtered.sort((a, b) => a.price - b.price);
           break;
         case "price-desc":
-          rows.sort((a, b) => b.price - a.price);
+          filtered.sort((a, b) => b.price - a.price);
           break;
         case "newest":
-          rows.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          // Reverse order for newest first (in real app, would use createdAt)
+          filtered.reverse();
           break;
         case "relevance":
         default:
-          rows.sort((a, b) => a.displayOrder - b.displayOrder);
+          // Keep original order
           break;
       }
 
-      const total = rows.length;
+      // Calculate pagination
+      const total = filtered.length;
       const totalPages = Math.ceil(total / input.limit);
       const start = (input.page - 1) * input.limit;
-      const paged = rows.slice(start, start + input.limit);
+      const end = start + input.limit;
+
+      const products = filtered.slice(start, end).map((p) => ({
+        ...p,
+        image: CATEGORY_IMAGES[p.category as keyof typeof CATEGORY_IMAGES],
+      }));
 
       return {
-        products: paged.map(toCard),
+        products,
         pagination: {
           page: input.page,
           limit: input.limit,
@@ -111,45 +105,26 @@ export const productsRouter = router({
     }),
 
   /**
-   * Produto por ID (slug). Inclui descrição, tamanhos, cores e rating/avaliações
-   * agregados da tabela de reviews aprovados (0 quando não há avaliações).
+   * Get product by ID
    */
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new Error("Product not found");
-
-      const found = await db
-        .select()
-        .from(products)
-        .where(and(eq(products.id, input.id), eq(products.active, 1)))
-        .limit(1);
-
-      const product = found[0];
-      if (!product) throw new Error("Product not found");
-
-      const stats = await db
-        .select({ avg: sql<number>`AVG(${reviews.rating})`, count: sql<number>`COUNT(*)` })
-        .from(reviews)
-        .where(and(eq(reviews.productId, product.id), eq(reviews.status, "aprovado")));
-
-      const reviewsCount = Number(stats[0]?.count ?? 0);
-      const rating = reviewsCount > 0 ? Math.round(Number(stats[0]?.avg ?? 0) * 10) / 10 : 0;
-
+    .query(({ input }) => {
+      const product = MOCK_PRODUCTS.find((p) => p.id === input.id);
+      if (!product) {
+        throw new Error("Product not found");
+      }
       return {
-        ...toCard(product),
-        description: product.description ?? "",
-        images: parseJsonArray(product.images),
-        sizes: parseJsonArray(product.sizes),
-        colors: parseJsonArray(product.colors),
-        rating,
-        reviews: reviewsCount,
+        ...product,
+        image: CATEGORY_IMAGES[product.category as keyof typeof CATEGORY_IMAGES],
+        description: `Premium ${product.category} apparel with superior quality and design.`,
+        sizes: ["P", "M", "G", "GG"],
+        colors: ["Preto", "Branco", "Cinza", "Azul"],
       };
     }),
 
   /**
-   * Produtos relacionados (mesma categoria, exclui o atual).
+   * Get related products (same category, exclude current product)
    */
   getRelated: publicProcedure
     .input(
@@ -158,32 +133,26 @@ export const productsRouter = router({
         limit: z.number().int().min(1).max(20).default(4),
       })
     )
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) return [];
+    .query(({ input }) => {
+      const product = MOCK_PRODUCTS.find((p) => p.id === input.productId);
+      if (!product) {
+        throw new Error("Product not found");
+      }
 
-      const found = await db
-        .select()
-        .from(products)
-        .where(eq(products.id, input.productId))
-        .limit(1);
-      const product = found[0];
-      if (!product) return [];
-
-      const related = await db
-        .select()
-        .from(products)
-        .where(and(eq(products.category, product.category), eq(products.active, 1)))
-        .orderBy(asc(products.displayOrder));
-
-      return related
-        .filter((p) => p.id !== input.productId)
+      const related = MOCK_PRODUCTS.filter(
+        (p) => p.category === product.category && p.id !== input.productId
+      )
         .slice(0, input.limit)
-        .map(toCard);
+        .map((p) => ({
+          ...p,
+          image: CATEGORY_IMAGES[p.category as keyof typeof CATEGORY_IMAGES],
+        }));
+
+      return related;
     }),
 
   /**
-   * Produtos em destaque (featured = 1, com fallback para os que têm tag).
+   * Get featured products (with tags)
    */
   getFeatured: publicProcedure
     .input(
@@ -191,38 +160,31 @@ export const productsRouter = router({
         limit: z.number().int().min(1).max(20).default(6),
       })
     )
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) return [];
+    .query(({ input }) => {
+      const featured = MOCK_PRODUCTS.filter((p) => p.tag)
+        .slice(0, input.limit)
+        .map((p) => ({
+          ...p,
+          image: CATEGORY_IMAGES[p.category as keyof typeof CATEGORY_IMAGES],
+        }));
 
-      const rows = await db
-        .select()
-        .from(products)
-        .where(eq(products.active, 1))
-        .orderBy(asc(products.displayOrder));
-
-      const featured = rows.filter((p) => p.featured === 1);
-      const pool = featured.length > 0 ? featured : rows.filter((p) => p.tag);
-
-      return pool.slice(0, input.limit).map(toCard);
+      return featured;
     }),
 
   /**
-   * Estatísticas por categoria.
+   * Get category statistics
    */
-  getCategoryStats: publicProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) return [];
+  getCategoryStats: publicProcedure.query(() => {
+    const categories = ["cotton", "oversized", "dryfit", "hoodie"] as const;
+    const stats = categories.map((cat) => ({
+      category: cat,
+      count: MOCK_PRODUCTS.filter((p) => p.category === cat).length,
+      avgPrice: Math.round(
+        MOCK_PRODUCTS.filter((p) => p.category === cat).reduce((sum, p) => sum + p.price, 0) /
+          Math.max(1, MOCK_PRODUCTS.filter((p) => p.category === cat).length)
+      ),
+    }));
 
-    const rows = await db.select().from(products).where(eq(products.active, 1));
-    const categories = Array.from(new Set(rows.map((p) => p.category)));
-
-    return categories.map((cat) => {
-      const inCat = rows.filter((p) => p.category === cat);
-      const avgPrice = inCat.length
-        ? Math.round(inCat.reduce((sum, p) => sum + p.price, 0) / inCat.length)
-        : 0;
-      return { category: cat, count: inCat.length, avgPrice };
-    });
+    return stats;
   }),
 });

@@ -37,26 +37,15 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
-// Lê o cookie do CSRF (double-submit) para reenviar no header das mutations.
-function getCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]+)"));
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
-        const csrfToken = getCookie("__csrf_token");
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
-          headers: {
-            ...(init?.headers ?? {}),
-            ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
-          },
         });
       },
     }),

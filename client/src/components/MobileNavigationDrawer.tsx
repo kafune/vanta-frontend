@@ -11,33 +11,23 @@ import { getLoginUrl } from "@/const";
 
 interface MobileNavigationDrawerProps {
   cartCount?: number;
-  onCartClick?: () => void;
 }
 
-export function MobileNavigationDrawer({ cartCount = 0, onCartClick }: MobileNavigationDrawerProps) {
+export function MobileNavigationDrawer({ cartCount = 0 }: MobileNavigationDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
 
   const menuItems = [
     { icon: Home, label: "Home", href: "/" },
-    { icon: Shirt, label: "Coleções", href: "/collections" },
-    { icon: Palette, label: "Personalizar", href: "/#canvas" },
-    { icon: User, label: "Perfil", href: "/profile" },
+    { icon: Shirt, label: "Coleção", href: "/colecao" },
+    { icon: Palette, label: "Personalizar", href: "/personalizar" },
+    { icon: User, label: "Perfil", href: "/perfil" },
   ];
 
   const handleNavigation = (href: string) => {
+    setLocation(href);
     setIsOpen(false);
-    // Suporta âncoras (ex.: "/#canvas"): navega para a rota e rola até a seção.
-    if (href.includes("#")) {
-      const [path, hash] = href.split("#");
-      setLocation(path || "/");
-      setTimeout(() => {
-        document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
-      }, 120);
-    } else {
-      setLocation(href);
-    }
   };
 
   const handleLogout = async () => {
@@ -102,10 +92,7 @@ export function MobileNavigationDrawer({ cartCount = 0, onCartClick }: MobileNav
 
         {/* Cart */}
         <button
-          onClick={() => {
-            setIsOpen(false);
-            onCartClick?.();
-          }}
+          onClick={() => handleNavigation("/carrinho")}
           className="w-full mx-4 flex items-center gap-3 px-4 py-3 text-[#EFEFEF] bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] rounded transition-colors text-left relative"
         >
           <ShoppingBag size={20} />

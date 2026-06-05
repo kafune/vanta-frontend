@@ -44,17 +44,9 @@ export default function Navbar() {
     setMenuOpen(false);
     if (isRoute) {
       setLocation(href);
-      return;
-    }
-    // Âncora (#secao): rola na Home. Se estiver em outra página, vai pra Home e rola.
-    const el = document.querySelector(href);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
     } else {
-      setLocation("/");
-      setTimeout(() => {
-        document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
-      }, 120);
+      const el = document.querySelector(href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -142,7 +134,7 @@ export default function Navbar() {
               </button>
 
               {/* Mobile Menu Toggle - now handled by MobileNavigationDrawer */}
-              <MobileNavigationDrawer cartCount={itemCount} onCartClick={() => setCartOpen(true)} />
+              <MobileNavigationDrawer cartCount={itemCount} />
             </div>
           </div>
         </div>

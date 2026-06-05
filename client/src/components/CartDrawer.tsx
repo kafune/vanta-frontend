@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { PixCheckout } from "@/components/PixCheckout";
-import { getLoginUrl } from "@/const";
 
 interface CartDrawerProps {
   open: boolean;
@@ -34,8 +33,6 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "other">("pix");
   
-  const createOrderMutation = trpc.orders.create.useMutation();
-  const uploadStampMutation = trpc.uploads.uploadStamp.useMutation();
   const sendOrderConfirmationMutation = trpc.email.sendOrderConfirmation.useMutation();
   const recordCouponUsageMutation = trpc.coupons.recordUsage.useMutation();
   const getCashbackBalanceQuery = trpc.cashback.getBalance.useQuery(undefined, { enabled: !!user });
@@ -60,68 +57,100 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const cashbackDiscount = applyCashback && getCashbackBalanceQuery.data?.availableBalance ? Math.min(getCashbackBalanceQuery.data.availableBalance / 100, total) : 0;
   const finalTotal = (appliedCoupon ? total - (appliedCoupon.discount / 100) : total) - cashbackDiscount;
 
-  // Cria o pedido real (orders + orderItems), sobe as estampas personalizadas e
-  // então abre o PixCheckout com o orderId real.
-  const handleStartCheckout = async () => {
+  const handleCheckout = async () => {
     if (items.length === 0) {
       toast.error("Carrinho vazio");
       return;
     }
+
     setIsCheckingOut(true);
     try {
-      const orderItems = [];
-      for (const item of items) {
-        let customImageUrl: string | undefined;
-        const art = item.customization?.imageData;
-        if (art && art.startsWith("data:")) {
-          const up = await uploadStampMutation.mutateAsync({ dataUrl: art });
-          customImageUrl = up.url;
-        }
-        orderItems.push({
-          productId: item.id,
-          productName: item.name,
+      // Generate order ID
+      const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
+      const trackingNumber = `VANTA-${orderId}-2025`;
+      
+      // Send order confirmation email
+      const emailData = {
+        orderId,
+        trackingNumber,
+        customerEmail: "customer@example.com", // TODO: Get from user auth
+        customerName: "Valued Customer",
+        items: items.map(item => ({
+          name: item.name,
           quantity: item.quantity,
-          price: item.price, // em reais (carrinho)
-          color: item.color,
+          price: item.price,
           size: item.size,
-          customImageUrl,
-        });
-      }
-      const res = await createOrderMutation.mutateAsync({
-        items: orderItems,
-        totalPrice: finalTotal,
-        paymentMethod: "pix",
-      });
-      setCurrentOrderId(res.orderId);
-      setShowPixCheckout(true);
-    } catch (error: any) {
-      toast.error("Erro ao iniciar o pedido", { description: error?.message });
-      setIsCheckingOut(false);
-    }
-  };
+        })),
+        subtotal,
+        tax,
+        shipping,
+        total: finalTotal,
+        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-PT", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+      };
 
-  // Registra uso de cupom e cashback após o pagamento confirmado (orderId real).
-  const recordPostPayment = async (orderId: string) => {
-    if (appliedCoupon?.couponId) {
-      try {
-        await recordCouponUsageMutation.mutateAsync({ couponId: appliedCoupon.couponId, orderId });
-      } catch (error) {
-        console.error("Erro ao registrar uso de cupom:", error);
+      await sendOrderConfirmationMutation.mutateAsync(emailData);
+      
+      // Record coupon usage if a coupon was applied
+      if (appliedCoupon?.couponId) {
+        try {
+          await recordCouponUsageMutation.mutateAsync({
+            couponId: appliedCoupon.couponId,
+            orderId,
+          });
+        } catch (error) {
+          console.error("Error recording coupon usage:", error);
+          // Don't block checkout if coupon recording fails
+        }
       }
-    }
-    if (applyCashback && cashbackDiscount > 0 && user) {
-      try {
-        await recordCashbackSpentMutation.mutateAsync({ orderId, spentAmount: Math.round(cashbackDiscount * 100) });
-      } catch (error) {
-        console.error("Erro ao registrar cashback gasto:", error);
+      
+      // Record cashback spent if applied
+      if (applyCashback && cashbackDiscount > 0 && user) {
+        try {
+          await recordCashbackSpentMutation.mutateAsync({
+            orderId,
+            spentAmount: Math.round(cashbackDiscount * 100),
+          });
+        } catch (error) {
+          console.error("Error recording cashback spent:", error);
+        }
       }
-    }
-    if (user) {
-      try {
-        await recordCashbackEarnedMutation.mutateAsync({ orderId, orderTotal: Math.round(finalTotal * 100) });
-      } catch (error) {
-        console.error("Erro ao registrar cashback ganho:", error);
+      
+      // Record cashback earned (10% of final total)
+      if (user) {
+        try {
+          await recordCashbackEarnedMutation.mutateAsync({
+            orderId,
+            orderTotal: Math.round(finalTotal * 100),
+          });
+        } catch (error) {
+          console.error("Error recording cashback earned:", error);
+        }
       }
+      
+      // TODO: Integrate with Stripe checkout
+      // For now, simulate successful checkout and redirect
+      toast.success("Pedido processado com sucesso!", {
+        description: "Email de confirmação enviado...",
+      });
+      
+      // Clear cart and redirect to success page
+      setTimeout(() => {
+        clearCart();
+        removeCoupon();
+        setApplyCashback(false);
+        setIsCheckingOut(false);
+        onOpenChange(false);
+        setLocation(`/checkout/success?orderId=${orderId}`);
+      }, 1500);
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error("Erro ao processar checkout");
+      setIsCheckingOut(false);
     }
   };
 
@@ -140,33 +169,6 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           </div>
         </DrawerHeader>
 
-        {showPixCheckout && currentOrderId ? (
-          <div className="overflow-y-auto p-4" style={{ maxHeight: "78vh" }}>
-            <button
-              onClick={() => { setShowPixCheckout(false); setCurrentOrderId(null); setIsCheckingOut(false); }}
-              className="mb-4 text-sm text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
-            >
-              ← Voltar ao carrinho
-            </button>
-            <PixCheckout
-              orderId={currentOrderId}
-              amount={Math.round(finalTotal * 100)}
-              onPaymentConfirmed={() => {
-                const oid = currentOrderId;
-                void recordPostPayment(oid);
-                setShowPixCheckout(false);
-                clearCart();
-                removeCoupon();
-                setApplyCashback(false);
-                setIsCheckingOut(false);
-                onOpenChange(false);
-                setLocation(`/checkout/success?orderId=${oid}`);
-              }}
-              onCancel={() => { setShowPixCheckout(false); setCurrentOrderId(null); setIsCheckingOut(false); }}
-            />
-          </div>
-        ) : (
-        <>
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto max-h-[60vh] p-4 space-y-3">
           {items.length === 0 ? (
@@ -209,7 +211,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                     </button>
                   </div>
                   <p className="font-mono-label text-[0.7rem] text-[rgba(239,239,239,0.5)]">
-                    {appliedCoupon.code} - {appliedCoupon.discountType === "percentage" ? `${appliedCoupon.discountValue}%` : `R$${(appliedCoupon.discountValue / 100).toFixed(2)}`} de desconto
+                    {appliedCoupon.code} - {appliedCoupon.discountType === "percentage" ? `${appliedCoupon.discountValue}%` : `€${(appliedCoupon.discountValue / 100).toFixed(2)}`} de desconto
                   </p>
                 </div>
               ) : (
@@ -238,7 +240,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] p-3 rounded-sm">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-heading text-sm text-blue-400">💰 Cashback Disponível</span>
-                  <span className="font-mono-label text-[0.7rem] text-blue-400">R${(getCashbackBalanceQuery.data.availableBalance / 100).toFixed(2)}</span>
+                  <span className="font-mono-label text-[0.7rem] text-blue-400">€{(getCashbackBalanceQuery.data.availableBalance / 100).toFixed(2)}</span>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -255,28 +257,28 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
                 <span>Subtotal</span>
-                <span>R${subtotal.toFixed(2)}</span>
+                <span>€{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
                 <span>IVA (10%)</span>
-                <span>R${tax.toFixed(2)}</span>
+                <span>€{tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
                 <span>Envio</span>
                 <span className={shipping === 0 ? "text-green-400" : ""}>
-                  {shipping === 0 ? "Grátis" : `R$${shipping.toFixed(2)}`}
+                  {shipping === 0 ? "Grátis" : `€${shipping.toFixed(2)}`}
                 </span>
               </div>
               {appliedCoupon && (
                 <div className="flex justify-between text-green-400">
                   <span>Desconto (Cupom)</span>
-                  <span>-R${(appliedCoupon.discount / 100).toFixed(2)}</span>
+                  <span>-€{(appliedCoupon.discount / 100).toFixed(2)}</span>
                 </div>
               )}
               {applyCashback && cashbackDiscount > 0 && (
                 <div className="flex justify-between text-blue-400">
                   <span>Desconto (Cashback)</span>
-                  <span>-R${cashbackDiscount.toFixed(2)}</span>
+                  <span>-€{cashbackDiscount.toFixed(2)}</span>
                 </div>
               )}
             </div>
@@ -285,41 +287,68 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
 
             <div className="flex justify-between font-heading font-semibold text-[#EFEFEF]">
               <span>Total</span>
-              <span>R${finalTotal.toFixed(2)}</span>
+              <span>€{finalTotal.toFixed(2)}</span>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2 pt-2">
-              {!user ? (
-                <Button
-                  onClick={() => {
-                    onOpenChange(false);
-                    setLocation(getLoginUrl());
-                  }}
-                  className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
-                >
-                  🔐 Fazer Login para Comprar
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleStartCheckout}
-                  disabled={isCheckingOut || createOrderMutation.isPending || items.length === 0}
-                  className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
-                >
-                  💳 Pagar com PIX
-                </Button>
-              )}
-              <Button
-                onClick={() => clearCart()}
-                variant="outline"
-                className="w-full border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
-              >
-                Limpar Carrinho
-              </Button>
-            </div>
+            {/* PIX Checkout */}
+            {showPixCheckout && currentOrderId ? (
+              <PixCheckout
+                orderId={currentOrderId}
+                amount={Math.round(finalTotal * 100)}
+                onPaymentConfirmed={() => {
+                  setShowPixCheckout(false);
+                  clearCart();
+                  removeCoupon();
+                  setApplyCashback(false);
+                  setIsCheckingOut(false);
+                  onOpenChange(false);
+                  setLocation(`/checkout/success?orderId=${currentOrderId}`);
+                }}
+                onCancel={() => {
+                  setShowPixCheckout(false);
+                  setCurrentOrderId(null);
+                }}
+              />
+            ) : (
+              <>
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 pt-2">
+                  {!user ? (
+                    <Button
+                      onClick={() => {
+                        const loginUrl = new URL(window.location.origin);
+                        loginUrl.pathname = '/api/oauth/login';
+                        window.location.href = loginUrl.toString();
+                      }}
+                      className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
+                    >
+                      🔐 Fazer Login para Comprar
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
+                        setCurrentOrderId(orderId);
+                        setShowPixCheckout(true);
+                        setIsCheckingOut(true);
+                      }}
+                      disabled={isCheckingOut || sendOrderConfirmationMutation.isPending || items.length === 0}
+                      className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
+                    >
+                      💳 Pagar com PIX
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => clearCart()}
+                    variant="outline"
+                    className="w-full border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
+                  >
+                    Limpar Carrinho
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
-        )}
-        </>
         )}
       </DrawerContent>
     </Drawer>
@@ -349,7 +378,7 @@ function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
           {item.name}
         </p>
         <p className="font-mono-label text-[0.65rem] text-[rgba(239,239,239,0.4)]">
-          R${item.price.toFixed(2)} cada
+          €{item.price.toFixed(2)} cada
         </p>
 
         {/* Size & Color */}
@@ -385,7 +414,7 @@ function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
       {/* Price & Delete */}
       <div className="flex flex-col items-end justify-between">
         <p className="font-heading font-semibold text-[#EFEFEF] text-sm">
-          R${(item.price * item.quantity).toFixed(2)}
+          €{(item.price * item.quantity).toFixed(2)}
         </p>
         <button
           onClick={() => onRemove(item.id)}

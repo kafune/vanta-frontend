@@ -1,9 +1,7 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { nanoid } from "nanoid";
 import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { hashPassword } from './_core/password';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -89,65 +87,6 @@ export async function getUserByOpenId(openId: string) {
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
-}
-
-// ── Login local (email + senha) ──────────────────────────────
-
-export async function getUserByEmail(email: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-/** Cria um usuário local (login por email+senha). Gera um openId próprio. */
-export async function createLocalUser(input: {
-  name: string;
-  email: string;
-  passwordHash: string;
-  role?: "user" | "admin";
-}) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const openId = `local_${nanoid(21)}`;
-  await db.insert(users).values({
-    openId,
-    name: input.name,
-    email: input.email,
-    passwordHash: input.passwordHash,
-    loginMethod: "local",
-    role: input.role ?? "user",
-    lastSignedIn: new Date(),
-  });
-  return getUserByOpenId(openId);
-}
-
-/**
- * Garante o admin inicial a partir de ADMIN_EMAIL/ADMIN_PASSWORD (idempotente).
- * Rodado no boot. Se o email já existe, promove a admin (sem trocar a senha).
- */
-export async function ensureAdminUser(): Promise<void> {
-  if (!ENV.adminEmail || !ENV.adminPassword) return;
-  const db = await getDb();
-  if (!db) return;
-
-  const existing = await getUserByEmail(ENV.adminEmail);
-  if (existing) {
-    if (existing.role !== "admin") {
-      await db.update(users).set({ role: "admin" }).where(eq(users.id, existing.id));
-      console.log(`[Auth] Usuário ${ENV.adminEmail} promovido a admin.`);
-    }
-    return;
-  }
-
-  await createLocalUser({
-    name: ENV.adminName,
-    email: ENV.adminEmail,
-    passwordHash: hashPassword(ENV.adminPassword),
-    role: "admin",
-  });
-  console.log(`[Auth] Admin inicial criado: ${ENV.adminEmail}`);
 }
 
 // TODO: add feature queries here as your schema grows.

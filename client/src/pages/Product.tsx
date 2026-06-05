@@ -1,148 +1,116 @@
 /**
-<<<<<<< Updated upstream
  * VANTA Product Page — Carbon Fiber Design System
- * Página de produto com galeria, seletor de tamanho e relacionados.
- * Dados vêm do banco via trpc.products.getById / getRelated.
-=======
- * VANTA Product Page – Carbon Fiber Design System
  * Detailed product page with gallery, size selector, and specifications
->>>>>>> Stashed changes
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
-import { Heart, Share2, Truck, RotateCcw, Shield, ArrowLeft, Loader2 } from "lucide-react";
+import { Heart, Share2, Truck, RotateCcw, Shield, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductGallery from "@/components/ProductGallery";
 import SizeSelector from "@/components/SizeSelector";
-import { trpc } from "@/lib/trpc";
-import { useCart } from "@/hooks/useCart";
-<<<<<<< Updated upstream
 
-const formatPrice = (cents: number) => `R$ ${(cents / 100).toFixed(2)}`;
-=======
->>>>>>> Stashed changes
+// Product data
+const products: Record<string, any> = {
+  "essential-tee-280g": {
+    id: "essential-tee-280g",
+    name: "Essential Tee 280g",
+    category: "Algodão Premium",
+    price: 89,
+    originalPrice: null,
+    rating: 4.9,
+    reviews: 127,
+    description: "A camiseta perfeita. Feita com 100% algodão penteado de gramatura superior (280g/m²), oferece conforto absoluto e durabilidade excepcional. Pré-encolhida e com costuras reforçadas.",
+    images: [
+      "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-cotton-6C3ChDmVfT5oxo4PDhFrbf.webp",
+      "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/product-detail-1-FGrzrLBX82KeThKTTGH6am.webp",
+      "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/product-detail-2-aWGKvfCZk8dbv7JukEyuwe.webp",
+      "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/product-detail-3-UZb5s66z8ayiNCaGFkKok4.webp",
+    ],
+    sizes: ["P", "M", "G", "GG"],
+    colors: ["Preto"],
+    composition: "100% Algodão Penteado",
+    care: "Lavar em água fria. Secar na sombra. Não usar alvejante.",
+    features: [
+      { icon: "🧵", title: "Algodão Premium", description: "280g/m² de gramatura superior" },
+      { icon: "✓", title: "Pré-encolhido", description: "Mantém o tamanho após lavagens" },
+      { icon: "💪", title: "Costuras Reforçadas", description: "Durabilidade garantida" },
+      { icon: "🌍", title: "Sustentável", description: "Produção responsável" },
+    ],
+    inStock: true,
+  },
+  "urban-oversized": {
+    id: "urban-oversized",
+    name: "Urban Oversized",
+    category: "Oversized",
+    price: 109,
+    originalPrice: null,
+    rating: 4.8,
+    reviews: 89,
+    description: "Silhueta urbana com caimento largo e elegante. Drop shoulder e barra alongada para o fit oversized perfeito. Ideal para quem busca conforto sem abrir mão do estilo.",
+    images: [
+      "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/category-oversized-fkaeTb24PqHL7RPsvGjmFY.webp",
+      "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/product-detail-2-aWGKvfCZk8dbv7JukEyuwe.webp",
+      "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/product-detail-1-FGrzrLBX82KeThKTTGH6am.webp",
+      "https://d2xsxph8kpxj0f.cloudfront.net/310519663562545777/LJQd3ZRoW3TSgjTHQuTJmW/product-detail-3-UZb5s66z8ayiNCaGFkKok4.webp",
+    ],
+    sizes: ["P", "M", "G", "GG", "XGG"],
+    colors: ["Preto"],
+    composition: "100% Algodão",
+    care: "Lavar em água fria. Secar na sombra.",
+    features: [
+      { icon: "📐", title: "Drop Shoulder", description: "Ombro caído para fit relaxado" },
+      { icon: "📏", title: "Barra Alongada", description: "Comprimento extra para cobertura" },
+      { icon: "🎨", title: "Versátil", description: "Combina com qualquer estilo" },
+      { icon: "⚡", title: "Confortável", description: "Máxima liberdade de movimento" },
+    ],
+    inStock: true,
+  },
+};
 
 export default function Product() {
   const [, params] = useRoute("/produto/:id");
   const [, setLocation] = useLocation();
-  const { addItem } = useCart();
   const [liked, setLiked] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const { addItem } = useCart();
 
   const productId = params?.id as string;
-<<<<<<< Updated upstream
-
-  const { data: product, isLoading, isError } = trpc.products.getById.useQuery(
-    { id: productId },
-    { enabled: !!productId, retry: false }
-  );
-  const { data: related = [] } = trpc.products.getRelated.useQuery(
-    { productId, limit: 4 },
-    { enabled: !!productId }
-  );
+  const product = products[productId];
 
   useEffect(() => {
-    if (isError) setLocation("/404");
-  }, [isError, setLocation]);
+    if (!product) {
+      setLocation("/404");
+    }
+  }, [product, setLocation]);
 
-  if (isLoading || !product) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0B0B0B" }}>
-        <Loader2 className="w-8 h-8 animate-spin text-[#EFEFEF]" />
-      </div>
-    );
+  if (!product) {
+    return null;
   }
-=======
-
-  // Busca o produto via API (igual ao que o CollectionSection já faz)
-  const { data: product, isLoading, error } = trpc.products.getById.useQuery(
-    { id: productId },
-    { enabled: !!productId }
-  );
->>>>>>> Stashed changes
-
-  const galleryImages = product.images.length > 0 ? product.images : product.image ? [product.image] : [];
 
   const handleAddToCart = () => {
     if (!selectedSize) {
       toast.error("Selecione um tamanho", { description: "É necessário escolher um tamanho para adicionar ao carrinho." });
       return;
     }
-<<<<<<< Updated upstream
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price / 100, // carrinho em reais; produto vem em centavos
-      quantity,
-      image: product.image ?? "",
-      size: selectedSize,
-    });
     toast.success(`${product.name} adicionado!`, {
-      description: `Tamanho ${selectedSize} × ${quantity} - ${formatPrice(product.price * quantity)}`,
-=======
-    if (!product) return;
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      quantity,
-      image: product.image,
-      size: selectedSize,
-    });
-    toast.success(`${product.name} adicionado!`, {
-      description: `Tamanho ${selectedSize} × ${quantity} unidade(s) - R$ ${(product.price / 100 * quantity).toFixed(2)}`,
->>>>>>> Stashed changes
+      description: `Tamanho ${selectedSize} × ${quantity} unidade(s) - R$ ${(product.price * quantity).toFixed(2)}`,
     });
   };
 
   const handleShare = () => {
     if (navigator.share) {
-<<<<<<< Updated upstream
-      navigator.share({ title: product.name, text: product.description, url: window.location.href });
-=======
       navigator.share({
-        title: product?.name,
-        text: product?.description,
+        title: product.name,
+        text: product.description,
         url: window.location.href,
       });
->>>>>>> Stashed changes
     } else {
       toast.success("Link copiado!", { description: "Compartilhe com seus amigos." });
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen" style={{ background: "#0B0B0B" }}>
-        <Navbar />
-        <div className="flex items-center justify-center py-32">
-          <p className="text-[rgba(239,239,239,0.5)]">Carregando produto...</p>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error || !product) {
-    return (
-      <div className="min-h-screen" style={{ background: "#0B0B0B" }}>
-        <Navbar />
-        <div className="flex items-center justify-center py-32">
-          <p className="text-red-400">Produto não encontrado.</p>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Preço já vem em centavos da API, dividimos por 100 para exibir em reais
-  const priceInReais = product.price / 100;
-  const originalPriceInReais = product.originalPrice ? product.originalPrice / 100 : null;
 
   return (
     <div className="min-h-screen" style={{ background: "#0B0B0B" }}>
@@ -170,8 +138,7 @@ export default function Product() {
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           {/* Gallery */}
           <div>
-<<<<<<< Updated upstream
-            <ProductGallery images={galleryImages} productName={product.name} />
+            <ProductGallery images={product.images} productName={product.name} />
           </div>
 
           {/* Product Info */}
@@ -181,102 +148,54 @@ export default function Product() {
               <div className="font-mono-label text-[rgba(239,239,239,0.35)] mb-2">{product.category}</div>
               <h1 className="font-display text-4xl lg:text-5xl text-[#EFEFEF] mb-4">{product.name}</h1>
 
-              {/* Rating — só exibe quando há avaliações reais */}
-              {product.reviews > 0 && (
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i} className={i < Math.floor(product.rating) ? "text-[#EFEFEF]" : "text-[rgba(239,239,239,0.2)]"}>
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                  <span className="font-heading font-semibold text-[#EFEFEF]">{product.rating}</span>
-                  <span className="font-mono-label text-[rgba(239,239,239,0.3)] text-[0.65rem]">({product.reviews} avaliações)</span>
+              {/* Rating */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span key={i} className={i < Math.floor(product.rating) ? "text-[#EFEFEF]" : "text-[rgba(239,239,239,0.2)]"}>
+                      ★
+                    </span>
+                  ))}
                 </div>
-              )}
+                <span className="font-heading font-semibold text-[#EFEFEF]">{product.rating}</span>
+                <span className="font-mono-label text-[rgba(239,239,239,0.3)] text-[0.65rem]">({product.reviews} avaliações)</span>
+              </div>
 
               {/* Price */}
               <div className="flex items-baseline gap-3">
-                <span className="font-display text-4xl text-[#EFEFEF]">{formatPrice(product.price)}</span>
+                <span className="font-display text-4xl text-[#EFEFEF]">R$ {product.price}</span>
                 {product.originalPrice && (
                   <span className="font-heading text-lg text-[rgba(239,239,239,0.35)] line-through">
-                    {formatPrice(product.originalPrice)}
+                    R$ {product.originalPrice}
                   </span>
                 )}
               </div>
 
               {/* Stock status */}
               <div className="mt-4">
-                <span className="font-heading text-xs font-semibold tracking-widest uppercase text-[rgba(100,200,100,0.8)]">
-                  ✓ Em Estoque
-=======
-            <ProductGallery images={[product.image]} productName={product.name} />
-          </div>
-
-          {/* Info */}
-          <div>
-            {/* Tag */}
-            {product.tag && (
-              <div className="font-mono-label text-[0.6rem] bg-[rgba(11,11,11,0.8)] text-[#EFEFEF] px-2 py-1 backdrop-blur-sm inline-block mb-4">
-                {product.tag}
-              </div>
-            )}
-
-            <h1 className="font-display text-4xl text-[#EFEFEF] leading-none mb-2">{product.name}</h1>
-
-            <div className="font-mono-label text-[rgba(239,239,239,0.3)] text-[0.6rem] mb-6">{product.category}</div>
-
-            {/* Price */}
-            <div className="flex items-center gap-2 mb-6">
-              <span className="font-heading font-bold text-[#EFEFEF] text-2xl">
-                R$ {priceInReais.toFixed(2)}
-              </span>
-              {originalPriceInReais && (
-                <span className="font-heading text-sm text-[rgba(239,239,239,0.35)] line-through">
-                  R$ {originalPriceInReais.toFixed(2)}
->>>>>>> Stashed changes
+                <span className={`font-heading text-xs font-semibold tracking-widest uppercase ${product.inStock ? "text-[rgba(100,200,100,0.8)]" : "text-[rgba(200,100,100,0.8)]"}`}>
+                  {product.inStock ? "✓ Em Estoque" : "Fora de Estoque"}
                 </span>
-              )}
-            </div>
-
-            {/* Stock status */}
-            <div className="mt-4">
-              <span className={`font-heading text-xs font-semibold tracking-widest uppercase text-[rgba(100,200,100,0.8)]`}>
-                ✓ Em Estoque
-              </span>
+              </div>
             </div>
 
             {/* Description */}
-<<<<<<< Updated upstream
-            {product.description && (
-              <p className="font-heading text-base font-light text-[rgba(239,239,239,0.6)] leading-relaxed">
-                {product.description}
-              </p>
-            )}
-
-            {/* Size Selector */}
-            {product.sizes.length > 0 && (
-              <SizeSelector sizes={product.sizes} onSizeSelect={setSelectedSize} selectedSize={selectedSize} />
-            )}
-=======
-            <p className="font-heading text-base font-light text-[rgba(239,239,239,0.6)] leading-relaxed mt-4 mb-6">
+            <p className="font-heading text-base font-light text-[rgba(239,239,239,0.6)] leading-relaxed">
               {product.description}
             </p>
 
             {/* Size Selector */}
-            <SizeSelector sizes={product.sizes ?? ["P", "M", "G", "GG"]} onSizeSelect={setSelectedSize} selectedSize={selectedSize} />
->>>>>>> Stashed changes
+            <SizeSelector sizes={product.sizes} onSizeSelect={setSelectedSize} selectedSize={selectedSize} />
 
             {/* Quantity */}
-            <div className="mt-6 mb-6">
+            <div>
               <label className="font-heading font-semibold text-[#EFEFEF] block mb-3">Quantidade</label>
               <div className="flex items-center gap-3 w-fit">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="w-10 h-10 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all"
                 >
-                  –
+                  −
                 </button>
                 <input
                   type="number"
@@ -313,13 +232,8 @@ export default function Product() {
               </button>
             </div>
 
-<<<<<<< Updated upstream
-            {/* Benefits (políticas da loja) */}
-            <div className="space-y-3 pt-4 border-t border-[rgba(255,255,255,0.06)]">
-=======
             {/* Benefits */}
-            <div className="space-y-3 pt-4 border-t border-[rgba(255,255,255,0.06)] mt-6">
->>>>>>> Stashed changes
+            <div className="space-y-3 pt-4 border-t border-[rgba(255,255,255,0.06)]">
               {[
                 { icon: Truck, text: "Entrega express em 48h" },
                 { icon: RotateCcw, text: "Devoluções grátis em 30 dias" },
@@ -336,38 +250,41 @@ export default function Product() {
             </div>
           </div>
         </div>
-<<<<<<< Updated upstream
 
-        {/* Produtos relacionados */}
-        {related.length > 0 && (
-          <div className="max-w-[1400px] mx-auto mt-20 pt-12 border-t border-[rgba(255,255,255,0.06)]">
-            <h2 className="font-display text-3xl text-[#EFEFEF] mb-8">VOCÊ TAMBÉM PODE GOSTAR</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-              {related.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => { setLocation(`/produto/${r.id}`); window.scrollTo({ top: 0 }); }}
-                  className="text-left group"
-                >
-                  <div className="relative overflow-hidden bg-[rgba(255,255,255,0.04)] aspect-square mb-3">
-                    {r.image && (
-                      <img
-                        src={r.image}
-                        alt={r.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    )}
+        {/* Specifications */}
+        <div className="max-w-[1400px] mx-auto mt-20 pt-12 border-t border-[rgba(255,255,255,0.06)]">
+          <h2 className="font-display text-3xl text-[#EFEFEF] mb-8">ESPECIFICAÇÕES</h2>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Features */}
+            <div>
+              <h3 className="font-heading font-semibold text-[#EFEFEF] mb-6">Características</h3>
+              <div className="space-y-4">
+                {product.features.map((feature: any, i: number) => (
+                  <div key={i} className="flex gap-4">
+                    <span className="text-2xl flex-shrink-0">{feature.icon}</span>
+                    <div>
+                      <p className="font-heading font-semibold text-[rgba(239,239,239,0.8)]">{feature.title}</p>
+                      <p className="font-heading text-sm text-[rgba(239,239,239,0.5)]">{feature.description}</p>
+                    </div>
                   </div>
-                  <p className="font-heading text-sm text-[rgba(239,239,239,0.8)]">{r.name}</p>
-                  <p className="font-heading text-sm text-[rgba(239,239,239,0.5)]">{formatPrice(r.price)}</p>
-                </button>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Care & Composition */}
+            <div className="space-y-8">
+              <div>
+                <h3 className="font-heading font-semibold text-[#EFEFEF] mb-3">Composição</h3>
+                <p className="font-heading text-[rgba(239,239,239,0.5)]">{product.composition}</p>
+              </div>
+              <div>
+                <h3 className="font-heading font-semibold text-[#EFEFEF] mb-3">Cuidados</h3>
+                <p className="font-heading text-[rgba(239,239,239,0.5)]">{product.care}</p>
+              </div>
             </div>
           </div>
-        )}
-=======
->>>>>>> Stashed changes
+        </div>
       </div>
 
       <Footer />

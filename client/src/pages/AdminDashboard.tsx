@@ -14,9 +14,6 @@ import { ResendNotificationDialog } from "@/components/ResendNotificationDialog"
 import { OrderFilters, OrderFiltersState } from "@/components/OrderFilters";
 import { FilterAnalytics } from "@/components/FilterAnalytics";
 import { SavedFiltersList } from "@/components/SavedFiltersList";
-import ProductsManager from "@/components/admin/ProductsManager";
-import CollectionsManager from "@/components/admin/CollectionsManager";
-import SettingsManager from "@/components/admin/SettingsManager";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -168,15 +165,9 @@ export default function AdminDashboard() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)]">
+          <TabsList className="grid w-full grid-cols-4 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)]">
             <TabsTrigger value="sales" className="data-[state=active]:bg-[rgba(255,255,255,0.1)]">
               Vendas
-            </TabsTrigger>
-            <TabsTrigger value="products" className="data-[state=active]:bg-[rgba(255,255,255,0.1)]">
-              Produtos
-            </TabsTrigger>
-            <TabsTrigger value="collections" className="data-[state=active]:bg-[rgba(255,255,255,0.1)]">
-              Coleções
             </TabsTrigger>
             <TabsTrigger value="orders" className="data-[state=active]:bg-[rgba(255,255,255,0.1)]">
               Pedidos
@@ -187,25 +178,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="analytics" className="data-[state=active]:bg-[rgba(255,255,255,0.1)]">
               Análise
             </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-[rgba(255,255,255,0.1)]">
-              Config
-            </TabsTrigger>
           </TabsList>
-
-          {/* Products Tab */}
-          <TabsContent value="products" className="mt-6">
-            <ProductsManager />
-          </TabsContent>
-
-          {/* Collections Tab */}
-          <TabsContent value="collections" className="mt-6">
-            <CollectionsManager />
-          </TabsContent>
-
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="mt-6">
-            <SettingsManager />
-          </TabsContent>
 
           {/* Sales Tab */}
           <TabsContent value="sales" className="space-y-6 mt-6">
