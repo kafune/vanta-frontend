@@ -78,6 +78,48 @@
       "when": 1779883105026,
       "tag": "0010_kind_silvermane",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1780429933752,
+      "tag": "0011_wonderful_swarm",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1780429985302,
+      "tag": "0012_seed_products",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1780431599005,
+      "tag": "0013_add_password_hash",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1780432941204,
+      "tag": "0014_order_stamp_and_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1780487966211,
+      "tag": "0015_order_item_custom_image",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1780489065393,
+      "tag": "0016_addresses",
+      "breakpoints": true
     }
   ]
 }

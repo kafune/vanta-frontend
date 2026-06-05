@@ -16,6 +16,8 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
+  /** Hash da senha (scrypt) para login local. Null em usuários OAuth/Manus. */
+  passwordHash: varchar("passwordHash", { length: 255 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -49,6 +51,8 @@ export const orderItems = mysqlTable("orderItems", {
   price: int("price").notNull(), // in cents
   color: varchar("color", { length: 64 }),
   size: varchar("size", { length: 10 }),
+  /** URL da estampa personalizada enviada pelo cliente (self-hosted em /uploads). */
+  customImageUrl: varchar("customImageUrl", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -247,6 +251,59 @@ export const collections = mysqlTable("collections", {
 
 export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = typeof collections.$inferInsert;
+
+// Products table - catálogo de produtos (id é um slug, ex.: "essential-tee-280g",
+// para casar com productId já usado em orderItems, wishlist, reviews e collectionProducts).
+export const products = mysqlTable("products", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 64 }).notNull(),
+  description: text("description"),
+  price: int("price").notNull(), // em centavos
+  originalPrice: int("originalPrice"), // em centavos, nullable (preço "de")
+  tag: varchar("tag", { length: 64 }), // Bestseller, Novo, Promoção...
+  image: varchar("image", { length: 500 }), // imagem principal (URL)
+  images: text("images"), // JSON array de URLs adicionais
+  sizes: text("sizes"), // JSON array, ex.: ["P","M","G","GG"]
+  colors: text("colors"), // JSON array de nomes de cor
+  featured: tinyint("featured").default(0).notNull(),
+  active: tinyint("active").default(1).notNull(),
+  displayOrder: int("displayOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = typeof products.$inferInsert;
+
+// Addresses table - endereços de entrega por usuário
+export const addresses = mysqlTable("addresses", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: int("userId").notNull(),
+  label: varchar("label", { length: 100 }), // "Casa", "Trabalho"
+  recipient: varchar("recipient", { length: 255 }),
+  street: varchar("street", { length: 255 }).notNull(),
+  number: varchar("number", { length: 32 }),
+  complement: varchar("complement", { length: 255 }),
+  city: varchar("city", { length: 128 }).notNull(),
+  state: varchar("state", { length: 64 }),
+  zipCode: varchar("zipCode", { length: 20 }),
+  isDefault: tinyint("isDefault").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Address = typeof addresses.$inferSelect;
+export type InsertAddress = typeof addresses.$inferInsert;
+
+// Settings table - configurações da loja (chave/valor)
+export const settings = mysqlTable("settings", {
+  key: varchar("key", { length: 64 }).primaryKey(),
+  value: text("value"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Setting = typeof settings.$inferSelect;
+export type InsertSetting = typeof settings.$inferInsert;
 
 // Collection products table - link products to collections
 export const collectionProducts = mysqlTable("collectionProducts", {
