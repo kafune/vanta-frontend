@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { publicProcedure } from "../_core/trpc";
+import { publicProcedure, adminProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { collections, collectionProducts } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export const collectionsRouter = {
   getAll: publicProcedure.query(async () => {
@@ -49,11 +49,11 @@ export const collectionsRouter = {
       return products;
     }),
 
-  create: publicProcedure
+  create: adminProcedure
     .input(
       z.object({
-        id: z.string(),
-        name: z.string(),
+        id: z.string().min(1).max(64).regex(/^[a-z0-9-]+$/, "Use minúsculas, números e hífens"),
+        name: z.string().min(1),
         description: z.string().optional(),
         image: z.string().optional(),
         featured: z.number().default(0),
@@ -63,18 +63,57 @@ export const collectionsRouter = {
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const newCollection = await db.insert(collections).values({
+      const existing = await db.select().from(collections).where(eq(collections.id, input.id)).limit(1);
+      if (existing.length > 0) throw new Error("Já existe uma coleção com esse ID/slug");
+      await db.insert(collections).values({
         id: input.id,
         name: input.name,
-        description: input.description,
-        image: input.image,
+        description: input.description ?? null,
+        image: input.image ?? null,
         featured: input.featured,
         displayOrder: input.displayOrder,
       });
-      return newCollection;
+      return { id: input.id };
     }),
 
-  addProductToCollection: publicProcedure
+  update: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        image: z.string().optional(),
+        featured: z.number().default(0),
+        displayOrder: z.number().default(0),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db
+        .update(collections)
+        .set({
+          name: input.name,
+          description: input.description ?? null,
+          image: input.image ?? null,
+          featured: input.featured,
+          displayOrder: input.displayOrder,
+        })
+        .where(eq(collections.id, input.id));
+      return { id: input.id };
+    }),
+
+  delete: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.delete(collections).where(eq(collections.id, input.id));
+      await db.delete(collectionProducts).where(eq(collectionProducts.collectionId, input.id));
+      return { id: input.id };
+    }),
+
+  addProductToCollection: adminProcedure
     .input(
       z.object({
         id: z.string(),
@@ -86,12 +125,36 @@ export const collectionsRouter = {
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const result = await db.insert(collectionProducts).values({
+      // Evita duplicar o mesmo produto na coleção.
+      const existing = await db
+        .select()
+        .from(collectionProducts)
+        .where(eq(collectionProducts.collectionId, input.collectionId));
+      if (existing.some((cp) => cp.productId === input.productId)) {
+        return { ok: true, already: true };
+      }
+      await db.insert(collectionProducts).values({
         id: input.id,
         collectionId: input.collectionId,
         productId: input.productId,
         displayOrder: input.displayOrder,
       });
-      return result;
+      return { ok: true };
+    }),
+
+  removeProductFromCollection: adminProcedure
+    .input(z.object({ collectionId: z.string(), productId: z.string() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db
+        .delete(collectionProducts)
+        .where(
+          and(
+            eq(collectionProducts.collectionId, input.collectionId),
+            eq(collectionProducts.productId, input.productId)
+          )
+        );
+      return { ok: true };
     }),
 };

@@ -12,6 +12,7 @@ import { csrfTokenMiddleware, validateCsrfToken } from "../middleware/csrf";
 import { rateLimiters, startRateLimitCleanup } from "../middleware/rateLimiter";
 import { ensureAdminUser } from "../db";
 import { registerAbacatePayWebhook } from "./abacatepayWebhook";
+import { getUploadsDir } from "./uploads";
 import cookieParser from "cookie-parser";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -53,6 +54,9 @@ async function startServer() {
   app.use(cookieParser());
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Servir imagens enviadas (self-hosted) do diretório de uploads.
+  app.use("/uploads", express.static(getUploadsDir()));
 
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);

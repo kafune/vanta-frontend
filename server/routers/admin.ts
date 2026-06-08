@@ -3,6 +3,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { coupons, orders, orderItems, users } from "../../drizzle/schema";
 import { eq, and, gte, lte, desc, or, SQL } from "drizzle-orm";
+import { adminProductsRouter } from "./admin-products";
 
 // Admin procedure - check if user is admin
 const adminProcedure = publicProcedure.use(async ({ ctx, next }) => {
@@ -238,4 +239,7 @@ export const adminRouter = router({
         return { success: true };
       }),
   }),
+
+  // Gerenciamento de produtos (CRUD)
+  products: adminProductsRouter,
 });
