@@ -9,7 +9,6 @@ import Product from "./pages/Product";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import OrderTracking from "./pages/OrderTracking";
 import CategoryProducts from "./pages/CategoryProducts";
-import ModelDetails from "./pages/ModelDetails";
 import UserAccount from "./pages/UserAccount";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
@@ -26,7 +25,6 @@ function Router() {
       <Route path={"/login"} component={Login} />
       <Route path={"/produto/:id"} component={Product} />
       <Route path={"/categoria/:category"} component={CategoryProducts} />
-      <Route path={"/modelo/:id"} component={ModelDetails} />
       <Route path={"/account"} component={UserAccount} />
       <Route path={"/profile"} component={Profile} />
       <Route path={"/wishlist"} component={Wishlist} />

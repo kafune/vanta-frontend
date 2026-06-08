@@ -19,14 +19,13 @@ const publicCaller = appRouter.createCaller({
 
 describe("Monitoring Router", () => {
   describe("getPerformanceMetrics", () => {
-    it("should return performance metrics (admin only)", async () => {
+    it("should return real process metrics (admin only)", async () => {
       const result = await adminCaller.monitoring.getPerformanceMetrics();
 
       expect(result).toBeDefined();
-      expect(result.pageLoadTime).toBeGreaterThan(0);
-      expect(result.apiResponseTime).toBeGreaterThan(0);
-      expect(result.cacheHitRate).toBeGreaterThanOrEqual(0);
-      expect(result.cacheHitRate).toBeLessThanOrEqual(1);
+      expect(result.uptimeSeconds).toBeGreaterThanOrEqual(0);
+      expect(result.memoryRssMb).toBeGreaterThan(0);
+      expect(result.nodeVersion).toBeDefined();
       expect(result.timestamp).toBeDefined();
     });
   });
@@ -36,10 +35,10 @@ describe("Monitoring Router", () => {
       const result = await adminCaller.monitoring.getSystemHealth();
 
       expect(result).toBeDefined();
-      expect(result.database).toBeDefined();
-      expect(result.cache).toBeDefined();
-      expect(result.api).toBeDefined();
-      expect(result.uptime).toBeGreaterThan(0);
+      // Sem DATABASE_URL no teste, database vem "down" (ping falha) — é o esperado.
+      expect(["healthy", "down"]).toContain(result.database);
+      expect(result.api).toBe("healthy");
+      expect(result.uptimeSeconds).toBeGreaterThanOrEqual(0);
       expect(result.allHealthy).toBeTypeOf("boolean");
     });
   });
@@ -78,38 +77,14 @@ describe("Monitoring Router", () => {
     });
   });
 
-  describe("getApiStats", () => {
-    it("should return API statistics (admin only)", async () => {
-      const result = await adminCaller.monitoring.getApiStats();
-
-      expect(result).toBeDefined();
-      expect(result.averageResponseTime).toBeGreaterThan(0);
-      expect(result.p95ResponseTime).toBeGreaterThan(0);
-      expect(result.requestsPerSecond).toBeGreaterThan(0);
-      expect(result.totalRequests).toBeGreaterThan(0);
-    });
-  });
-
-  describe("getDatabaseStats", () => {
-    it("should return database statistics (admin only)", async () => {
-      const result = await adminCaller.monitoring.getDatabaseStats();
-
-      expect(result).toBeDefined();
-      expect(result.averageQueryTime).toBeGreaterThan(0);
-      expect(result.cacheHitRate).toBeGreaterThanOrEqual(0);
-      expect(result.activeConnections).toBeGreaterThanOrEqual(0);
-    });
-  });
-
   describe("getUserActivityMetrics", () => {
     it("should return user activity metrics (admin only)", async () => {
       const result = await adminCaller.monitoring.getUserActivityMetrics();
 
       expect(result).toBeDefined();
+      expect(result.totalUsers).toBeGreaterThanOrEqual(0);
       expect(result.activeUsers).toBeGreaterThanOrEqual(0);
       expect(result.newUsersToday).toBeGreaterThanOrEqual(0);
-      expect(result.bounceRate).toBeGreaterThanOrEqual(0);
-      expect(result.bounceRate).toBeLessThanOrEqual(1);
     });
   });
 
@@ -120,7 +95,7 @@ describe("Monitoring Router", () => {
       expect(result).toBeDefined();
       expect(result.totalRevenue).toBeGreaterThanOrEqual(0);
       expect(result.revenueToday).toBeGreaterThanOrEqual(0);
-      expect(result.conversionRate).toBeGreaterThanOrEqual(0);
+      expect(result.orderCount).toBeGreaterThanOrEqual(0);
     });
   });
 

@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { reviews, Review } from "../../drizzle/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { reviews, users, products, Review } from "../../drizzle/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { TRPCError } from "@trpc/server";
 
@@ -27,6 +27,53 @@ export const reviewsRouter = router({
 
       return result;
     }),
+
+  // Avaliações aprovadas mais recentes (com nome do autor e do produto) — usado
+  // na vitrine de depoimentos. Vazio se não houver avaliações reais.
+  getRecent: publicProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(20).default(4) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      const rows = await db
+        .select({
+          id: reviews.id,
+          rating: reviews.rating,
+          title: reviews.title,
+          comment: reviews.comment,
+          createdAt: reviews.createdAt,
+          userName: users.name,
+          productName: products.name,
+        })
+        .from(reviews)
+        .leftJoin(users, eq(reviews.userId, users.id))
+        .leftJoin(products, eq(reviews.productId, products.id))
+        .where(eq(reviews.status, "aprovado"))
+        .orderBy(desc(reviews.helpful), desc(reviews.createdAt))
+        .limit(input.limit);
+
+      return rows;
+    }),
+
+  // Média e total de avaliações aprovadas (cabeçalho da seção de depoimentos).
+  getGlobalStats: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return { average: 0, total: 0 };
+
+    const [row] = await db
+      .select({
+        average: sql<number>`avg(${reviews.rating})`,
+        total: sql<number>`count(*)`,
+      })
+      .from(reviews)
+      .where(eq(reviews.status, "aprovado"));
+
+    return {
+      average: row?.average ? Number(Number(row.average).toFixed(1)) : 0,
+      total: Number(row?.total ?? 0),
+    };
+  }),
 
   // Get reviews by user
   getByUserId: protectedProcedure.query(async ({ ctx }) => {

@@ -317,3 +317,15 @@ export const collectionProducts = mysqlTable("collectionProducts", {
 
 export type CollectionProduct = typeof collectionProducts.$inferSelect;
 export type InsertCollectionProduct = typeof collectionProducts.$inferInsert;
+
+// Search queries log - analytics de busca, base para "trending searches" reais.
+export const searchQueries = mysqlTable("searchQueries", {
+  id: int("id").autoincrement().primaryKey(),
+  query: varchar("query", { length: 100 }).notNull(),
+  userId: int("userId"),
+  resultsCount: int("resultsCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SearchQuery = typeof searchQueries.$inferSelect;
+export type InsertSearchQuery = typeof searchQueries.$inferInsert;

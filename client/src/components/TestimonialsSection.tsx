@@ -1,49 +1,27 @@
 /**
  * VANTA Testimonials Section — Carbon Fiber Design System
- * Social proof with customer reviews in horizontal scroll
+ * Depoimentos reais (avaliações aprovadas via trpc.reviews). Sem avaliações,
+ * a seção não é renderizada (nada de social proof inventado).
  */
 
 import { useRef, useEffect, useState } from "react";
 import { Star } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
-const testimonials = [
-  {
-    id: 1,
-    name: "Lucas M.",
-    handle: "@lucasm_style",
-    rating: 5,
-    text: "A qualidade do algodão é incomparável. Já comprei em outras marcas premium e a VANTA está num nível acima. O processo de customização é incrível.",
-    product: "Essential Tee 280g",
-  },
-  {
-    id: 2,
-    name: "Ana P.",
-    handle: "@anapires",
-    rating: 5,
-    text: "O Hoodie chegou numa embalagem linda e a qualidade do tecido é absurda. Parece que vai durar anos. Já fiz o segundo pedido.",
-    product: "Luxury Hoodie",
-  },
-  {
-    id: 3,
-    name: "Rafael S.",
-    handle: "@rafaelstreet",
-    rating: 5,
-    text: "Usei o Your Canvas para criar uma estampa personalizada e ficou exatamente como eu imaginei. O mockup em tempo real ajudou muito na decisão.",
-    product: "Your Canvas — Oversized",
-  },
-  {
-    id: 4,
-    name: "Mariana C.",
-    handle: "@mari.creates",
-    rating: 5,
-    text: "Finalmente uma marca que entende o que é moda premium acessível. O Dry Fit é perfeito para treinos e ainda fica estiloso no dia a dia.",
-    product: "Performance Pro",
-  },
-];
+// Primeiro nome + inicial do sobrenome (ex.: "Lucas Macedo" -> "Lucas M.").
+function shortName(name: string | null): string {
+  if (!name) return "Cliente";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+}
 
 export default function TestimonialsSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+
+  const { data: reviews } = trpc.reviews.getRecent.useQuery({ limit: 4 });
+  const { data: stats } = trpc.reviews.getGlobalStats.useQuery();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -53,6 +31,12 @@ export default function TestimonialsSection() {
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
+
+  // Sem avaliações reais ainda → não renderiza a seção.
+  if (!reviews || reviews.length === 0) return null;
+
+  const average = stats?.average || 0;
+  const total = stats?.total || reviews.length;
 
   return (
     <section className="py-24 lg:py-28 overflow-hidden" style={{ background: "#0B0B0B" }} ref={sectionRef}>
@@ -67,21 +51,27 @@ export default function TestimonialsSection() {
                 O QUE DIZEM<br />SOBRE NÓS
               </h2>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex">
-                {[1,2,3,4,5].map(i => (
-                  <Star key={i} size={14} className="fill-[#EFEFEF] text-[#EFEFEF]" />
-                ))}
+            {average > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star
+                      key={i}
+                      size={14}
+                      className={i <= Math.round(average) ? "fill-[#EFEFEF] text-[#EFEFEF]" : "text-[rgba(239,239,239,0.25)]"}
+                    />
+                  ))}
+                </div>
+                <span className="font-heading font-semibold text-[#EFEFEF]">{average.toFixed(1)}</span>
+                <span className="font-mono-label text-[rgba(239,239,239,0.35)]">/ {total} {total === 1 ? "avaliação" : "avaliações"}</span>
               </div>
-              <span className="font-heading font-semibold text-[#EFEFEF]">4.9</span>
-              <span className="font-mono-label text-[rgba(239,239,239,0.35)]">/ 500+ avaliações</span>
-            </div>
+            )}
           </div>
         </div>
 
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {testimonials.map((t, i) => (
+          {reviews.map((t, i) => (
             <div
               key={t.id}
               className={`glass-card p-6 lg:p-8 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
@@ -96,18 +86,19 @@ export default function TestimonialsSection() {
 
               {/* Quote */}
               <p className="font-heading text-sm font-light text-[rgba(239,239,239,0.65)] leading-relaxed mb-5">
-                "{t.text}"
+                "{t.comment || t.title}"
               </p>
 
               {/* Author */}
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-heading font-semibold text-[#EFEFEF] text-sm">{t.name}</div>
-                  <div className="font-mono-label text-[rgba(239,239,239,0.3)] text-[0.6rem]">{t.handle}</div>
+                  <div className="font-heading font-semibold text-[#EFEFEF] text-sm">{shortName(t.userName)}</div>
                 </div>
-                <div className="font-mono-label text-[rgba(239,239,239,0.25)] text-[0.6rem] text-right">
-                  {t.product}
-                </div>
+                {t.productName && (
+                  <div className="font-mono-label text-[rgba(239,239,239,0.25)] text-[0.6rem] text-right">
+                    {t.productName}
+                  </div>
+                )}
               </div>
             </div>
           ))}

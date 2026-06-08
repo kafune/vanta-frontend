@@ -1,20 +1,17 @@
 /**
  * Monitoring Router
- * Handles performance monitoring, error tracking, and system health
+ * Métricas de negócio derivadas do banco (receita/produtos/usuários) e métricas
+ * reais do processo (uptime/memória). Sem números de infra inventados — as que
+ * não têm instrumentação real (latência de API, pool, cache hit) foram removidas.
  */
 
 import { publicProcedure, adminProcedure, router } from "../_core/trpc";
 import { z } from "zod";
+import { getDb } from "../db";
+import { orders, orderItems, users } from "../../drizzle/schema";
+import { desc, gte, ne, sql } from "drizzle-orm";
 
-// Mock monitoring data
-const performanceMetrics = {
-  pageLoadTime: 1250,
-  apiResponseTime: 145,
-  databaseQueryTime: 89,
-  cacheHitRate: 0.87,
-  errorRate: 0.02,
-};
-
+// Log de erros de runtime (mecanismo real, em memória — não é mock de dados).
 const errorLogs: Array<{
   id: string;
   timestamp: Date;
@@ -24,41 +21,44 @@ const errorLogs: Array<{
   userId?: number;
 }> = [];
 
-const systemHealth = {
-  database: "healthy",
-  cache: "healthy",
-  api: "healthy",
-  storage: "healthy",
-  uptime: 99.98,
-};
+const round = (n: number) => Math.round(n * 100) / 100;
 
 export const monitoringRouter = router({
-  /**
-   * Get performance metrics
-   */
+  // Métricas reais do processo Node (uptime e memória).
   getPerformanceMetrics: adminProcedure.query(() => {
+    const mem = process.memoryUsage();
     return {
-      ...performanceMetrics,
+      uptimeSeconds: Math.round(process.uptime()),
+      memoryRssMb: round(mem.rss / 1024 / 1024),
+      memoryHeapUsedMb: round(mem.heapUsed / 1024 / 1024),
+      memoryHeapTotalMb: round(mem.heapTotal / 1024 / 1024),
+      nodeVersion: process.version,
       timestamp: new Date(),
     };
   }),
 
-  /**
-   * Get system health status
-   */
-  getSystemHealth: adminProcedure.query(() => {
+  // Saúde do sistema: ping real no banco + uptime do processo.
+  getSystemHealth: adminProcedure.query(async () => {
+    let database: "healthy" | "down" = "down";
+    const db = await getDb();
+    if (db) {
+      try {
+        await db.select({ ok: sql<number>`1` }).from(users).limit(1);
+        database = "healthy";
+      } catch {
+        database = "down";
+      }
+    }
     return {
-      ...systemHealth,
+      database,
+      api: "healthy" as const,
+      uptimeSeconds: Math.round(process.uptime()),
+      allHealthy: database === "healthy",
       timestamp: new Date(),
-      allHealthy: Object.values(systemHealth).every(
-        (v) => v === "healthy" || typeof v === "number"
-      ),
     };
   }),
 
-  /**
-   * Get error logs
-   */
+  // Logs de erro (mais recentes), com filtro opcional por nível.
   getErrorLogs: adminProcedure
     .input(
       z.object({
@@ -68,20 +68,13 @@ export const monitoringRouter = router({
     )
     .query(({ input }) => {
       let logs = [...errorLogs];
-
       if (input.level) {
         logs = logs.filter((log) => log.level === input.level);
       }
-
-      return {
-        logs: logs.slice(-input.limit),
-        total: errorLogs.length,
-      };
+      return { logs: logs.slice(-input.limit), total: errorLogs.length };
     }),
 
-  /**
-   * Log an error
-   */
+  // Registra um erro de runtime (chamado pelo client/servidor).
   logError: publicProcedure
     .input(
       z.object({
@@ -92,108 +85,115 @@ export const monitoringRouter = router({
       })
     )
     .mutation(({ input }) => {
-      const errorLog = {
-        id: `err_${Date.now()}`,
-        timestamp: new Date(),
-        ...input,
-      };
-
+      const errorLog = { id: `err_${errorLogs.length + 1}_${Math.round(process.uptime() * 1000)}`, timestamp: new Date(), ...input };
       errorLogs.push(errorLog);
-
-      // Keep only last 1000 errors
-      if (errorLogs.length > 1000) {
-        errorLogs.shift();
-      }
-
+      if (errorLogs.length > 1000) errorLogs.shift();
       return { success: true, errorId: errorLog.id };
     }),
 
-  /**
-   * Get API response time statistics
-   */
-  getApiStats: adminProcedure.query(() => {
+  // Atividade de usuários derivada da tabela users.
+  getUserActivityMetrics: adminProcedure.query(async () => {
+    const db = await getDb();
+    const base = { totalUsers: 0, activeUsers: 0, newUsersToday: 0, timestamp: new Date() };
+    if (!db) return base;
+
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const last30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [{ total = 0 } = {}] = await db.select({ total: sql<number>`count(*)` }).from(users);
+    const [{ active = 0 } = {}] = await db
+      .select({ active: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.lastSignedIn, last30));
+    const [{ created = 0 } = {}] = await db
+      .select({ created: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.createdAt, startToday));
+
     return {
-      averageResponseTime: 145,
-      p95ResponseTime: 320,
-      p99ResponseTime: 580,
-      requestsPerSecond: 125,
-      totalRequests: 1250000,
+      totalUsers: Number(total),
+      activeUsers: Number(active),
+      newUsersToday: Number(created),
       timestamp: new Date(),
     };
   }),
 
-  /**
-   * Get database performance metrics
-   */
-  getDatabaseStats: adminProcedure.query(() => {
+  // Receita real a partir de pedidos não cancelados.
+  getRevenueMetrics: adminProcedure.query(async () => {
+    const db = await getDb();
+    const base = {
+      totalRevenue: 0,
+      revenueToday: 0,
+      revenueThisWeek: 0,
+      revenueThisMonth: 0,
+      averageOrderValue: 0,
+      orderCount: 0,
+      timestamp: new Date(),
+    };
+    if (!db) return base;
+
+    const rows = await db
+      .select({ total: orders.totalPrice, createdAt: orders.createdAt })
+      .from(orders)
+      .where(ne(orders.status, "cancelado"));
+
+    const now = new Date();
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startWeek = new Date(startToday.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const sumReais = (rs: typeof rows) => rs.reduce((s, r) => s + r.total, 0) / 100;
+    const totalRevenue = sumReais(rows);
+    const orderCount = rows.length;
+
     return {
-      averageQueryTime: 89,
-      slowQueries: 12,
-      totalQueries: 450000,
-      cacheHitRate: 0.87,
-      connectionPoolSize: 10,
-      activeConnections: 3,
+      totalRevenue: round(totalRevenue),
+      revenueToday: round(sumReais(rows.filter((r) => new Date(r.createdAt) >= startToday))),
+      revenueThisWeek: round(sumReais(rows.filter((r) => new Date(r.createdAt) >= startWeek))),
+      revenueThisMonth: round(sumReais(rows.filter((r) => new Date(r.createdAt) >= startMonth))),
+      averageOrderValue: orderCount > 0 ? round(totalRevenue / orderCount) : 0,
+      orderCount,
       timestamp: new Date(),
     };
   }),
 
-  /**
-   * Get user activity metrics
-   */
-  getUserActivityMetrics: adminProcedure.query(() => {
+  // Desempenho de produtos real a partir dos itens de pedido.
+  getProductMetrics: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return { topProducts: [], lowPerformingProducts: [], timestamp: new Date() };
+
+    const rows = await db
+      .select({
+        productId: orderItems.productId,
+        sales: sql<number>`sum(${orderItems.quantity})`,
+        revenue: sql<number>`sum(${orderItems.price} * ${orderItems.quantity})`,
+      })
+      .from(orderItems)
+      .groupBy(orderItems.productId)
+      .orderBy(desc(sql`sum(${orderItems.quantity})`));
+
+    const mapped = rows.map((r) => ({
+      productId: r.productId,
+      sales: Number(r.sales),
+      revenue: round(Number(r.revenue) / 100),
+    }));
+
     return {
-      activeUsers: 342,
-      newUsersToday: 45,
-      sessionsToday: 1250,
-      averageSessionDuration: 8.5, // minutes
-      bounceRate: 0.32,
+      topProducts: mapped.slice(0, 5),
+      lowPerformingProducts: [...mapped].reverse().slice(0, 5),
       timestamp: new Date(),
     };
   }),
 
-  /**
-   * Get revenue metrics
-   */
-  getRevenueMetrics: adminProcedure.query(() => {
-    return {
-      totalRevenue: 125000,
-      revenueToday: 3450,
-      revenueThisWeek: 24500,
-      revenueThisMonth: 98000,
-      averageOrderValue: 245.5,
-      conversionRate: 0.035,
-      timestamp: new Date(),
-    };
-  }),
-
-  /**
-   * Get product performance metrics
-   */
-  getProductMetrics: adminProcedure.query(() => {
-    return {
-      topProducts: [
-        { productId: "essential-tee-280g", sales: 450, revenue: 22500 },
-        { productId: "urban-oversized", sales: 320, revenue: 19200 },
-        { productId: "performance-pro", sales: 280, revenue: 18200 },
-      ],
-      lowPerformingProducts: [
-        { productId: "luxury-hoodie", sales: 15, revenue: 1500 },
-        { productId: "classic-cotton", sales: 8, revenue: 400 },
-      ],
-      timestamp: new Date(),
-    };
-  }),
-
-  /**
-   * Get alert configuration
-   */
+  // Configuração de alertas (limiares operacionais).
   getAlertConfig: adminProcedure.query(() => {
     return {
       errorRateThreshold: 0.05,
       responseTimeThreshold: 500,
-      downtimeThreshold: 1, // minutes
+      downtimeThreshold: 1,
       lowStockThreshold: 10,
-      alertChannels: ["email", "slack"],
+      alertChannels: ["email"],
       timestamp: new Date(),
     };
   }),

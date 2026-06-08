@@ -1,25 +1,14 @@
+/**
+ * Search Router — busca no catálogo real (tabela products) e analytics de busca.
+ * "trending" sai das buscas mais frequentes (searchQueries); sem dados ainda,
+ * cai para as categorias reais do catálogo. Nada hardcoded.
+ */
+
 import { publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
-
-// Hardcoded products matching the frontend collection
-const PRODUCTS = [
-  { id: "essential-tee-280g", name: "Essential Tee 280g", category: "cotton", price: 89, description: "Camiseta essencial de algodão 280g", createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-  { id: "urban-oversized", name: "Urban Oversized", category: "oversized", price: 109, description: "Camiseta oversized urbana", createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-  { id: "performance-pro", name: "Performance Pro", category: "dryfit", price: 99, description: "Camiseta performance dry fit", createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
-  { id: "luxury-hoodie", name: "Moletom canguru", category: "hoodie", price: 189, description: "Moletom premium com canguru", createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
-  { id: "classic-cotton", name: "Classic Cotton", category: "cotton", price: 79, description: "Camiseta clássica de algodão", createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
-  { id: "street-oversized", name: "Street Oversized", category: "oversized", price: 119, description: "Camiseta oversized street", createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
-];
-
-const CATEGORIES = ["cotton", "oversized", "dryfit", "hoodie"];
-
-const TRENDING_SEARCHES = [
-  "Moletom",
-  "Camiseta oversized",
-  "Hoodie premium",
-  "Sweatshirt",
-  "Camiseta manga comprida",
-];
+import { getDb } from "../db";
+import { products as productsTable, searchQueries } from "../../drizzle/schema";
+import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
 
 export const searchRouter = router({
   // Search products by query with filters
@@ -34,52 +23,57 @@ export const searchRouter = router({
       })
     )
     .query(async ({ input }) => {
-      // Filter products
-      let results = PRODUCTS.filter((product) => {
-        const matchesQuery =
-          product.name.toLowerCase().includes(input.query.toLowerCase()) ||
-          product.description.toLowerCase().includes(input.query.toLowerCase());
+      const db = await getDb();
+      if (!db) return { results: [], total: 0, hasMore: false };
 
-        const matchesCategory = !input.category || product.category === input.category;
-
-        return matchesQuery && matchesCategory;
-      });
-
-      // Sort results
-      switch (input.sortBy) {
-        case "price-asc":
-          results.sort((a, b) => a.price - b.price);
-          break;
-        case "price-desc":
-          results.sort((a, b) => b.price - a.price);
-          break;
-        case "newest":
-          results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-          break;
-        case "relevance":
-        default:
-          // Prioritize name matches over description
-          results.sort((a, b) => {
-            const aNameMatch = a.name.toLowerCase().includes(input.query.toLowerCase());
-            const bNameMatch = b.name.toLowerCase().includes(input.query.toLowerCase());
-            if (aNameMatch && !bNameMatch) return -1;
-            if (!aNameMatch && bNameMatch) return 1;
-            return 0;
-          });
-          break;
+      const term = `%${input.query}%`;
+      const conditions = [
+        eq(productsTable.active, 1),
+        or(like(productsTable.name, term), like(productsTable.description, term))!,
+      ];
+      if (input.category) {
+        conditions.push(eq(productsTable.category, input.category));
       }
+      const where = and(...conditions);
 
-      const total = results.length;
-      const paginatedResults = results.slice(input.offset, input.offset + input.limit);
+      const orderBy =
+        input.sortBy === "price-asc"
+          ? [asc(productsTable.price)]
+          : input.sortBy === "price-desc"
+            ? [desc(productsTable.price)]
+            : input.sortBy === "newest"
+              ? [desc(productsTable.createdAt)]
+              : [asc(productsTable.displayOrder)];
+
+      const [{ count } = { count: 0 }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(productsTable)
+        .where(where);
+      const total = Number(count);
+
+      const rows = await db
+        .select({
+          id: productsTable.id,
+          name: productsTable.name,
+          category: productsTable.category,
+          price: productsTable.price,
+          description: productsTable.description,
+          image: productsTable.image,
+        })
+        .from(productsTable)
+        .where(where)
+        .orderBy(...orderBy)
+        .limit(input.limit)
+        .offset(input.offset);
 
       return {
-        results: paginatedResults,
+        results: rows,
         total,
         hasMore: input.offset + input.limit < total,
       };
     }),
 
-  // Get search suggestions (autocomplete)
+  // Get search suggestions (autocomplete) — nomes de produtos reais
   suggestions: publicProcedure
     .input(
       z.object({
@@ -88,20 +82,32 @@ export const searchRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const suggestions = PRODUCTS
-        .filter((p) => p.name.toLowerCase().includes(input.query.toLowerCase()))
-        .map((p) => p.name)
-        .slice(0, input.limit);
+      const db = await getDb();
+      if (!db) return [] as string[];
 
-      return suggestions;
+      const rows = await db
+        .select({ name: productsTable.name })
+        .from(productsTable)
+        .where(and(eq(productsTable.active, 1), like(productsTable.name, `%${input.query}%`)))
+        .limit(input.limit);
+
+      return rows.map((r) => r.name);
     }),
 
-  // Get available categories for filtering
+  // Get available categories for filtering — distintas no catálogo
   categories: publicProcedure.query(async () => {
-    return CATEGORIES;
+    const db = await getDb();
+    if (!db) return [] as string[];
+
+    const rows = await db
+      .selectDistinct({ category: productsTable.category })
+      .from(productsTable)
+      .where(eq(productsTable.active, 1));
+
+    return rows.map((r) => r.category);
   }),
 
-  // Get trending/popular searches
+  // Get trending/popular searches — buscas mais frequentes; fallback: categorias
   trending: publicProcedure
     .input(
       z.object({
@@ -109,6 +115,29 @@ export const searchRouter = router({
       })
     )
     .query(async ({ input }) => {
-      return TRENDING_SEARCHES.slice(0, input.limit);
+      const db = await getDb();
+      if (!db) return [] as string[];
+
+      const top = await db
+        .select({
+          query: searchQueries.query,
+          hits: sql<number>`count(*)`,
+        })
+        .from(searchQueries)
+        .groupBy(searchQueries.query)
+        .orderBy(desc(sql`count(*)`))
+        .limit(input.limit);
+
+      if (top.length > 0) {
+        return top.map((r) => r.query);
+      }
+
+      // Sem histórico de busca ainda: usa categorias reais do catálogo.
+      const cats = await db
+        .selectDistinct({ category: productsTable.category })
+        .from(productsTable)
+        .where(eq(productsTable.active, 1))
+        .limit(input.limit);
+      return cats.map((r) => r.category);
     }),
 });

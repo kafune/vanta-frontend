@@ -12,82 +12,12 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart } from "@/hooks/useCart";
-import ProductReviews from "@/components/ProductReviews";
-
-interface Order {
-  id: string;
-  date: string;
-  total: number;
-  status: "confirmado" | "preparacao" | "entregue" | "cancelado";
-  items: number;
-  trackingNumber: string;
-}
-
-interface Address {
-  id: string;
-  name: string;
-  street: string;
-  number: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  isDefault: boolean;
-}
-
-// Mock data
-const mockOrders: Order[] = [
-  {
-    id: "ORD-001",
-    date: "2026-04-10",
-    total: 149.99,
-    status: "entregue",
-    items: 2,
-    trackingNumber: "TRACK-2026-001",
-  },
-  {
-    id: "ORD-002",
-    date: "2026-04-05",
-    total: 89.99,
-    status: "entregue",
-    items: 1,
-    trackingNumber: "TRACK-2026-002",
-  },
-  {
-    id: "ORD-003",
-    date: "2026-03-28",
-    total: 199.99,
-    status: "preparacao",
-    items: 3,
-    trackingNumber: "TRACK-2026-003",
-  },
-];
-
-const mockAddresses: Address[] = [
-  {
-    id: "addr-1",
-    name: "Casa",
-    street: "Rua Principal",
-    number: "123",
-    city: "Lisboa",
-    state: "Lisboa",
-    zipCode: "1000-001",
-    isDefault: true,
-  },
-  {
-    id: "addr-2",
-    name: "Trabalho",
-    street: "Avenida Comercial",
-    number: "456",
-    city: "Porto",
-    state: "Porto",
-    zipCode: "4000-001",
-    isDefault: false,
-  },
-];
+import { trpc } from "@/lib/trpc";
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
+  pendente: { bg: "bg-yellow-500/10", text: "text-yellow-400", label: "Pendente" },
   confirmado: { bg: "bg-blue-500/10", text: "text-blue-400", label: "Confirmado" },
-  preparacao: { bg: "bg-yellow-500/10", text: "text-yellow-400", label: "Em Preparação" },
+  enviado: { bg: "bg-purple-500/10", text: "text-purple-400", label: "Enviado" },
   entregue: { bg: "bg-green-500/10", text: "text-green-400", label: "Entregue" },
   cancelado: { bg: "bg-red-500/10", text: "text-red-400", label: "Cancelado" },
 };
@@ -163,17 +93,89 @@ function FavoritesTab() {
   );
 }
 
+// Formulário compacto de criação de endereço (usa trpc.addresses.create).
+function AddressForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState({
+    label: "",
+    street: "",
+    number: "",
+    city: "",
+    state: "",
+    zipCode: "",
+  });
+  const createAddress = trpc.addresses.create.useMutation({
+    onSuccess: () => {
+      toast.success("Endereço adicionado");
+      onCreated();
+    },
+    onError: (e) => toast.error("Não foi possível salvar", { description: e.message }),
+  });
+
+  const inputClass =
+    "bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-[#EFEFEF]";
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.street.trim() || !form.city.trim()) {
+      toast.error("Preencha pelo menos rua e cidade");
+      return;
+    }
+    createAddress.mutate({
+      label: form.label || undefined,
+      street: form.street,
+      number: form.number || undefined,
+      city: form.city,
+      state: form.state || undefined,
+      zipCode: form.zipCode || undefined,
+    });
+  };
+
+  return (
+    <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
+      <CardContent className="pt-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input placeholder="Rótulo (ex.: Casa)" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} className={inputClass} />
+            <Input placeholder="CEP" value={form.zipCode} onChange={(e) => setForm({ ...form, zipCode: e.target.value })} className={inputClass} />
+            <Input placeholder="Rua" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} className={inputClass} required />
+            <Input placeholder="Número" value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} className={inputClass} />
+            <Input placeholder="Cidade" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputClass} required />
+            <Input placeholder="Estado" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className={inputClass} />
+          </div>
+          <div className="flex gap-3">
+            <Button type="submit" disabled={createAddress.isPending} className="bg-[#EFEFEF] text-[#0B0B0B] hover:bg-white">
+              {createAddress.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+            <Button type="button" variant="outline" onClick={onCancel} className="border-[rgba(255,255,255,0.1)] text-[#EFEFEF] hover:bg-[rgba(255,255,255,0.05)]">
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function UserAccount() {
   const { user, logout, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    phone: "+351 912 345 678",
   });
-  const [addresses, setAddresses] = useState<Address[]>(mockAddresses);
-  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+
+  const utils = trpc.useUtils();
+  const { data: orders = [] } = trpc.orders.getByUser.useQuery(undefined, { enabled: !!user });
+  const { data: addresses = [] } = trpc.addresses.list.useQuery(undefined, { enabled: !!user });
+  const { data: myReviews = [] } = trpc.reviews.getByUserId.useQuery(undefined, { enabled: !!user });
+  const deleteAddress = trpc.addresses.delete.useMutation({
+    onSuccess: () => {
+      utils.addresses.list.invalidate();
+      toast.success("Endereço removido");
+    },
+  });
 
   if (loading) {
     return (
@@ -295,20 +297,6 @@ export default function UserAccount() {
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-[rgba(239,239,239,0.8)]">
-                          Telefone
-                        </Label>
-                        <Input
-                          id="phone"
-                          value={profileData.phone}
-                          onChange={(e) =>
-                            setProfileData({ ...profileData, phone: e.target.value })
-                          }
-                          className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] text-[#EFEFEF]"
-                        />
-                      </div>
-
                       <div className="flex gap-3 pt-4">
                         <Button
                           onClick={handleSaveProfile}
@@ -339,11 +327,6 @@ export default function UserAccount() {
                         <p className="text-[#EFEFEF] font-semibold">{profileData.email}</p>
                       </div>
 
-                      <div className="space-y-2">
-                        <p className="text-[rgba(239,239,239,0.6)] text-sm">Telefone</p>
-                        <p className="text-[#EFEFEF] font-semibold">{profileData.phone}</p>
-                      </div>
-
                       <Button
                         onClick={() => setIsEditingProfile(true)}
                         variant="outline"
@@ -371,39 +354,42 @@ export default function UserAccount() {
 
             {/* Pedidos */}
             <TabsContent value="orders" className="mt-8 space-y-4">
-              {mockOrders.length > 0 ? (
-                mockOrders.map((order) => (
-                  <Card
-                    key={order.id}
-                    className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] cursor-pointer hover:bg-[rgba(255,255,255,0.08)] transition-colors"
-                    onClick={() => setLocation(`/track/${order.id}`)}
-                  >
-                    <CardContent className="pt-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="space-y-2">
-                          <p className="text-[#EFEFEF] font-semibold">{order.id}</p>
-                          <p className="text-[rgba(239,239,239,0.6)] text-sm">
-                            {new Date(order.date).toLocaleDateString("pt-PT")}
-                          </p>
-                          <p className="text-[rgba(239,239,239,0.5)] text-sm">
-                            {order.items} item(ns)
-                          </p>
-                        </div>
+              {orders.length > 0 ? (
+                orders.map((order) => {
+                  const sc = statusColors[order.status] ?? statusColors.pendente;
+                  return (
+                    <Card
+                      key={order.id}
+                      className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)] cursor-pointer hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+                      onClick={() => setLocation(`/track/${order.id}`)}
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="space-y-2">
+                            <p className="text-[#EFEFEF] font-semibold">{order.id}</p>
+                            <p className="text-[rgba(239,239,239,0.6)] text-sm">
+                              {new Date(order.createdAt).toLocaleDateString("pt-BR")}
+                            </p>
+                            {order.trackingNumber && (
+                              <p className="text-[rgba(239,239,239,0.5)] text-sm">
+                                Rastreio: {order.trackingNumber}
+                              </p>
+                            )}
+                          </div>
 
-                        <div className="space-y-2 sm:text-right">
-                          <p className="text-[#EFEFEF] font-semibold">€{order.total.toFixed(2)}</p>
-                          <div
-                            className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold ${
-                              statusColors[order.status].bg
-                            } ${statusColors[order.status].text}`}
-                          >
-                            {statusColors[order.status].label}
+                          <div className="space-y-2 sm:text-right">
+                            <p className="text-[#EFEFEF] font-semibold">R$ {(order.totalPrice / 100).toFixed(2)}</p>
+                            <div
+                              className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold ${sc.bg} ${sc.text}`}
+                            >
+                              {sc.label}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      </CardContent>
+                    </Card>
+                  );
+                })
               ) : (
                 <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
                   <CardContent className="pt-6 text-center">
@@ -420,6 +406,14 @@ export default function UserAccount() {
 
             {/* Endereços */}
             <TabsContent value="addresses" className="mt-8 space-y-4">
+              {addresses.length === 0 && !showAddressForm && (
+                <Card className="bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]">
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-[rgba(239,239,239,0.6)]">Nenhum endereço cadastrado</p>
+                  </CardContent>
+                </Card>
+              )}
+
               {addresses.map((address) => (
                 <Card
                   key={address.id}
@@ -429,45 +423,51 @@ export default function UserAccount() {
                     <div className="flex justify-between items-start gap-4">
                       <div className="space-y-2 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="text-[#EFEFEF] font-semibold">{address.name}</p>
-                          {address.isDefault && (
+                          <p className="text-[#EFEFEF] font-semibold">{address.label || "Endereço"}</p>
+                          {address.isDefault === 1 && (
                             <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">
                               Padrão
                             </span>
                           )}
                         </div>
                         <p className="text-[rgba(239,239,239,0.6)] text-sm">
-                          {address.street}, {address.number}
+                          {address.street}{address.number ? `, ${address.number}` : ""}
                         </p>
                         <p className="text-[rgba(239,239,239,0.6)] text-sm">
-                          {address.zipCode} - {address.city}, {address.state}
+                          {address.zipCode ? `${address.zipCode} - ` : ""}{address.city}{address.state ? `, ${address.state}` : ""}
                         </p>
                       </div>
 
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-[rgba(255,255,255,0.1)] text-[#EFEFEF] hover:bg-[rgba(255,255,255,0.05)]"
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-red-500/30 text-red-400 hover:bg-red-500/10"
-                        >
-                          Remover
-                        </Button>
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={deleteAddress.isPending}
+                        onClick={() => deleteAddress.mutate({ id: address.id })}
+                        className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                      >
+                        Remover
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
 
-              <Button className="w-full bg-[#EFEFEF] text-[#0B0B0B] hover:bg-white">
-                + Adicionar Novo Endereço
-              </Button>
+              {showAddressForm ? (
+                <AddressForm
+                  onCancel={() => setShowAddressForm(false)}
+                  onCreated={() => {
+                    setShowAddressForm(false);
+                    utils.addresses.list.invalidate();
+                  }}
+                />
+              ) : (
+                <Button
+                  onClick={() => setShowAddressForm(true)}
+                  className="w-full bg-[#EFEFEF] text-[#0B0B0B] hover:bg-white"
+                >
+                  + Adicionar Novo Endereço
+                </Button>
+              )}
             </TabsContent>
 
             {/* Notificações */}
@@ -523,21 +523,31 @@ export default function UserAccount() {
                   <CardDescription>Veja e gerencie suas avaliações de produtos</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    {mockOrders.map((order) => (
-                      <div key={order.id} className="border-b border-[rgba(255,255,255,0.1)] pb-6 last:border-b-0">
-                        <div className="mb-4">
-                          <p className="text-[#EFEFEF] font-semibold mb-1">{order.id}</p>
-                          <p className="text-[rgba(239,239,239,0.6)] text-sm">{order.date}</p>
+                  {myReviews.length === 0 ? (
+                    <p className="text-[rgba(239,239,239,0.6)] text-center py-6">
+                      Você ainda não avaliou nenhum produto. Avalie a partir de um pedido entregue.
+                    </p>
+                  ) : (
+                    <div className="space-y-6">
+                      {myReviews.map((review) => (
+                        <div key={review.id} className="border-b border-[rgba(255,255,255,0.1)] pb-6 last:border-b-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex">
+                              {Array.from({ length: review.rating }).map((_, j) => (
+                                <Star key={j} size={14} className="fill-[#EFEFEF] text-[#EFEFEF]" />
+                              ))}
+                            </div>
+                            <span className="text-[rgba(239,239,239,0.4)] text-xs">
+                              {new Date(review.createdAt).toLocaleDateString("pt-BR")}
+                            </span>
+                          </div>
+                          {review.title && <p className="text-[#EFEFEF] font-semibold mb-1">{review.title}</p>}
+                          {review.comment && <p className="text-[rgba(239,239,239,0.65)] text-sm">{review.comment}</p>}
+                          <p className="text-[rgba(239,239,239,0.35)] text-xs mt-2">Produto: {review.productId}</p>
                         </div>
-                        <ProductReviews
-                          productId={`product-${order.id}`}
-                          orderId={order.id}
-                          canReview={order.status === "entregue"}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

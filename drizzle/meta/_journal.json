@@ -127,6 +127,20 @@
       "when": 1780913848247,
       "tag": "0017_wakeful_squirrel_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1780913848248,
+      "tag": "0018_search_queries",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1780913848249,
+      "tag": "0019_seed_product_stock",
+      "breakpoints": true
     }
   ]
 }

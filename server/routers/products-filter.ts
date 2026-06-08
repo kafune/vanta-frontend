@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { publicProcedure, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { collectionProducts, collections } from "../../drizzle/schema";
+import { collectionProducts, collections, searchQueries } from "../../drizzle/schema";
 import { eq, desc, asc } from "drizzle-orm";
 
 // Available filter options
@@ -353,11 +353,13 @@ export const productsFilterRouter = {
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // This would be saved to a search_queries table in a real implementation
-      // For now, we just log it
-      console.log(
-        `[Search Analytics] User ${ctx.user.id} searched for: "${input.query}" (${input.resultsCount} results)`
-      );
+      const db = await getDb();
+      if (!db) return { success: false };
+      await db.insert(searchQueries).values({
+        query: input.query.trim(),
+        userId: ctx.user.id,
+        resultsCount: input.resultsCount,
+      });
       return { success: true };
     }),
 };
