@@ -307,3 +307,15 @@ _Itens para implementação futura, não são bloqueadores do projeto atual_
 - [x] Integrate animations into CheckoutAuthGuard (loading state management)
 - [x] Add button feedback during login ("Conectando..." state)
 - [x] Create vitest tests for animation components (CheckoutLoadingOverlay.test.ts with 12 tests)
+
+
+## Multi-Image Product Gallery & Stock Verification (COMPLETE)
+- [x] Update database schema to include `stock` and `images` (JSON) fields in products table
+- [x] Run `pnpm db:push` to migrate schema changes
+- [x] Update Product.tsx component to support multi-image gallery
+- [x] Implement image carousel with thumbnail navigation
+- [x] Add real-time stock verification in product detail page
+- [x] Display stock status (in stock, low stock, out of stock)
+- [x] Update PaginatedProductGrid.tsx to align with tRPC return type
+- [x] Fix getCategoryStats procedure to return correct fields (category, count, avgPrice)
+- [x] All 272 tests passing with new schema and procedures

@@ -266,6 +266,7 @@ export const products = mysqlTable("products", {
   images: text("images"), // JSON array de URLs adicionais
   sizes: text("sizes"), // JSON array, ex.: ["P","M","G","GG"]
   colors: text("colors"), // JSON array de nomes de cor
+  stock: int("stock").default(0).notNull(), // quantidade em estoque
   featured: tinyint("featured").default(0).notNull(),
   active: tinyint("active").default(1).notNull(),
   displayOrder: int("displayOrder").default(0).notNull(),

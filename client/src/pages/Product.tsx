@@ -3,9 +3,9 @@
  * Detailed product page with gallery, size selector, and specifications
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
-import { Heart, Share2, Truck, RotateCcw, Shield, ArrowLeft } from "lucide-react";
+import { Heart, Share2, Truck, RotateCcw, Shield, ArrowLeft, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -31,9 +31,49 @@ export default function Product() {
     { enabled: !!productId }
   );
 
+  // Parse múltiplas imagens do campo JSON
+  const productImages = useMemo(() => {
+    if (!product) return [];
+    try {
+      // Se images é uma string JSON, faz parse
+      if (typeof product.images === "string" && product.images.length > 0) {
+        const parsed = JSON.parse(product.images);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      // Se já é array, retorna como está
+      if (Array.isArray(product.images)) {
+        return product.images;
+      }
+    } catch (e) {
+      console.error("Erro ao parsear imagens:", e);
+    }
+    // Fallback: retorna a imagem principal
+    return product.image ? [product.image] : [];
+  }, [product]);
+
+  // Verifica disponibilidade de estoque
+  const isInStock = product ? (product.stock ?? 0) > 0 : false;
+  const stockMessage = product
+    ? isInStock
+      ? `${product.stock} em estoque`
+      : "Fora de estoque"
+    : "";
+
+  // Calcula quantidade máxima que pode ser adicionada
+  const maxQuantity = product?.stock ?? 0;
+  const canAddToCart = isInStock && quantity <= maxQuantity;
+
   const handleAddToCart = () => {
     if (!selectedSize) {
       toast.error("Selecione um tamanho", { description: "É necessário escolher um tamanho para adicionar ao carrinho." });
+      return;
+    }
+    if (!isInStock) {
+      toast.error("Produto fora de estoque", { description: "Este produto não está disponível no momento." });
+      return;
+    }
+    if (quantity > maxQuantity) {
+      toast.error("Quantidade indisponível", { description: `Apenas ${maxQuantity} unidade(s) disponível(is).` });
       return;
     }
     if (!product) return;
@@ -64,6 +104,12 @@ export default function Product() {
         toast.error("Não foi possível copiar o link.");
       });
     }
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    const clamped = Math.max(1, Math.min(newQuantity, maxQuantity));
+    setQuantity(clamped);
+    setQuantityInput(String(clamped));
   };
 
   if (isLoading) {
@@ -118,9 +164,9 @@ export default function Product() {
       {/* Main Content */}
       <div className="py-12 lg:py-16 px-6 lg:px-8">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-          {/* Gallery */}
+          {/* Gallery - Múltiplas Imagens */}
           <div>
-            <ProductGallery images={[product.image]} productName={product.name} />
+            <ProductGallery images={productImages} productName={product.name} />
           </div>
 
           {/* Info */}
@@ -148,11 +194,20 @@ export default function Product() {
               )}
             </div>
 
-            {/* Stock status */}
-            <div className="mt-4">
-              <span className={`font-heading text-xs font-semibold tracking-widest uppercase text-[rgba(100,200,100,0.8)]`}>
-                ✓ Em Estoque
-              </span>
+            {/* Stock status - Verificação Real */}
+            <div className="mt-4 mb-6">
+              {isInStock ? (
+                <span className={`font-heading text-xs font-semibold tracking-widest uppercase text-[rgba(100,200,100,0.8)]`}>
+                  ✓ {stockMessage}
+                </span>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={16} className="text-red-400" />
+                  <span className="font-heading text-xs font-semibold tracking-widest uppercase text-red-400">
+                    {stockMessage}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Description */}
@@ -168,44 +223,48 @@ export default function Product() {
               <label className="font-heading font-semibold text-[#EFEFEF] block mb-3">Quantidade</label>
               <div className="flex items-center gap-3 w-fit">
                 <button
-                  onClick={() => {
-                    const next = Math.max(1, quantity - 1);
-                    setQuantity(next);
-                    setQuantityInput(String(next));
-                  }}
-                  className="w-10 h-10 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all"
+                  onClick={() => handleQuantityChange(quantity - 1)}
+                  disabled={!isInStock}
+                  className="w-10 h-10 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   –
                 </button>
                 <input
                   type="number"
                   min="1"
+                  max={maxQuantity}
                   value={quantityInput}
                   onChange={(e) => setQuantityInput(e.target.value)}
                   onBlur={(e) => {
                     const parsed = Math.max(1, parseInt(e.target.value) || 1);
-                    setQuantity(parsed);
-                    setQuantityInput(String(parsed));
+                    handleQuantityChange(parsed);
                   }}
-                  className="w-12 h-10 text-center bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.15)] text-[#EFEFEF] font-heading focus:outline-none focus:border-[rgba(255,255,255,0.4)]"
+                  disabled={!isInStock}
+                  className="w-12 h-10 text-center bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.15)] text-[#EFEFEF] font-heading focus:outline-none focus:border-[rgba(255,255,255,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
-                  onClick={() => {
-                    const next = quantity + 1;
-                    setQuantity(next);
-                    setQuantityInput(String(next));
-                  }}
-                  className="w-10 h-10 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all"
+                  onClick={() => handleQuantityChange(quantity + 1)}
+                  disabled={!isInStock || quantity >= maxQuantity}
+                  className="w-10 h-10 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF] hover:border-[rgba(255,255,255,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
               </div>
+              {isInStock && maxQuantity > 0 && (
+                <p className="font-heading text-xs text-[rgba(239,239,239,0.4)] mt-2">
+                  Máximo: {maxQuantity} unidade(s)
+                </p>
+              )}
             </div>
 
             {/* CTA Buttons */}
             <div className="flex gap-3 pt-4">
-              <button onClick={handleAddToCart} className="btn-cta flex-1 py-3.5">
-                <span>Adicionar ao Carrinho</span>
+              <button
+                onClick={handleAddToCart}
+                disabled={!canAddToCart}
+                className="btn-cta flex-1 py-3.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span>{isInStock ? "Adicionar ao Carrinho" : "Fora de Estoque"}</span>
               </button>
               <button
                 onClick={() => { setLiked(!liked); toast(liked ? "Removido dos favoritos" : "Adicionado aos favoritos"); }}
