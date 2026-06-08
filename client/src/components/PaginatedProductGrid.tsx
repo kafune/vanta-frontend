@@ -3,13 +3,12 @@
  * Reusable component for displaying products with pagination
  */
 
-import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight, Loader2, ShoppingBag, Heart } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useCart } from "@/hooks/useCart";
 import { useLocation } from "wouter";
-import { ShoppingBag, Heart } from "lucide-react";
 
 interface PaginatedProductGridProps {
   category?: "todos" | "cotton" | "oversized" | "dryfit" | "hoodie";
@@ -42,8 +41,16 @@ function ProductCard({ product }: { product: any }) {
     setSelectedSize(null);
   };
 
+  // Preço vem em centavos do servidor, dividimos por 100 para exibir
+  const priceInReais = (product.price / 100).toFixed(2);
+  const originalPriceInReais = product.originalPrice ? (product.originalPrice / 100).toFixed(2) : null;
+
   return (
-    <div className="product-card group" style={{ borderRadius: "4px" }}>
+    <div
+      className="product-card group"
+      style={{ borderRadius: "4px", cursor: "pointer" }}
+      onClick={() => setLocation(`/produto/${product.id}`)}
+    >
       {/* Image with lazy loading */}
       <div className="relative overflow-hidden" style={{ aspectRatio: "3/4" }}>
         <img
@@ -67,7 +74,8 @@ function ProductCard({ product }: { product: any }) {
 
         {/* Like button */}
         <button
-          onClick={() => { setLiked(!liked); toast(liked ? "Removido dos favoritos" : "Adicionado aos favoritos"); }}
+          onClick={(e) => { e.stopPropagation(); setLiked(!liked); toast(liked ? "Removido dos favoritos" : "Adicionado aos favoritos"); }}
+          aria-label={liked ? "Remover dos favoritos" : "Adicionar aos favoritos"}
           className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-[rgba(11,11,11,0.6)] backdrop-blur-sm border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.3)] transition-all"
         >
           <Heart
@@ -79,7 +87,7 @@ function ProductCard({ product }: { product: any }) {
         {/* Quick add on hover */}
         <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex gap-2">
           <button
-            onClick={handleAddToCart}
+            onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
             disabled={!selectedSize}
             className="flex-1 btn-cta py-2.5 text-xs flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -87,7 +95,7 @@ function ProductCard({ product }: { product: any }) {
             <span>Carrinho</span>
           </button>
           <button
-            onClick={() => setLocation(`/produto/${product.id}`)}
+            onClick={(e) => { e.stopPropagation(); setLocation(`/produto/${product.id}`); }}
             className="flex-1 btn-outline py-2.5 text-xs flex items-center justify-center gap-2"
           >
             <span>Detalhes</span>
@@ -109,7 +117,7 @@ function ProductCard({ product }: { product: any }) {
           {["P", "M", "G", "GG"].map((size) => (
             <button
               key={size}
-              onClick={() => setSelectedSize(selectedSize === size ? null : size)}
+              onClick={(e) => { e.stopPropagation(); setSelectedSize(selectedSize === size ? null : size); }}
               className={`w-7 h-7 text-[0.6rem] font-mono border transition-all duration-150 ${
                 selectedSize === size
                   ? "border-white text-white bg-[rgba(255,255,255,0.1)]"
@@ -123,10 +131,10 @@ function ProductCard({ product }: { product: any }) {
 
         {/* Price */}
         <div className="flex items-center gap-2">
-          <span className="font-heading font-bold text-[#EFEFEF]">R$ {(product.price / 100).toFixed(2)}</span>
-          {product.originalPrice && (
+          <span className="font-heading font-bold text-[#EFEFEF]">R$ {priceInReais}</span>
+          {originalPriceInReais && (
             <span className="font-heading text-sm text-[rgba(239,239,239,0.35)] line-through">
-              R$ {(product.originalPrice / 100).toFixed(2)}
+              R$ {originalPriceInReais}
             </span>
           )}
         </div>
@@ -143,18 +151,6 @@ export function PaginatedProductGrid({
   onProductClick,
 }: PaginatedProductGridProps) {
   const [page, setPage] = useState(1);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  // Observe section visibility
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold: 0.1 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
 
   // Fetch paginated products
   const { data, isLoading, error } = trpc.products.getPaginated.useQuery({
@@ -193,14 +189,12 @@ export function PaginatedProductGrid({
   }
 
   return (
-    <div ref={sectionRef} className="w-full">
+    <div className="w-full relative">
       {/* Products Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5 mb-8">
-        {products.map((product, i) => (
+        {products.map((product) => (
           <div
             key={product.id}
-            className={`transition-all duration-500 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
-            style={{ transitionDelay: `${i * 80}ms` }}
             onClick={() => onProductClick?.(product.id)}
           >
             <ProductCard product={product} />
