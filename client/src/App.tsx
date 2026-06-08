@@ -17,11 +17,13 @@ import Wishlist from "./pages/Wishlist";
 import SearchResults from "./pages/SearchResults";
 import Collections from "./pages/Collections";
 import CollectionDetail from "./pages/CollectionDetail";
+import Login from "./pages/Login";
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/login"} component={Login} />
       <Route path={"/produto/:id"} component={Product} />
       <Route path={"/categoria/:category"} component={CategoryProducts} />
       <Route path={"/modelo/:id"} component={ModelDetails} />

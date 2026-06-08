@@ -10,6 +10,7 @@ import { serveStatic, setupVite } from "./vite";
 import { securityHeadersMiddleware } from "../middleware/securityHeaders";
 import { csrfTokenMiddleware, validateCsrfToken } from "../middleware/csrf";
 import { rateLimiters, startRateLimitCleanup } from "../middleware/rateLimiter";
+import { ensureAdminUser } from "../db";
 import cookieParser from "cookie-parser";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -68,6 +69,13 @@ async function startServer() {
     await setupVite(app, server);
   } else {
     serveStatic(app);
+  }
+
+  // Garante o admin inicial (login local) a partir das envs ADMIN_EMAIL/ADMIN_PASSWORD.
+  try {
+    await ensureAdminUser();
+  } catch (error) {
+    console.error("[Auth] Falha ao garantir admin inicial:", error);
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
