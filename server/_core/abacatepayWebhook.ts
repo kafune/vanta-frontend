@@ -32,21 +32,27 @@ export function registerAbacatePayWebhook(app: Express) {
       // A AbacatePay aninha a cobrança de formas diferentes conforme o evento.
       const charge = data.pixQrCode ?? data.billing ?? data;
       const gatewayId: string | undefined = charge?.id ?? data?.id;
+      // externalId (= nosso orderId) pode vir no topo do data ou em metadata.
+      const externalId: string | undefined =
+        data?.externalId ?? data?.metadata?.externalId ?? charge?.metadata?.externalId;
       const status: string = String(charge?.status ?? data?.status ?? "").toUpperCase();
       const isPaid = status === "PAID" || event.event === "billing.paid" || event.event === "pixQrCode.paid";
 
-      if (!gatewayId || !isPaid) {
+      if ((!gatewayId && !externalId) || !isPaid) {
         return res.status(200).json({ ok: true, ignored: true });
       }
 
       const db = await getDb();
       if (!db) return res.status(200).json({ ok: true });
 
-      const [payment] = await db
-        .select()
-        .from(pixPayments)
-        .where(eq(pixPayments.gatewayId, gatewayId))
-        .limit(1);
+      // Casa pela cobrança (gatewayId) ou, em fallback, pelo pedido (externalId).
+      let payment;
+      if (gatewayId) {
+        [payment] = await db.select().from(pixPayments).where(eq(pixPayments.gatewayId, gatewayId)).limit(1);
+      }
+      if (!payment && externalId) {
+        [payment] = await db.select().from(pixPayments).where(eq(pixPayments.orderId, externalId)).limit(1);
+      }
 
       if (payment && payment.status !== "confirmed") {
         await markPixPaid(db, payment.id, payment.orderId);

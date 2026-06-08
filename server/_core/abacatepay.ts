@@ -71,8 +71,10 @@ export async function createPixCharge(input: AbacateCreateInput): Promise<Abacat
     amount: input.amountCents,
     expiresIn: input.expiresInSeconds ?? 1800,
     description: input.description,
-    externalId: input.externalId,
     customer: input.customer,
+    // externalId é aninhado em metadata (conforme a API da AbacatePay) — é como
+    // conciliamos a cobrança com o nosso orderId.
+    metadata: input.externalId ? { externalId: input.externalId } : undefined,
   };
   const data = await request<any>("/pixQrCode/create", {
     method: "POST",
