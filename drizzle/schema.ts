@@ -214,6 +214,8 @@ export const pixPayments = mysqlTable("pixPayments", {
   pixKey: varchar("pixKey", { length: 255 }).notNull(), // PIX key used
   qrCode: text("qrCode").notNull(), // QR code data (base64 or string)
   brCode: text("brCode").notNull(), // BR Code for PIX
+  /** ID da cobrança no gateway (AbacatePay). Null em PIX estático. */
+  gatewayId: varchar("gatewayId", { length: 128 }),
   status: mysqlEnum("status", ["pending", "confirmed", "failed", "expired"]).default("pending").notNull(),
   expiresAt: timestamp("expiresAt").notNull(), // QR code expiration time
   confirmedAt: timestamp("confirmedAt"), // when payment was confirmed
@@ -329,3 +331,56 @@ export const searchQueries = mysqlTable("searchQueries", {
 
 export type SearchQuery = typeof searchQueries.$inferSelect;
 export type InsertSearchQuery = typeof searchQueries.$inferInsert;
+
+// Promotions - campanhas/descontos sazonais.
+export const promotions = mysqlTable("promotions", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 32 }).notNull(), // seasonal, flash, referral, loyalty
+  discount: int("discount").notNull(), // percentual 0-100
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  active: tinyint("active").default(1).notNull(),
+  applicableCategories: text("applicableCategories"), // JSON array, ex.: ["cotton"] ou ["all"]
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Promotion = typeof promotions.$inferSelect;
+export type InsertPromotion = typeof promotions.$inferInsert;
+
+// Referrals - indicações; cada linha é um indicado trazido por um referrerId.
+export const referrals = mysqlTable("referrals", {
+  id: int("id").autoincrement().primaryKey(),
+  referrerId: int("referrerId").notNull(),
+  referredUserId: int("referredUserId"),
+  rewardPoints: int("rewardPoints").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = typeof referrals.$inferInsert;
+
+// Email marketing - assinantes da newsletter.
+export const emailSubscribers = mysqlTable("emailSubscribers", {
+  email: varchar("email", { length: 320 }).primaryKey(),
+  active: tinyint("active").default(1).notNull(),
+  tags: text("tags"), // JSON array
+  subscribedAt: timestamp("subscribedAt").defaultNow().notNull(),
+});
+
+export type EmailSubscriber = typeof emailSubscribers.$inferSelect;
+export type InsertEmailSubscriber = typeof emailSubscribers.$inferInsert;
+
+// Email marketing - campanhas de email.
+export const emailCampaigns = mysqlTable("emailCampaigns", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  recipientCount: int("recipientCount").default(0).notNull(),
+  sentAt: timestamp("sentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EmailCampaign = typeof emailCampaigns.$inferSelect;
+export type InsertEmailCampaign = typeof emailCampaigns.$inferInsert;

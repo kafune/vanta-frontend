@@ -6,13 +6,36 @@
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { pixPayments, pixTransactions } from "../../drizzle/schema";
+import { pixPayments, pixTransactions, orders } from "../../drizzle/schema";
 import { generatePixPayment, validatePixKey, formatCurrency } from "../pix";
 import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
+import { createPixCharge, getPixChargeStatus, isAbacatePayConfigured, isChargePaid } from "../_core/abacatepay";
 
 function generateId() {
   return crypto.randomBytes(16).toString("hex");
+}
+
+/**
+ * Marca um pagamento PIX como confirmado, registra a transação e move o pedido
+ * para "confirmado". Idempotente. Reusado por checkStatus e pelo webhook.
+ */
+export async function markPixPaid(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  paymentId: string,
+  orderId: string
+): Promise<void> {
+  await db
+    .update(pixPayments)
+    .set({ status: "confirmed", confirmedAt: new Date() })
+    .where(eq(pixPayments.id, paymentId));
+  await db.insert(pixTransactions).values({
+    id: generateId(),
+    pixPaymentId: paymentId,
+    status: "confirmed",
+    message: "PIX payment confirmed",
+  });
+  await db.update(orders).set({ status: "confirmado", updatedAt: new Date() }).where(eq(orders.id, orderId));
 }
 
 export const pixRouter = router({
@@ -30,63 +53,81 @@ export const pixRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { orderId, amount, description } = input;
+      const useGateway = isAbacatePayConfigured();
       const pixKey = process.env.PIX_KEY;
       const ownerName = process.env.PIX_OWNER_NAME || "VANTA Store";
 
-      if (!pixKey) {
-        throw new Error("PIX key not configured");
-      }
-
-      if (!validatePixKey(pixKey)) {
-        throw new Error("Invalid PIX key format");
+      // Sem gateway configurado, exige a chave PIX estática.
+      if (!useGateway) {
+        if (!pixKey) throw new Error("PIX key not configured");
+        if (!validatePixKey(pixKey)) throw new Error("Invalid PIX key format");
       }
 
       try {
-        // Generate PIX payment data
-        const pixData = await generatePixPayment({
-          pixKey,
-          ownerName,
-          amount,
-          description: description || "Compra VANTA",
-          transactionId: orderId,
-        });
-
-        // Get database connection
         const db = await getDb();
         if (!db) {
           throw new Error("Database not available");
         }
 
-        // Store payment in database
         const paymentId = generateId();
-        const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes expiration
+        let brCode: string;
+        let qrCode: string;
+        let gatewayId: string | null = null;
+        let expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min default
+
+        if (useGateway) {
+          // Cobrança real via AbacatePay.
+          const charge = await createPixCharge({
+            amountCents: amount,
+            description: description || "Compra VANTA",
+            expiresInSeconds: 30 * 60,
+            externalId: orderId,
+            customer: { name: ctx.user.name ?? undefined, email: ctx.user.email ?? undefined },
+          });
+          brCode = charge.brCode;
+          qrCode = charge.brCodeBase64;
+          gatewayId = charge.id;
+          if (charge.expiresAt) expiresAt = new Date(charge.expiresAt);
+        } else {
+          // PIX estático (chave do lojista, confirmação manual).
+          const pixData = await generatePixPayment({
+            pixKey: pixKey!,
+            ownerName,
+            amount,
+            description: description || "Compra VANTA",
+            transactionId: orderId,
+          });
+          brCode = pixData.brCode;
+          qrCode = pixData.qrCode;
+        }
 
         await db.insert(pixPayments).values({
           id: paymentId,
           orderId,
           userId: ctx.user.id,
           amount,
-          pixKey,
-          qrCode: pixData.qrCode,
-          brCode: pixData.brCode,
+          pixKey: useGateway ? "abacatepay" : pixKey!,
+          qrCode,
+          brCode,
+          gatewayId,
           status: "pending",
           expiresAt,
         });
 
-        // Log transaction
         await db.insert(pixTransactions).values({
           id: generateId(),
           pixPaymentId: paymentId,
           status: "pending",
-          message: "PIX payment generated successfully",
+          message: useGateway ? "AbacatePay charge created" : "PIX payment generated successfully",
         });
 
         return {
           success: true,
           paymentId,
-          brCode: pixData.brCode,
-          qrCode: pixData.qrCode,
-          pixKey,
+          brCode,
+          qrCode,
+          pixKey: useGateway ? "abacatepay" : pixKey!,
+          provider: useGateway ? ("abacatepay" as const) : ("static" as const),
           amount,
           amountFormatted: formatCurrency(amount),
           expiresAt,
@@ -96,6 +137,39 @@ export const pixRouter = router({
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         throw new Error(`Failed to generate PIX payment: ${errorMessage}`);
       }
+    }),
+
+  /**
+   * Check payment status against the gateway (AbacatePay) and confirm if paid.
+   * Lets the frontend poll for automatic confirmation.
+   */
+  checkStatus: protectedProcedure
+    .input(z.object({ paymentId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      const [payment] = await db
+        .select()
+        .from(pixPayments)
+        .where(and(eq(pixPayments.id, input.paymentId), eq(pixPayments.userId, ctx.user.id)))
+        .limit(1);
+      if (!payment) throw new Error("Payment not found");
+
+      if (payment.status === "confirmed") {
+        return { status: "confirmed" as const, paid: true };
+      }
+      // Sem gateway/charge não há o que consultar — segue pendente (confirmação manual).
+      if (!payment.gatewayId || !isAbacatePayConfigured()) {
+        return { status: payment.status, paid: false };
+      }
+
+      const charge = await getPixChargeStatus(payment.gatewayId);
+      if (isChargePaid(charge.status)) {
+        await markPixPaid(db, payment.id, payment.orderId);
+        return { status: "confirmed" as const, paid: true };
+      }
+      return { status: payment.status, paid: false };
     }),
 
   /**

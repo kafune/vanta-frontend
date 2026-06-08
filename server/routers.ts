@@ -13,7 +13,6 @@ import { analyticsRouter } from "./routers/analytics";
 import { savedFiltersRouter } from "./routers/saved-filters";
 import { pixRouter } from "./routers/pix";
 import { productsRouter } from "./routers/products";
-import { stripeRouter } from "./routers/stripe";
 import { inventoryRouter } from "./routers/inventory";
 import { promotionsRouter } from "./routers/promotions";
 import { monitoringRouter } from "./routers/monitoring";
@@ -45,7 +44,6 @@ export const appRouter = router({
   savedFilters: savedFiltersRouter,
   pix: pixRouter,
   products: productsRouter,
-  stripe: stripeRouter,
   inventory: inventoryRouter,
   promotions: promotionsRouter,
   monitoring: monitoringRouter,

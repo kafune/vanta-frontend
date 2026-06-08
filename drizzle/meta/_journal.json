@@ -141,6 +141,20 @@
       "when": 1780913848249,
       "tag": "0019_seed_product_stock",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1780913848250,
+      "tag": "0020_promotions_email_marketing",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1780913848251,
+      "tag": "0021_pix_gateway_id",
+      "breakpoints": true
     }
   ]
 }

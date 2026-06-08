@@ -53,7 +53,7 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
     },
   });
 
-  // Confirm payment (simulated)
+  // Confirm payment (PIX estático: confirmação manual pelo lojista/cliente)
   const confirmPayment = trpc.pix.confirmPayment.useMutation({
     onSuccess: () => {
       setPaymentConfirmed(true);
@@ -62,6 +62,17 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
     },
     onError: (error) => {
       toast.error(`Erro ao confirmar pagamento: ${error.message}`);
+    },
+  });
+
+  // Consulta o status no gateway (AbacatePay) — usado no polling automático.
+  const checkStatus = trpc.pix.checkStatus.useMutation({
+    onSuccess: (data) => {
+      if (data.paid) {
+        setPaymentConfirmed(true);
+        toast.success("Pagamento confirmado!");
+        onPaymentConfirmed?.();
+      }
     },
   });
 
@@ -77,6 +88,17 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
   }, [orderId, amount]);
 
   const pixData = generatePayment.data;
+  const isGateway = pixData?.provider === "abacatepay";
+
+  // Polling automático de confirmação quando o pagamento é via gateway.
+  useEffect(() => {
+    if (!pixData || !isGateway || paymentConfirmed || isExpired) return;
+    const interval = setInterval(() => {
+      checkStatus.mutate({ paymentId: pixData.paymentId });
+    }, 5000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pixData?.paymentId, isGateway, paymentConfirmed, isExpired]);
   const amountFormatted = (amount / 100).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -264,23 +286,31 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
       {/* Action Buttons */}
       {!isExpired && (
         <div className="flex gap-3">
-          <Button
-            onClick={() => {
-              setConfirmingPayment(true);
-              confirmPayment.mutate({ paymentId: pixData.paymentId });
-            }}
-            disabled={confirmingPayment || confirmPayment.isPending}
-            className="flex-1 bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E]"
-          >
-            {confirmingPayment || confirmPayment.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Confirmando...
-              </>
-            ) : (
-              "Confirmar Pagamento"
-            )}
-          </Button>
+          {isGateway ? (
+            // Via gateway: confirmação automática (webhook + polling). Sem botão manual.
+            <div className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[rgba(239,239,239,0.7)] text-sm">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Aguardando confirmação do pagamento...
+            </div>
+          ) : (
+            <Button
+              onClick={() => {
+                setConfirmingPayment(true);
+                confirmPayment.mutate({ paymentId: pixData.paymentId });
+              }}
+              disabled={confirmingPayment || confirmPayment.isPending}
+              className="flex-1 bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E]"
+            >
+              {confirmingPayment || confirmPayment.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Confirmando...
+                </>
+              ) : (
+                "Confirmar Pagamento"
+              )}
+            </Button>
+          )}
           <Button
             onClick={onCancel}
             variant="outline"

@@ -11,6 +11,7 @@ import { securityHeadersMiddleware } from "../middleware/securityHeaders";
 import { csrfTokenMiddleware, validateCsrfToken } from "../middleware/csrf";
 import { rateLimiters, startRateLimitCleanup } from "../middleware/rateLimiter";
 import { ensureAdminUser } from "../db";
+import { registerAbacatePayWebhook } from "./abacatepayWebhook";
 import cookieParser from "cookie-parser";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -55,6 +56,8 @@ async function startServer() {
 
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Webhook de confirmação de pagamento (AbacatePay) — fora do CSRF (chamada externa).
+  registerAbacatePayWebhook(app);
   // tRPC API with CSRF validation for mutations
   app.use("/api/trpc", validateCsrfToken);
   app.use(
