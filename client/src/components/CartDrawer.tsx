@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { PixCheckout } from "@/components/PixCheckout";
-import { getLoginUrl } from "@/const";
 
 interface CartDrawerProps {
   open: boolean;
@@ -160,33 +159,8 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           </div>
         </DrawerHeader>
 
-        {showPixCheckout && currentOrderId ? (
-          /* Checkout PIX ocupa o corpo inteiro do drawer, com rolagem própria —
-             evita que o formulário (celular/CPF) e o QR fiquem cortados fora da tela. */
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <PixCheckout
-              orderId={currentOrderId}
-              amount={Math.round(finalTotal * 100)}
-              onPaymentConfirmed={() => {
-                setShowPixCheckout(false);
-                clearCart();
-                removeCoupon();
-                setApplyCashback(false);
-                setIsCheckingOut(false);
-                onOpenChange(false);
-                setLocation(`/checkout/success?orderId=${currentOrderId}`);
-              }}
-              onCancel={() => {
-                setShowPixCheckout(false);
-                setCurrentOrderId(null);
-                setIsCheckingOut(false);
-              }}
-            />
-          </div>
-        ) : (
-        <>
         {/* Cart Items */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto max-h-[60vh] p-4 space-y-3">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <ShoppingBag size={40} className="text-[rgba(239,239,239,0.2)] mb-3" />
@@ -207,15 +181,11 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           )}
         </div>
 
-<<<<<<< Updated upstream
-        {/* Summary (rolável e fixado embaixo) */}
-=======
         {items.length > 0 && <div className="h-px bg-[rgba(255,255,255,0.08)]" />}
 
         {/* Summary */}
->>>>>>> Stashed changes
         {items.length > 0 && (
-          <div className="shrink-0 max-h-[55vh] overflow-y-auto p-4 space-y-3 border-t border-[rgba(255,255,255,0.08)]">
+          <div className="p-4 space-y-3 border-t border-[rgba(255,255,255,0.08)]">
             {/* Coupon Section */}
             <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] p-3 rounded-sm">
               {appliedCoupon ? (
@@ -230,15 +200,11 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                     </button>
                   </div>
                   <p className="font-mono-label text-[0.7rem] text-[rgba(239,239,239,0.5)]">
-<<<<<<< Updated upstream
-                    {appliedCoupon.code} - {appliedCoupon.discountType === "percentage" ? `${appliedCoupon.discountValue}%` : `R$ ${(appliedCoupon.discountValue / 100).toFixed(2)}`} de desconto
-=======
                     {appliedCoupon.code} -{" "}
                     {appliedCoupon.discountType === "percentage"
                       ? `${appliedCoupon.discountValue}%`
                       : `R$ ${(appliedCoupon.discountValue / 100).toFixed(2)}`}{" "}
                     de desconto
->>>>>>> Stashed changes
                   </p>
                 </div>
               ) : (
@@ -269,13 +235,9 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] p-3 rounded-sm">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-heading text-sm text-blue-400">💰 Cashback Disponível</span>
-<<<<<<< Updated upstream
-                  <span className="font-mono-label text-[0.7rem] text-blue-400">R$ {(getCashbackBalanceQuery.data.availableBalance / 100).toFixed(2)}</span>
-=======
                   <span className="font-mono-label text-[0.7rem] text-blue-400">
                     R$ {(getCashbackBalanceQuery.data.availableBalance / 100).toFixed(2)}
                   </span>
->>>>>>> Stashed changes
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -298,15 +260,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 <span>R$ {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
-<<<<<<< Updated upstream
-                <span>IVA (10%)</span>
-                <span>R$ {tax.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
-                <span>Envio</span>
-=======
                 <span>Frete</span>
->>>>>>> Stashed changes
                 <span className={shipping === 0 ? "text-green-400" : ""}>
                   {shipping === 0 ? "Grátis" : `R$ ${shipping.toFixed(2)}`}
                 </span>
@@ -332,22 +286,6 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <span>R$ {finalTotal.toFixed(2)}</span>
             </div>
 
-<<<<<<< Updated upstream
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2 pt-2">
-              {!user ? (
-                <Button
-                  onClick={() => {
-                    // Login é local (email + senha); o OAuth do Manus não está
-                    // configurado e /api/oauth/login dava 404.
-                    window.location.href = getLoginUrl();
-                  }}
-                  className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
-                >
-                  🔐 Fazer Login para Comprar
-                </Button>
-              ) : (
-=======
             {/* PIX Checkout */}
             {showPixCheckout && currentOrderId ? (
               <PixCheckout
@@ -369,7 +307,6 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               />
             ) : (
               <div className="flex flex-col gap-2 pt-2">
->>>>>>> Stashed changes
                 <Button
                   onClick={() => {
                     const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
@@ -382,17 +319,6 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 >
                   💳 Pagar com PIX
                 </Button>
-<<<<<<< Updated upstream
-              )}
-              <Button
-                onClick={() => clearCart()}
-                variant="outline"
-                className="w-full border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
-              >
-                Limpar Carrinho
-              </Button>
-            </div>
-=======
                 <Button
                   onClick={() => clearCart()}
                   variant="outline"
@@ -402,10 +328,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 </Button>
               </div>
             )}
->>>>>>> Stashed changes
           </div>
-        )}
-        </>
         )}
       </DrawerContent>
     </Drawer>
@@ -441,11 +364,7 @@ function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
           {item.name}
         </p>
         <p className="font-mono-label text-[0.65rem] text-[rgba(239,239,239,0.4)]">
-<<<<<<< Updated upstream
-          R$ {(item.price / 100).toFixed(2)} cada
-=======
           R$ {priceInReais.toFixed(2)} cada
->>>>>>> Stashed changes
         </p>
 
         {(item.size || item.color) && (
@@ -480,11 +399,7 @@ function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
       {/* Price & Delete */}
       <div className="flex flex-col items-end justify-between">
         <p className="font-heading font-semibold text-[#EFEFEF] text-sm">
-<<<<<<< Updated upstream
-          R$ {((item.price * item.quantity) / 100).toFixed(2)}
-=======
           R$ {(priceInReais * item.quantity).toFixed(2)}
->>>>>>> Stashed changes
         </p>
         <button
           onClick={() => onRemove(item.id)}
