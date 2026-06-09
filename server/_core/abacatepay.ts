@@ -3,9 +3,11 @@
  * Estrutura pronta; a chave vem de ABACATEPAY_API_KEY (env). Enquanto a chave não
  * estiver setada, isConfigured() é false e o fluxo cai no PIX estático.
  *
- * Docs: https://docs.abacatepay.com — endpoints usados:
- *   POST /pixQrCode/create  -> cria cobrança PIX (retorna brCode + QR base64)
- *   GET  /pixQrCode/check   -> consulta status de uma cobrança
+ * Docs: https://docs.abacatepay.com — API v2 (checkout transparente):
+ *   POST /transparents/create  -> cria cobrança PIX (method=PIX; retorna brCode + QR base64)
+ *   GET  /transparents/check   -> consulta status de uma cobrança
+ * A base é definida por ABACATEPAY_BASE_URL (default .../v2). Chaves v2 (abc_dev_/
+ * abc_prod_) dão "API key version mismatch" se chamadas no /v1 antigo.
  */
 
 import { ENV } from "./env";
@@ -76,16 +78,21 @@ export async function createPixCharge(input: AbacateCreateInput): Promise<Abacat
     c && c.name && c.email && c.cellphone && c.taxId
       ? { name: c.name, email: c.email, cellphone: c.cellphone, taxId: c.taxId }
       : undefined;
+  // AbacatePay v2: checkout transparente. method=PIX gera o QR Code; os dados
+  // da cobrança vão aninhados em `data`.
   const body = {
-    amount: input.amountCents,
-    expiresIn: input.expiresInSeconds ?? 1800,
-    description: input.description,
-    customer: customerComplete,
-    // externalId é aninhado em metadata (conforme a API da AbacatePay) — é como
-    // conciliamos a cobrança com o nosso orderId.
-    metadata: input.externalId ? { externalId: input.externalId } : undefined,
+    method: "PIX",
+    data: {
+      amount: input.amountCents,
+      expiresIn: input.expiresInSeconds ?? 1800,
+      description: input.description,
+      customer: customerComplete,
+      // externalId (idempotência) + cópia em metadata para reconciliar no webhook.
+      externalId: input.externalId,
+      metadata: input.externalId ? { externalId: input.externalId } : undefined,
+    },
   };
-  const data = await request<any>("/pixQrCode/create", {
+  const data = await request<any>("/transparents/create", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -93,7 +100,7 @@ export async function createPixCharge(input: AbacateCreateInput): Promise<Abacat
 }
 
 export async function getPixChargeStatus(chargeId: string): Promise<AbacatePixCharge> {
-  const data = await request<any>(`/pixQrCode/check?id=${encodeURIComponent(chargeId)}`, {
+  const data = await request<any>(`/transparents/check?id=${encodeURIComponent(chargeId)}`, {
     method: "GET",
   });
   return normalizeCharge(data);

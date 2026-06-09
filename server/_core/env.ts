@@ -16,6 +16,6 @@ export const ENV = {
   // Gateway de pagamento PIX (AbacatePay). Vazio = usa PIX estático (chave do lojista).
   abacatePayApiKey: process.env.ABACATEPAY_API_KEY ?? "",
   abacatePayWebhookSecret: process.env.ABACATEPAY_WEBHOOK_SECRET ?? "",
-  abacatePayBaseUrl: process.env.ABACATEPAY_BASE_URL ?? "https://api.abacatepay.com/v1",
+  abacatePayBaseUrl: process.env.ABACATEPAY_BASE_URL ?? "https://api.abacatepay.com/v2",
   appUrl: process.env.APP_URL ?? process.env.VITE_APP_URL ?? "http://localhost:3000",
 };
