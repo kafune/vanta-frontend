@@ -22,6 +22,7 @@ interface PixContactFormProps {
   defaultTaxId?: string | null;
   submitting?: boolean;
   onSubmit: (data: { cellphone: string; taxId: string }) => void;
+  onCancel?: () => void;
 }
 
 export function PixContactForm({
@@ -29,6 +30,7 @@ export function PixContactForm({
   defaultTaxId,
   submitting = false,
   onSubmit,
+  onCancel,
 }: PixContactFormProps) {
   const [cellphone, setCellphone] = useState(maskCellphone(defaultCellphone ?? ""));
   const [taxId, setTaxId] = useState(maskTaxId(defaultTaxId ?? ""));
@@ -106,6 +108,17 @@ export function PixContactForm({
               "Continuar para o pagamento"
             )}
           </Button>
+          {onCancel && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onCancel}
+              disabled={submitting}
+              className="w-full text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
+            >
+              Voltar ao carrinho
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>

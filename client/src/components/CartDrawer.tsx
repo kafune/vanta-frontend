@@ -170,8 +170,33 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           </div>
         </DrawerHeader>
 
+        {showPixCheckout && currentOrderId ? (
+          /* Checkout PIX ocupa o corpo inteiro do drawer, com rolagem própria —
+             evita que o formulário (celular/CPF) e o QR fiquem cortados fora da tela. */
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <PixCheckout
+              orderId={currentOrderId}
+              amount={Math.round(finalTotal * 100)}
+              onPaymentConfirmed={() => {
+                setShowPixCheckout(false);
+                clearCart();
+                removeCoupon();
+                setApplyCashback(false);
+                setIsCheckingOut(false);
+                onOpenChange(false);
+                setLocation(`/checkout/success?orderId=${currentOrderId}`);
+              }}
+              onCancel={() => {
+                setShowPixCheckout(false);
+                setCurrentOrderId(null);
+                setIsCheckingOut(false);
+              }}
+            />
+          </div>
+        ) : (
+        <>
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto max-h-[60vh] p-4 space-y-3">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <ShoppingBag size={40} className="text-[rgba(239,239,239,0.2)] mb-3" />
@@ -192,12 +217,9 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           )}
         </div>
 
-        {/* Divider */}
-        {items.length > 0 && <div className="h-px bg-[rgba(255,255,255,0.08)]" />}
-
-        {/* Summary */}
+        {/* Summary (rolável e fixado embaixo) */}
         {items.length > 0 && (
-          <div className="p-4 space-y-3 border-t border-[rgba(255,255,255,0.08)]">
+          <div className="shrink-0 max-h-[55vh] overflow-y-auto p-4 space-y-3 border-t border-[rgba(255,255,255,0.08)]">
             {/* Coupon Section */}
             <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] p-3 rounded-sm">
               {appliedCoupon ? (
@@ -291,65 +313,44 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <span>R$ {finalTotal.toFixed(2)}</span>
             </div>
 
-            {/* PIX Checkout */}
-            {showPixCheckout && currentOrderId ? (
-              <PixCheckout
-                orderId={currentOrderId}
-                amount={Math.round(finalTotal * 100)}
-                onPaymentConfirmed={() => {
-                  setShowPixCheckout(false);
-                  clearCart();
-                  removeCoupon();
-                  setApplyCashback(false);
-                  setIsCheckingOut(false);
-                  onOpenChange(false);
-                  setLocation(`/checkout/success?orderId=${currentOrderId}`);
-                }}
-                onCancel={() => {
-                  setShowPixCheckout(false);
-                  setCurrentOrderId(null);
-                }}
-              />
-            ) : (
-              <>
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-2 pt-2">
-                  {!user ? (
-                    <Button
-                      onClick={() => {
-                        // Login é local (email + senha); o OAuth do Manus não está
-                        // configurado e /api/oauth/login dava 404.
-                        window.location.href = getLoginUrl();
-                      }}
-                      className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
-                    >
-                      🔐 Fazer Login para Comprar
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => {
-                        const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
-                        setCurrentOrderId(orderId);
-                        setShowPixCheckout(true);
-                        setIsCheckingOut(true);
-                      }}
-                      disabled={isCheckingOut || sendOrderConfirmationMutation.isPending || items.length === 0}
-                      className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
-                    >
-                      💳 Pagar com PIX
-                    </Button>
-                  )}
-                  <Button
-                    onClick={() => clearCart()}
-                    variant="outline"
-                    className="w-full border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
-                  >
-                    Limpar Carrinho
-                  </Button>
-                </div>
-              </>
-            )}
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2 pt-2">
+              {!user ? (
+                <Button
+                  onClick={() => {
+                    // Login é local (email + senha); o OAuth do Manus não está
+                    // configurado e /api/oauth/login dava 404.
+                    window.location.href = getLoginUrl();
+                  }}
+                  className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
+                >
+                  🔐 Fazer Login para Comprar
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    const orderId = Math.random().toString(36).substring(2, 11).toUpperCase();
+                    setCurrentOrderId(orderId);
+                    setShowPixCheckout(true);
+                    setIsCheckingOut(true);
+                  }}
+                  disabled={isCheckingOut || sendOrderConfirmationMutation.isPending || items.length === 0}
+                  className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
+                >
+                  💳 Pagar com PIX
+                </Button>
+              )}
+              <Button
+                onClick={() => clearCart()}
+                variant="outline"
+                className="w-full border-[rgba(255,255,255,0.15)] text-[rgba(239,239,239,0.6)] hover:text-[#EFEFEF]"
+              >
+                Limpar Carrinho
+              </Button>
+            </div>
           </div>
+        )}
+        </>
         )}
       </DrawerContent>
     </Drawer>

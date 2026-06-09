@@ -142,6 +142,7 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
         defaultTaxId={user.taxId}
         submitting={generatePayment.isPending}
         onSubmit={(data) => setContact(data)}
+        onCancel={onCancel}
       />
     );
   }
@@ -199,7 +200,7 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
           <CardTitle className="text-[#EFEFEF]">Valor a Pagar</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-bold text-[#4ECDC4]">{amountFormatted}</div>
+          <div className="text-3xl sm:text-4xl font-bold text-[#4ECDC4] break-all">{amountFormatted}</div>
         </CardContent>
       </Card>
 
@@ -261,7 +262,7 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
           </CardHeader>
           <CardContent className="flex flex-col items-center">
             {pixData.qrCode && (
-              <img src={pixData.qrCode} alt="PIX QR Code" className="w-64 h-64 border-2 border-[rgba(255,255,255,0.1)] rounded-lg p-4 bg-white" />
+              <img src={pixData.qrCode} alt="PIX QR Code" className="w-full max-w-[16rem] aspect-square border-2 border-[rgba(255,255,255,0.1)] rounded-lg p-4 bg-white" />
             )}
             <p className="text-sm text-[rgba(239,239,239,0.5)] mt-4 text-center">
               Abra o seu banco e escaneie o QR Code acima para fazer o pagamento
