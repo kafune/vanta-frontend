@@ -67,11 +67,20 @@ function normalizeCharge(raw: any): AbacatePixCharge {
 }
 
 export async function createPixCharge(input: AbacateCreateInput): Promise<AbacatePixCharge> {
+  // A AbacatePay trata `customer` como opcional, mas SE enviado exige todos os
+  // campos como string (name, cellphone, email, taxId) — um objeto parcial
+  // gera erros do tipo "customer.cellphone must be string". Por isso só
+  // anexamos `customer` quando temos os quatro campos preenchidos.
+  const c = input.customer;
+  const customerComplete =
+    c && c.name && c.email && c.cellphone && c.taxId
+      ? { name: c.name, email: c.email, cellphone: c.cellphone, taxId: c.taxId }
+      : undefined;
   const body = {
     amount: input.amountCents,
     expiresIn: input.expiresInSeconds ?? 1800,
     description: input.description,
-    customer: input.customer,
+    customer: customerComplete,
     // externalId é aninhado em metadata (conforme a API da AbacatePay) — é como
     // conciliamos a cobrança com o nosso orderId.
     metadata: input.externalId ? { externalId: input.externalId } : undefined,

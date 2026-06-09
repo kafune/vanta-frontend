@@ -150,4 +150,21 @@ export async function ensureAdminUser(): Promise<void> {
   console.log(`[Auth] Admin inicial criado: ${ENV.adminEmail}`);
 }
 
+/**
+ * Atualiza dados de contato (celular/CPF) do usuário. Só grava os campos
+ * informados. Usado no checkout PIX para reaproveitar nas próximas compras.
+ */
+export async function updateUserContact(
+  userId: number,
+  input: { phone?: string; taxId?: string }
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const set: { phone?: string; taxId?: string } = {};
+  if (input.phone !== undefined) set.phone = input.phone;
+  if (input.taxId !== undefined) set.taxId = input.taxId;
+  if (Object.keys(set).length === 0) return;
+  await db.update(users).set(set).where(eq(users.id, userId));
+}
+
 // TODO: add feature queries here as your schema grows.

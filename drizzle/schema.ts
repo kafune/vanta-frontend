@@ -15,6 +15,10 @@ export const users = mysqlTable("users", {
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
+  /** Celular do cliente (apenas dígitos, com DDD). Usado pela AbacatePay. */
+  phone: varchar("phone", { length: 20 }),
+  /** CPF/CNPJ do cliente (apenas dígitos). Usado pela AbacatePay (taxId). */
+  taxId: varchar("taxId", { length: 14 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   /** Hash da senha (scrypt) para login local. Null em usuários OAuth/Manus. */
   passwordHash: varchar("passwordHash", { length: 255 }),

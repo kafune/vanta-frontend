@@ -5,12 +5,13 @@
 
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
-import { getDb } from "../db";
+import { getDb, updateUserContact } from "../db";
 import { pixPayments, pixTransactions, orders } from "../../drizzle/schema";
 import { generatePixPayment, validatePixKey, formatCurrency } from "../pix";
 import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
 import { createPixCharge, getPixChargeStatus, isAbacatePayConfigured, isChargePaid } from "../_core/abacatepay";
+import { onlyDigits, isValidCellphone, isValidTaxId } from "@shared/br";
 
 function generateId() {
   return crypto.randomBytes(16).toString("hex");
@@ -49,6 +50,16 @@ export const pixRouter = router({
         orderId: z.string(),
         amount: z.number().positive(), // in cents
         description: z.string().optional(),
+        // Dados de contato exigidos pela AbacatePay (customer). Opcionais aqui:
+        // se não vierem, usamos o que já estiver salvo no usuário.
+        cellphone: z
+          .string()
+          .optional()
+          .refine((v) => v === undefined || isValidCellphone(v), "Celular inválido"),
+        taxId: z
+          .string()
+          .optional()
+          .refine((v) => v === undefined || isValidTaxId(v), "CPF/CNPJ inválido"),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -76,13 +87,32 @@ export const pixRouter = router({
         let expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 min default
 
         if (useGateway) {
-          // Cobrança real via AbacatePay.
+          // Normaliza o contato recebido (só dígitos) e cai pro que já está
+          // salvo no usuário quando o formulário não reenvia os campos.
+          const cellphone = input.cellphone ? onlyDigits(input.cellphone) : ctx.user.phone ?? undefined;
+          const taxId = input.taxId ? onlyDigits(input.taxId) : ctx.user.taxId ?? undefined;
+
+          // Persiste o contato no usuário para reaproveitar nas próximas compras.
+          if ((input.cellphone || input.taxId) && (cellphone || taxId)) {
+            await updateUserContact(ctx.user.id, {
+              phone: cellphone,
+              taxId,
+            });
+          }
+
+          // Cobrança real via AbacatePay. O customer só é enviado completo
+          // (ver createPixCharge) — name/email + cellphone/taxId.
           const charge = await createPixCharge({
             amountCents: amount,
             description: description || "Compra VANTA",
             expiresInSeconds: 30 * 60,
             externalId: orderId,
-            customer: { name: ctx.user.name ?? undefined, email: ctx.user.email ?? undefined },
+            customer: {
+              name: ctx.user.name ?? undefined,
+              email: ctx.user.email ?? undefined,
+              cellphone,
+              taxId,
+            },
           });
           brCode = charge.brCode;
           qrCode = charge.brCodeBase64;
@@ -340,6 +370,8 @@ export const pixRouter = router({
 
     return {
       configured: !!pixKey && !!ownerName,
+      // Quando o gateway está ativo, o checkout precisa coletar celular + CPF.
+      gateway: isAbacatePayConfigured(),
       pixKeyType: pixKey ? (pixKey.includes("@") ? "email" : pixKey.length === 11 ? "cpf" : "other") : null,
     };
   }),

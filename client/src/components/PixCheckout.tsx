@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Copy, Check, AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { CheckoutAuthGuard } from "./CheckoutAuthGuard";
+import { PixContactForm } from "./PixContactForm";
 import { getLoginUrl } from "@/const";
 
 interface PixCheckoutProps {
@@ -27,6 +28,20 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
   const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
+  // Contato coletado neste fluxo (celular + CPF) para o gateway.
+  const [contact, setContact] = useState<{ cellphone: string; taxId: string } | null>(null);
+
+  // Saber se o gateway (AbacatePay) está ativo decide se precisamos coletar
+  // celular/CPF antes de gerar a cobrança.
+  const configQuery = trpc.pix.isConfigured.useQuery();
+  const configLoaded = configQuery.isSuccess || configQuery.isError;
+  const gatewayEnabled = configQuery.data?.gateway ?? false;
+
+  // Contato efetivo: o que o usuário acabou de informar, ou o já salvo no perfil.
+  const storedContact =
+    user?.phone && user?.taxId ? { cellphone: user.phone, taxId: user.taxId } : null;
+  const effectiveContact = contact ?? storedContact;
+  const needsContact = gatewayEnabled && !effectiveContact;
 
   // Require authentication for PIX checkout
   if (!user) {
@@ -76,16 +91,20 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
     },
   });
 
-  // Generate PIX on mount
+  // Gera o PIX assim que sabemos o status do gateway e (se necessário) já
+  // temos o contato. Sem gateway, gera direto.
   useEffect(() => {
-    if (!generatePayment.data) {
-      generatePayment.mutate({
-        orderId,
-        amount,
-        description: "Compra VANTA",
-      });
-    }
-  }, [orderId, amount]);
+    if (!configLoaded) return;
+    if (needsContact) return;
+    if (generatePayment.data || generatePayment.isPending) return;
+    generatePayment.mutate({
+      orderId,
+      amount,
+      description: "Compra VANTA",
+      ...(effectiveContact ?? {}),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, amount, configLoaded, needsContact, effectiveContact]);
 
   const pixData = generatePayment.data;
   const isGateway = pixData?.provider === "abacatepay";
@@ -103,6 +122,29 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
     style: "currency",
     currency: "BRL",
   });
+
+  // Aguardando saber se o gateway está ativo.
+  if (!configLoaded) {
+    return (
+      <Card className="bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)]">
+        <CardContent className="pt-6 flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#4ECDC4]" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Gateway ativo e sem contato salvo: coleta celular + CPF antes de gerar.
+  if (needsContact && !generatePayment.data) {
+    return (
+      <PixContactForm
+        defaultCellphone={user.phone}
+        defaultTaxId={user.taxId}
+        submitting={generatePayment.isPending}
+        onSubmit={(data) => setContact(data)}
+      />
+    );
+  }
 
   if (generatePayment.isPending) {
     return (
@@ -192,6 +234,7 @@ export function PixCheckout({ orderId, amount, onPaymentConfirmed, onCancel }: P
                   orderId,
                   amount,
                   description: "Compra VANTA",
+                  ...(effectiveContact ?? {}),
                 });
               }}
               disabled={generatePayment.isPending}
