@@ -177,7 +177,7 @@ export default function CollectionDetail() {
 
                   {/* Price */}
                   <div className="mb-4">
-                    <p className="text-2xl font-bold">R$ {product.price.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">R$ {(product.price / 100).toFixed(2)}</p>
                   </div>
 
                   {/* Colors */}

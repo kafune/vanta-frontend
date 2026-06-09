@@ -66,7 +66,7 @@ function FavoritesTab() {
           <CardContent className="pt-4">
             <h3 className="text-[#EFEFEF] font-semibold mb-2">{product.name}</h3>
             <p className="text-[rgba(239,239,239,0.6)] text-sm mb-2">{product.color}</p>
-            <p className="text-[#EFEFEF] font-bold mb-4">€{product.price.toFixed(2)}</p>
+            <p className="text-[#EFEFEF] font-bold mb-4">R$ {product.price.toFixed(2)}</p>
             <div className="flex gap-2">
               <Button
                 onClick={() => handleAddToCart(product)}

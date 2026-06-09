@@ -152,7 +152,7 @@ export default function CanvasSection() {
       addItem({
         id: customId,
         name: `${modelLabel} Personalizado`,
-        price: 49.99,
+        price: 4999, // centavos (R$ 49,99)
         quantity: 1,
         image: uploadedImage,
         customization: {

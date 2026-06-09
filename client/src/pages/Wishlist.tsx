@@ -136,7 +136,7 @@ export default function Wishlist() {
 
                     {/* Price */}
                     <div className="text-lg font-semibold text-[#EFEFEF] mb-4">
-                      €{item.productPrice.toFixed(2)}
+                      R$ {item.productPrice.toFixed(2)}
                     </div>
 
                     {/* Actions */}
@@ -146,7 +146,8 @@ export default function Wishlist() {
                           addItem({
                             id: item.productId,
                             name: item.productName,
-                            price: item.productPrice,
+                            // productPrice vem em reais do router; o carrinho usa centavos.
+                            price: Math.round(item.productPrice * 100),
                             quantity: 1,
                             image: item.productImage || "",
                           });

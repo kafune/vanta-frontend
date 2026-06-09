@@ -211,7 +211,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                     </button>
                   </div>
                   <p className="font-mono-label text-[0.7rem] text-[rgba(239,239,239,0.5)]">
-                    {appliedCoupon.code} - {appliedCoupon.discountType === "percentage" ? `${appliedCoupon.discountValue}%` : `€${(appliedCoupon.discountValue / 100).toFixed(2)}`} de desconto
+                    {appliedCoupon.code} - {appliedCoupon.discountType === "percentage" ? `${appliedCoupon.discountValue}%` : `R$ ${(appliedCoupon.discountValue / 100).toFixed(2)}`} de desconto
                   </p>
                 </div>
               ) : (
@@ -240,7 +240,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] p-3 rounded-sm">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-heading text-sm text-blue-400">💰 Cashback Disponível</span>
-                  <span className="font-mono-label text-[0.7rem] text-blue-400">€{(getCashbackBalanceQuery.data.availableBalance / 100).toFixed(2)}</span>
+                  <span className="font-mono-label text-[0.7rem] text-blue-400">R$ {(getCashbackBalanceQuery.data.availableBalance / 100).toFixed(2)}</span>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -257,28 +257,28 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
                 <span>Subtotal</span>
-                <span>€{subtotal.toFixed(2)}</span>
+                <span>R$ {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
                 <span>IVA (10%)</span>
-                <span>€{tax.toFixed(2)}</span>
+                <span>R$ {tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[rgba(239,239,239,0.6)]">
                 <span>Envio</span>
                 <span className={shipping === 0 ? "text-green-400" : ""}>
-                  {shipping === 0 ? "Grátis" : `€${shipping.toFixed(2)}`}
+                  {shipping === 0 ? "Grátis" : `R$ ${shipping.toFixed(2)}`}
                 </span>
               </div>
               {appliedCoupon && (
                 <div className="flex justify-between text-green-400">
                   <span>Desconto (Cupom)</span>
-                  <span>-€{(appliedCoupon.discount / 100).toFixed(2)}</span>
+                  <span>-R$ {(appliedCoupon.discount / 100).toFixed(2)}</span>
                 </div>
               )}
               {applyCashback && cashbackDiscount > 0 && (
                 <div className="flex justify-between text-blue-400">
                   <span>Desconto (Cashback)</span>
-                  <span>-€{cashbackDiscount.toFixed(2)}</span>
+                  <span>-R$ {cashbackDiscount.toFixed(2)}</span>
                 </div>
               )}
             </div>
@@ -287,7 +287,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
 
             <div className="flex justify-between font-heading font-semibold text-[#EFEFEF]">
               <span>Total</span>
-              <span>€{finalTotal.toFixed(2)}</span>
+              <span>R$ {finalTotal.toFixed(2)}</span>
             </div>
 
             {/* PIX Checkout */}
@@ -378,7 +378,7 @@ function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
           {item.name}
         </p>
         <p className="font-mono-label text-[0.65rem] text-[rgba(239,239,239,0.4)]">
-          €{item.price.toFixed(2)} cada
+          R$ {(item.price / 100).toFixed(2)} cada
         </p>
 
         {/* Size & Color */}
@@ -414,7 +414,7 @@ function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
       {/* Price & Delete */}
       <div className="flex flex-col items-end justify-between">
         <p className="font-heading font-semibold text-[#EFEFEF] text-sm">
-          €{(item.price * item.quantity).toFixed(2)}
+          R$ {((item.price * item.quantity) / 100).toFixed(2)}
         </p>
         <button
           onClick={() => onRemove(item.id)}

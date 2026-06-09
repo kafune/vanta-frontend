@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { CartProvider } from "@/hooks/useCart";
 import Home from "./pages/Home";
 import Product from "./pages/Product";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -54,20 +55,22 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
-        <TooltipProvider>
-          <Toaster
-            toastOptions={{
-              style: {
-                background: '#111111',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: '#EFEFEF',
-                fontFamily: 'DM Sans, sans-serif',
-              },
-            }}
-          />
-          <ScrollToTop />
-          <Router />
-        </TooltipProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster
+              toastOptions={{
+                style: {
+                  background: '#111111',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#EFEFEF',
+                  fontFamily: 'DM Sans, sans-serif',
+                },
+              }}
+            />
+            <ScrollToTop />
+            <Router />
+          </TooltipProvider>
+        </CartProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useCart, CartItem } from "./useCart";
+import { useCart, CartProvider, CartItem } from "./useCart";
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -39,7 +39,7 @@ describe("useCart Hook", () => {
   });
 
   it("should initialize with empty cart", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     expect(result.current.items).toEqual([]);
     expect(result.current.itemCount).toBe(0);
@@ -48,7 +48,7 @@ describe("useCart Hook", () => {
   });
 
   it("should add item to cart", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     const item: CartItem = {
       id: "test-1",
@@ -69,7 +69,7 @@ describe("useCart Hook", () => {
   });
 
   it("should increment quantity for duplicate items", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     const item: CartItem = {
       id: "test-1",
@@ -91,7 +91,7 @@ describe("useCart Hook", () => {
   });
 
   it("should calculate subtotal correctly", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
@@ -110,11 +110,12 @@ describe("useCart Hook", () => {
       });
     });
 
-    expect(result.current.subtotal).toBe(250); // 100*2 + 50*1
+    // price em centavos: (100*2 + 50*1) = 250 centavos = R$ 2,50
+    expect(result.current.subtotal).toBe(2.5);
   });
 
   it("should calculate tax correctly (10%)", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
@@ -126,17 +127,18 @@ describe("useCart Hook", () => {
       });
     });
 
-    expect(result.current.tax).toBe(10); // 100 * 0.1
+    // 100 centavos * 0,1 = 10 centavos = R$ 0,10
+    expect(result.current.tax).toBe(0.1);
   });
 
-  it("should calculate free shipping for orders over 100", () => {
-    const { result } = renderHook(() => useCart());
+  it("should give free shipping for orders over R$200", () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
         id: "test-1",
         name: "Product 1",
-        price: 150,
+        price: 20000, // R$ 200,00 em centavos
         quantity: 1,
         image: "test.jpg",
       });
@@ -145,41 +147,44 @@ describe("useCart Hook", () => {
     expect(result.current.shipping).toBe(0);
   });
 
-  it("should charge 10 for shipping on orders under 100", () => {
-    const { result } = renderHook(() => useCart());
+  it("should charge R$15 shipping on orders under R$200", () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
         id: "test-1",
         name: "Product 1",
-        price: 50,
+        price: 5000, // R$ 50,00 em centavos
         quantity: 1,
         image: "test.jpg",
       });
     });
 
-    expect(result.current.shipping).toBe(10);
+    expect(result.current.shipping).toBe(15);
   });
 
   it("should calculate total correctly", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
         id: "test-1",
         name: "Product 1",
-        price: 100,
+        price: 25000, // R$ 250,00 em centavos
         quantity: 1,
         image: "test.jpg",
       });
     });
 
-    // Subtotal: 100, Tax: 10, Shipping: 10, Total: 120
-    expect(result.current.total).toBe(120);
+    // Subtotal: R$ 250,00, IVA: R$ 25,00, Frete: grátis (>= R$200) => Total: R$ 275,00
+    expect(result.current.subtotal).toBe(250);
+    expect(result.current.tax).toBe(25);
+    expect(result.current.shipping).toBe(0);
+    expect(result.current.total).toBe(275);
   });
 
   it("should remove item from cart", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
@@ -202,7 +207,7 @@ describe("useCart Hook", () => {
   });
 
   it("should update item quantity", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
@@ -223,7 +228,7 @@ describe("useCart Hook", () => {
   });
 
   it("should remove item when quantity is set to 0", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
@@ -243,7 +248,7 @@ describe("useCart Hook", () => {
   });
 
   it("should clear entire cart", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
@@ -274,7 +279,7 @@ describe("useCart Hook", () => {
   });
 
   it("should persist cart to localStorage", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
@@ -292,7 +297,7 @@ describe("useCart Hook", () => {
   });
 
   it("should respect MAX_QUANTITY limit", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     act(() => {
       result.current.addItem({
@@ -308,7 +313,7 @@ describe("useCart Hook", () => {
   });
 
   it("should handle items with customization", () => {
-    const { result } = renderHook(() => useCart());
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
 
     const item: CartItem = {
       id: "test-1",
