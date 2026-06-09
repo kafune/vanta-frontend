@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { PixCheckout } from "@/components/PixCheckout";
+import { getLoginUrl } from "@/const";
 
 interface CartDrawerProps {
   open: boolean;
@@ -316,9 +317,9 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                   {!user ? (
                     <Button
                       onClick={() => {
-                        const loginUrl = new URL(window.location.origin);
-                        loginUrl.pathname = '/api/oauth/login';
-                        window.location.href = loginUrl.toString();
+                        // Login é local (email + senha); o OAuth do Manus não está
+                        // configurado e /api/oauth/login dava 404.
+                        window.location.href = getLoginUrl();
                       }}
                       className="w-full bg-[#4ECDC4] text-[#0B0B0B] hover:bg-[#3BA99E] font-heading font-semibold"
                     >
